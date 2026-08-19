@@ -195,7 +195,6 @@
     <!-- JavaScript Məntiqi -->
     <script>
         // === SUPABASE PARAMETRLƏRİ ===
-        // Öz Supabase URL və Publishable/Anon açarınızı bura daxil edin:
         const SUPABASE_URL = "https://LAYIHƏNİZ.supabase.co";
         const SUPABASE_KEY = "SUPABASE_ANON_KEY_BURAYA";
         
@@ -272,7 +271,6 @@
                 return;
             }
 
-            // Uğurlu giriş - məlumatı yadda saxla və Dashboard-a keç
             localStorage.setItem('userSession', JSON.stringify(user));
             openDashboard(user);
         });
@@ -287,7 +285,6 @@
             switchView('loginView');
         });
 
-        // Səhifə açıldıqda localStorage yoxlanışı
         window.addEventListener('DOMContentLoaded', () => {
             const sessionData = localStorage.getItem('userSession');
             if (sessionData) {
@@ -295,51 +292,40 @@
             }
         });
 
-        // --- ADMİN PANEL MƏNTİQİ ---
-        document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+        // --- ADMİN PANEL MƏNTİQİ (Birbaşa Email və Şifrə yoxlanışı) ---
+        document.getElementById('adminLoginBtn').addEventListener('click', () => {
             const email = document.getElementById('adminEmail').value.trim();
             const password = document.getElementById('adminPassword').value.trim();
             const msgEl = document.getElementById('adminLoginMessage');
 
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                msgEl.innerText = "Giriş xətası: " + error.message;
-            } else {
+            if (email === "yuniss.imanov@gmail.com" && password === "Yunis2003") {
+                localStorage.setItem('adminLoggedIn', 'true');
                 checkAdminSession();
+            } else {
+                msgEl.innerText = "Giriş xətası: Email və ya şifrə yanlışdır.";
             }
         });
 
-        document.getElementById('adminLogoutBtn').addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
+        document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('adminLoggedIn');
             checkAdminSession();
         });
 
-        async function checkAdminSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
+        function checkAdminSession() {
+            const isAdmin = localStorage.getItem('adminLoggedIn');
             const adminLoginArea = document.getElementById('adminLoginArea');
             const adminPanelArea = document.getElementById('adminPanelArea');
 
-            if (session) {
-                // Admin olub-olmadığını cədvəldən yoxla
-                const { data } = await supabaseClient
-                    .from('admin_users')
-                    .select('*')
-                    .eq('user_id', session.user.id)
-                    .single();
-
-                if (data) {
-                    adminLoginArea.style.display = 'none';
-                    adminPanelArea.style.display = 'block';
-                    loadAdminUsers();
-                } else {
-                    alert('Bu hesabın admin səlahiyyəti yoxdur!');
-                    await supabaseClient.auth.signOut();
-                    adminLoginArea.style.display = 'block';
-                    adminPanelArea.style.display = 'none';
-                }
+            if (isAdmin === 'true') {
+                adminLoginArea.style.display = 'none';
+                adminPanelArea.style.display = 'block';
+                loadAdminUsers();
             } else {
                 adminLoginArea.style.display = 'block';
                 adminPanelArea.style.display = 'none';
+                document.getElementById('adminEmail').value = '';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminLoginMessage').innerText = '';
             }
         }
 
