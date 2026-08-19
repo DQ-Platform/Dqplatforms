@@ -74,6 +74,7 @@
             text-decoration: none;
             margin: 0 10px;
             font-size: 14px;
+            cursor: pointer;
         }
 
         .nav-links a:hover {
@@ -128,8 +129,8 @@
         </form>
         <div id="regMessage" class="message"></div>
         <div class="nav-links">
-            <a href="#" onclick="switchView('loginView')">Giriş səhifəsi</a> | 
-            <a href="#" onclick="switchView('adminView')">Admin Panel</a>
+            <a onclick="switchView('loginView')">Giriş səhifəsi</a> | 
+            <a onclick="switchView('adminView')">Admin Panel</a>
         </div>
     </div>
 
@@ -142,8 +143,8 @@
         </form>
         <div id="loginMessage" class="message"></div>
         <div class="nav-links">
-            <a href="#" onclick="switchView('registerView')">Qeydiyyatdan keç</a> | 
-            <a href="#" onclick="switchView('adminView')">Admin Panel</a>
+            <a onclick="switchView('registerView')">Qeydiyyatdan keç</a> | 
+            <a onclick="switchView('adminView')">Admin Panel</a>
         </div>
     </div>
 
@@ -161,9 +162,9 @@
         
         <!-- Admin Giriş Formu -->
         <div id="adminLoginArea">
-            <input type="email" id="adminEmail" placeholder="Admin Email">
+            <input type="email" id="adminEmail" placeholder="Admin Email" value="yuniss.imanov@gmail.com">
             <input type="password" id="adminPassword" placeholder="Admin Şifrə">
-            <button id="adminLoginBtn">Admin Girişi</button>
+            <button id="adminLoginBtn" type="button">Admin Girişi</button>
             <div id="adminLoginMessage" class="message"></div>
         </div>
         
@@ -188,19 +189,18 @@
         </div>
 
         <div class="nav-links" style="margin-top: 20px;">
-            <a href="#" onclick="switchView('registerView')">Qeydiyyata qayıt</a>
+            <a onclick="switchView('registerView')">Qeydiyyata qayıt</a>
         </div>
     </div>
 
     <!-- JavaScript Məntiqi -->
     <script>
         // === SUPABASE PARAMETRLƏRİ ===
-        const SUPABASE_URL = "https://LAYIHƏNİZ.supabase.co";
-        const SUPABASE_KEY = "SUPABASE_ANON_KEY_BURAYA";
+        const SUPABASE_URL = "https://LAYIHƏNİZ.supabase.co"; // Öz URL-nizi bura yazın
+        const SUPABASE_KEY = "SUPABASE_ANON_KEY_BURAYA";   // Öz açarınızı bura yazın
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Səhifə dəyişdirmə funksiyası
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -209,7 +209,6 @@
             }
         }
 
-        // FİN-i SHA-256 ilə hash edən köməkçi funksiya
         async function hashFin(fin) {
             const encoder = new TextEncoder();
             const data = encoder.encode(fin);
@@ -218,7 +217,7 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- QEYDİYYAT MƏNTİQİ ---
+        // Qeydiyyat
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const firstName = document.getElementById('regFirstName').value.trim();
@@ -238,15 +237,15 @@
 
             if (error) {
                 msgEl.style.color = "var(--danger-color)";
-                msgEl.innerText = "Xəta baş verdi (Ola bilər FİN artıq qeydiyyatdadır): " + error.message;
+                msgEl.innerText = "Xəta baş verdi: " + error.message;
             } else {
                 msgEl.style.color = "var(--success-color)";
-                msgEl.innerText = "Qeydiyyatınız qəbul edildi. Administrator tərəfindən təsdiq gözlənilir.";
+                msgEl.innerText = "Qeydiyyatınız qəbul edildi. Təsdiq gözlənilir.";
                 document.getElementById('registerForm').reset();
             }
         });
 
-        // --- GİRİŞ MƏNTİQİ ---
+        // İstifadəçi Girişi
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fin = document.getElementById('loginFin').value.trim().toUpperCase();
@@ -267,7 +266,7 @@
             }
 
             if (!user.is_approved) {
-                msgEl.innerText = "Hesabınız hələ administrator tərəfindən təsdiqlənməyib.";
+                msgEl.innerText = "Hesabınız hələ təsdiqlənməyib.";
                 return;
             }
 
@@ -292,7 +291,7 @@
             }
         });
 
-        // --- ADMİN PANEL MƏNTİQİ (Birbaşa Email və Şifrə yoxlanışı) ---
+        // Admin Girişi (Sabit Yunis İmanov məlumatları ilə)
         document.getElementById('adminLoginBtn').addEventListener('click', () => {
             const email = document.getElementById('adminEmail').value.trim();
             const password = document.getElementById('adminPassword').value.trim();
@@ -302,7 +301,7 @@
                 localStorage.setItem('adminLoggedIn', 'true');
                 checkAdminSession();
             } else {
-                msgEl.innerText = "Giriş xətası: Email və ya şifrə yanlışdır.";
+                msgEl.innerText = "Email və ya şifrə yanlışdır!";
             }
         });
 
@@ -323,7 +322,6 @@
             } else {
                 adminLoginArea.style.display = 'block';
                 adminPanelArea.style.display = 'none';
-                document.getElementById('adminEmail').value = '';
                 document.getElementById('adminPassword').value = '';
                 document.getElementById('adminLoginMessage').innerText = '';
             }
