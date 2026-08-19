@@ -3,151 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DQ Platform - Admin Panel</title>
+    <title>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
-        h2 { color: #1a1a1a; margin-bottom: 20px; font-size: 22px; text-align: center; }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; }
-        input:focus { border-color: #007bff; }
-        button { width: 100%; padding: 11px; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
-        button:hover { background-color: #0056b3; }
-        .logout-btn { background-color: #dc3545; margin-top: 15px; }
-        .logout-btn:hover { background-color: #a71d2a; }
-        #adminPanel, #errorBox { display: none; }
-        .error { color: #dc3545; font-size: 13px; margin-top: 10px; text-align: center; }
-        .success { color: #28a745; font-size: 13px; margin-top: 10px; text-align: center; }
-        ul { list-style: none; margin-top: 15px; max-height: 150px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 5px; }
-        li { padding: 8px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        li:last-child { border-bottom: none; }
-        .delete-btn { background: #ff4d4d; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        body { background-color: #f8f9fa; display: flex; flex-direction: column; min-height: 100vh; justify-content: space-between; align-items: center; padding: 20px; }
+        .container { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; margin: auto; text-align: center; }
+        h2 { color: #1a1a1a; margin-bottom: 8px; font-size: 20px; }
+        p { color: #666; font-size: 14px; margin-bottom: 24px; }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+        input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        input:focus { border-color: #ff7a59; }
+        button { width: 100%; padding: 12px; background-color: #ff7a59; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #ff623b; }
+        .error-msg { color: #e74c3c; font-size: 13px; margin-top: 12px; display: none; }
+        footer { font-size: 12px; color: #888; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- GİRİŞ HİSSƏSİ -->
-    <div class="container" id="loginBox">
-        <h2>Admin Girişi</h2>
-        <div class="form-group">
-            <label>Admin Şifrəsi</label>
-            <input type="password" id="adminPassword" placeholder="Şifrəni daxil edin">
-        </div>
-        <button onclick="adminLogin()">Daxil ol</button>
-        <div id="loginError" class="error">Şifrə səhvdir!</div>
-    </div>
-
-    <!-- İDARƏETMƏ PANELİ -->
-    <div class="container" id="adminPanel">
-        <h2>Sınaq İştirakçıları Paneli</h2>
+    <div class="container">
+        <h2>DQ Platform - Giriş</h2>
+        <p>Zəhmət olmasa məlumatlarınızı daxil edin</p>
         
         <div class="form-group">
-            <label>Tələbənin Adı və Soyadı</label>
-            <input type="text" id="studentName" placeholder="Məs: Əli Məmmədov">
+            <label for="fullName">Ad və Soyad</label>
+            <input type="text" id="fullName" placeholder="Məs: Əli Məmmədov">
         </div>
-        
+
         <div class="form-group">
-            <label>Tələbənin FİN Kodu</label>
-            <input type="text" id="studentFin" placeholder="Məs: 7P7GS57" style="text-transform: uppercase;">
+            <label for="finCode">FİN Kod</label>
+            <input type="text" id="finCode" placeholder="Məs: 7P7GS57" style="text-transform: uppercase;">
         </div>
 
-        <button onclick="addStudent()">İcazə Ver (Əlavə et)</button>
-        <div id="actionMsg"></div>
-
-        <div style="margin-top: 20px;">
-            <label>İcazə Verilən Şəxslər Siyahısı:</label>
-            <ul id="studentList"></ul>
-        </div>
-
-        <button class="logout-btn" onclick="adminLogout()">Çıxış</button>
+        <button onclick="checkAccess()">Daxil ol</button>
+        <div id="errorMsg" class="error-msg">Bu FİN kod üçün icazə tapılmadı və ya ödəniş təsdiqlənmədi.</div>
     </div>
+
+    <footer>
+        © 2026 DQ Platform – Developed by Yunis İmanov
+    </footer>
 
     <script>
-        // Öz admin şifrənizi burdan təyin edə bilərsiniz:
-        const ADMIN_PASS = "panah123"; // İstədiyiniz şifrə ilə əvəz edə bilərsiniz
+        function checkAccess() {
+            const nameInput = document.getElementById('fullName').value.trim();
+            const finInput = document.getElementById('finCode').value.trim().toUpperCase();
+            const errorMsg = document.getElementById('errorMsg');
 
-        function adminLogin() {
-            const pass = document.getElementById('adminPassword').value;
-            if (pass === ADMIN_PASS) {
-                localStorage.setItem('isAdminLoggedIn', 'true');
-                showPanel();
+            if (nameInput === "" || finInput === "") {
+                errorMsg.style.display = "block";
+                errorMsg.innerText = "Zəhmət olmasa bütün xanaları doldurun!";
+                return;
+            }
+
+            let students = localStorage.getItem('yunisAllowedStudents');
+            let allowedList = students ? JSON.parse(students) : [];
+
+            let found = allowedList.find(s => s.fin === finInput);
+
+            if (found) {
+                localStorage.setItem('studentName', found.name);
+                localStorage.setItem('studentFin', found.fin);
+                window.location.href = "exam.html"; 
             } else {
-                document.getElementById('loginError').style.display = 'block';
+                errorMsg.style.display = "block";
+                errorMsg.innerText = "Bu FİN kod sistemdə aktiv deyil. Ödəniş etmisinizsə administratorla əlaqə saxlayın.";
             }
-        }
-
-        function showPanel() {
-            document.getElementById('loginBox').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            loadStudents();
-        }
-
-        function adminLogout() {
-            localStorage.removeItem('isAdminLoggedIn');
-            location.reload();
-        }
-
-        // Səhifə açıldıqda giriş yoxlanışı
-        window.onload = function() {
-            if (localStorage.getItem('isAdminLoggedIn') === 'true') {
-                showPanel();
-            }
-        }
-
-        function getStudents() {
-            let students = localStorage.getItem('allowedStudents');
-            return students ? JSON.parse(students) : [
-                { name: "Sınaq İstifadəçi", fin: "7P7GS57" } // İlkin nümunə
-            ];
-        }
-
-        function loadStudents() {
-            const listEl = document.getElementById('studentList');
-            listEl.innerHTML = '';
-            let students = getStudents();
-
-            students.forEach((s, index) => {
-                listEl.innerHTML += `<li><span><b>${s.name}</b> (${s.fin})</span> <button class="delete-btn" onclick="deleteStudent(${index})">Sil</button></li>`;
-            });
-        }
-
-        function addStudent() {
-            let name = document.getElementById('studentName').value.trim();
-            let fin = document.getElementById('studentFin').value.trim().toUpperCase();
-            let msgBox = document.getElementById('actionMsg');
-
-            if (name === "" || fin === "") {
-                msgBox.className = "error";
-                msgBox.innerText = "Bütün xanaları doldurun!";
-                return;
-            }
-
-            let students = getStudents();
-            
-            // Eyni FİN artıq mövcuddursa yoxlayaq
-            if (students.some(s => s.fin === fin)) {
-                msgBox.className = "error";
-                msgBox.innerText = "Bu FİN kod artıq siyahıda mövcuddur!";
-                return;
-            }
-
-            students.push({ name: name, fin: fin });
-            localStorage.setItem('allowedStudents', JSON.stringify(students));
-
-            document.getElementById('studentName').value = "";
-            document.getElementById('studentFin').value = "";
-            msgBox.className = "success";
-            msgBox.innerText = "Uğurla əlavə olundu!";
-            loadStudents();
-        }
-
-        function deleteStudent(index) {
-            let students = getStudents();
-            students.splice(index, 1);
-            localStorage.setItem('allowedStudents', JSON.stringify(students));
-            loadStudents();
         }
     </script>
 </body>
