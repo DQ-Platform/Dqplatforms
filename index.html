@@ -5,69 +5,1230 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f8f9fa; display: flex; flex-direction: column; min-height: 100vh; justify-content: space-between; align-items: center; padding: 20px; }
-        .container { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; margin: auto; text-align: center; }
-        h2 { color: #1a1a1a; margin-bottom: 8px; font-size: 20px; }
-        p { color: #666; font-size: 14px; margin-bottom: 24px; }
-        .form-group { margin-bottom: 16px; text-align: left; }
-        label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
-        input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
-        input:focus { border-color: #ff7a59; }
-        button { width: 100%; padding: 12px; background-color: #ff7a59; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        button:hover { background-color: #ff623b; }
-        .error-msg { color: #e74c3c; font-size: 13px; margin-top: 12px; display: none; }
-        footer { font-size: 12px; color: #888; margin-top: 20px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            scroll-behavior: smooth;
+        }
+
+        @media print {
+            body { display: none; }
+        }
+
+        :root {
+            --primary-dark: #0f172a;
+            --accent-gold: #d4af37;
+            --bg-light: #f8fafc;
+            --text-color: #334155;
+            --warning-orange: #f59e0b;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+            border-top: 4px solid var(--accent-gold);
+        }
+
+        h2, h3, h4 {
+            color: var(--primary-dark);
+            text-align: center;
+        }
+
+        #login-screen, #waiting-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .code-input {
+            padding: 12px;
+            font-size: 16px;
+            width: 80%;
+            max-width: 400px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            outline: none;
+            text-align: center;
+        }
+
+        .code-input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .token-field {
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            background-color: var(--primary-dark);
+            color: var(--accent-gold);
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: inline-block;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #1e293b;
+        }
+
+        .btn-danger {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .btn-success {
+            background-color: var(--success-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        #exam-screen {
+            display: none;
+        }
+
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary-dark);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .timer {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .exam-layout {
+            display: flex;
+            gap: 20px;
+            position: relative;
+        }
+
+        .questions-area {
+            flex: 3;
+            background: #ffffff;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .answer-card-sidebar {
+            flex: 1;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            height: fit-content;
+            border: 1px solid #cbd5e1;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-header h4 {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .toggle-sidebar-btn {
+            background: var(--primary-dark);
+            color: var(--accent-gold);
+            border: none;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .grid-nav {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+
+        .grid-nav.collapsed {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-box {
+            padding: 6px 0;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-box.answered {
+            background-color: #d1fae5;
+            border-color: var(--success-green);
+            color: #065f46;
+        }
+
+        .nav-box.current {
+            border: 2px solid var(--primary-dark);
+            background-color: #e2e8f0;
+        }
+
+        .nav-box.flagged::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            width: 5px;
+            height: 5px;
+            background-color: var(--danger-red);
+            border-radius: 50%;
+        }
+
+        .question-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .question-title {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 15px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .question-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .flag-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #d97706;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .options label {
+            display: block;
+            padding: 10px 14px;
+            margin: 8px 0;
+            background: #f1f5f9;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .options label:hover {
+            background: #e2e8f0;
+        }
+
+        .clear-option-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 0;
+            margin-top: 10px;
+            text-decoration: underline;
+        }
+
+        .exam-navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+
+        #result-screen {
+            display: none;
+            font-size: 13px;
+        }
+
+        .dim-report-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 15px;
+            color: #000;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        .dim-student-name {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: #000;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .subject-section {
+            margin-bottom: 15px;
+        }
+
+        .dim-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+            text-align: center;
+            table-layout: fixed;
+        }
+
+        .dim-table th, .dim-table td {
+            border: 1px solid #94a3b8;
+            padding: 3px 1px;
+            font-size: 11px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dim-table th {
+            background-color: #f1f5f9;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .ans-correct {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .ans-wrong {
+            color: #b91c1c;
+            font-weight: bold;
+        }
+
+        .final-score-box {
+            text-align: center;
+            border: 2px solid #b91c1c;
+            padding: 15px;
+            margin-top: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #b91c1c;
+            background: #fef2f2;
+            border-radius: 6px;
+        }
+
+        #admin-panel {
+            display: none;
+            margin-top: 20px;
+            border-top: 2px solid var(--accent-gold);
+            padding-top: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid var(--accent-gold);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h5 {
+            margin: 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .stat-card .value {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin-top: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+
+        .footer-text {
+            color: var(--primary-dark);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .secret-admin-trigger {
+            cursor: default;
+            user-select: none;
+        }
+        
+        .error-msg {
+            color: #ef4444;
+            font-weight: bold;
+        }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-    <div class="container">
-        <h2>DQ Platform - Giriş</h2>
-        <p>Zəhmət olmasa məlumatlarınızı daxil edin</p>
-        
-        <div class="form-group">
-            <label for="fullName">Ad və Soyad</label>
-            <input type="text" id="fullName" placeholder="Məs: Əli Məmmədov">
+    <div class="container" id="top">
+        <!-- 1. GİRİŞ HİSSƏSİ (FIN KOD İLƏ) -->
+        <div id="login-screen">
+            <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
+            <p>Zəhmət olmasa məlumatlarınızı daxil edin:</p>
+            <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız"><br>
+            <input type="text" id="user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7"><br>
+            <button class="btn" onclick="requestExamAccess()">İmtahana Giriş Tələb Et</button>
+            <p id="error-msg" class="error-msg" style="margin-top: 10px;"></p>
         </div>
 
-        <div class="form-group">
-            <label for="finCode">FİN Kod</label>
-            <input type="text" id="finCode" placeholder="Məs: 7P7GS57" style="text-transform: uppercase;">
+        <!-- 1.1 TƏSDİQ GÖZLƏMƏ EKRANI -->
+        <div id="waiting-screen" style="display: none;">
+            <h2>⏳ Təsdiq Gözlənilir</h2>
+            <p>Məlumatlarınız administratora göndərildi. Zəhmət olmasa admin tərəfindən təsdiq edilməsini gözləyin...</p>
+            <button class="btn btn-secondary" onclick="checkApprovalStatus()">Yenidən Yoxla</button>
         </div>
 
-        <button onclick="checkAccess()">Daxil ol</button>
-        <div id="errorMsg" class="error-msg">Bu FİN kod üçün icazə tapılmadı və ya ödəniş təsdiqlənmədi.</div>
+        <!-- 2. SINAQ HİSSƏSİ -->
+        <div id="exam-screen">
+            <div class="exam-header">
+                <span>Dövlət Qulluğu Vəzifələri Üzrə Sınaq</span>
+                <span class="timer" id="timer">03:00:00</span>
+            </div>
+
+            <div class="exam-layout">
+                <!-- Solda Cari Sual Paneli -->
+                <div class="questions-area">
+                    <div id="single-question-container"></div>
+
+                    <div class="exam-navigation-buttons" id="exam-nav-btns">
+                        <button class="btn btn-secondary" onclick="prevQuestion()">Əvvəlki</button>
+                        <button class="btn btn-danger" onclick="confirmFinish()">Testi Bitir</button>
+                        <button class="btn" onclick="nextQuestion()">Növbəti</button>
+                    </div>
+                </div>
+
+                <!-- Sağda Cavab Kartı -->
+                <div class="answer-card-sidebar" id="sidebar-container">
+                    <div class="sidebar-header">
+                        <h4 id="sidebar-title-text">Cavab Kartı</h4>
+                        <button class="toggle-sidebar-btn" id="toggle-btn" onclick="toggleSidebar()">Yığ [-]</button>
+                    </div>
+                    <div class="grid-nav" id="grid-nav-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. DİM ÜSLUBU NƏTİCƏ PROTOKOLU -->
+        <div id="result-screen">
+            <div class="dim-report-title">
+                Dövlət qulluğu vəzifələri üzrə test imtahanının<br>nəticələri haqqında məlumat
+            </div>
+            <div class="dim-student-name" id="res-name"></div>
+
+            <div id="dim-report-content"></div>
+
+            <!-- Doğru, Yanlış, Cavabsız statistikaları -->
+            <div style="margin-top: 20px; font-weight: bold; font-size: 14px; line-height: 1.6;">
+                Doğru cavabların sayı: <span id="res-total-correct">0</span><br>
+                Yanlış cavabların sayı: <span id="res-total-wrong">0</span><br>
+                Cavablandırılmayan test tapşırıqlarının sayı: <span id="res-total-blank">0</span>
+            </div>
+
+            <!-- Yekun Bal Qutusu -->
+            <div class="final-score-box">
+                YEKUN BAL: <span id="res-total-score">0</span><br>
+                <span id="res-bb-group" style="font-size: 15px; color: #0f172a; margin-top: 5px; display: inline-block;"></span>
+            </div>
+
+            <!-- Suallara qayıt düyməsi -->
+            <div style="margin-top: 20px;">
+                <a href="#top" class="btn" style="width: 100%; box-sizing: border-box; text-align: center;" onclick="backToReviewQuestions()">⤴ Suallara qayıt (Baxış)</a>
+            </div>
+        </div>
+
+        <!-- 4. GİZLİ ADMİN PANELİ -->
+        <div id="admin-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>🔑 Admin Nəzarət Paneli</h3>
+                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="closeAdminPanel()">Paneli Bağla</button>
+            </div>
+
+            <div class="stats-grid" style="margin-top: 15px;">
+                <div class="stat-card">
+                    <h5>Gözləyən Tələbələr</h5>
+                    <div class="value" id="stat-pending-students">0</div>
+                </div>
+                <div class="stat-card">
+                    <h5>Ümumi İştirakçı</h5>
+                    <div class="value" id="stat-total-students">0</div>
+                </div>
+                <div class="stat-card">
+                    <h5>Ən Yüksək Bal</h5>
+                    <div class="value" id="stat-max-score">0</div>
+                </div>
+            </div>
+
+            <!-- Tələbələrin Təsdiqi Bölməsi -->
+            <h4 style="text-align: left; margin-top: 20px;">Tələbə Giriş Sorğuları</h4>
+            <div style="overflow-x: auto; margin-bottom: 25px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead>
+                        <tr style="background: var(--primary-dark); color: white;">
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Ad Soyad</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">FIN Kod</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Status</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Əməliyyat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Sual İdarəetmə Paneli -->
+            <hr>
+            <h4 style="text-align: left; margin-top: 20px;">Yeni Sual Əlavə Et</h4>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                <div class="form-group">
+                    <label>Fənn:</label>
+                    <select id="new-q-subject" class="form-control">
+                        <option value="Azərbaycan dili">Azərbaycan dili</option>
+                        <option value="Qanunvericilik">Qanunvericilik</option>
+                        <option value="İnformatika">İnformatika</option>
+                        <option value="Məntiq">Məntiq</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sual Mətni:</label>
+                    <textarea id="new-q-text" class="form-control" rows="3" placeholder="Sualın mətnini daxil edin..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Şəkil Linki (Opsional):</label>
+                    <input type="text" id="new-q-img" class="form-control" placeholder="Məs: 56.jpg və ya URL">
+                </div>
+                <div class="form-group">
+                    <label>Variantlar (A, B, C, D, E):</label>
+                    <input type="text" class="form-control opt-input" placeholder="A variantı" style="margin-bottom: 5px;">
+                    <input type="text" class="form-control opt-input" placeholder="B variantı" style="margin-bottom: 5px;">
+                    <input type="text" class="form-control opt-input" placeholder="C variantı" style="margin-bottom: 5px;">
+                    <input type="text" class="form-control opt-input" placeholder="D variantı" style="margin-bottom: 5px;">
+                    <input type="text" class="form-control opt-input" placeholder="E variantı">
+                </div>
+                <div class="form-group">
+                    <label>Düzgün Cavab İndeksi (0 = A, 1 = B, 2 = C, 3 = D, 4 = E):</label>
+                    <input type="number" id="new-q-correct" class="form-control" min="0" max="4" value="0">
+                </div>
+                <button class="btn btn-success" onclick="addNewQuestion()">Sualı Əlavə Et</button>
+            </div>
+
+            <!-- Mövcud Nəticələr -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 25px 0 10px 0;">
+                <h4 style="margin: 0;">İştirakçılar və Nəticələr</h4>
+                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="clearResults()">Bütün Nəticələri Təmizlə</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead>
+                        <tr style="background: var(--primary-dark); color: white;">
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Ad Soyad</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">FIN</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Doğru</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Yanlış</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Bal</th>
+                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Uyğun Qrup</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text">
+                © 2026 DQ Platform – Developed <span class="secret-admin-trigger" onclick="openAdminLogin()">by</span> Yunis İmanov
+            </div>
+        </div>
     </div>
 
-    <footer>
-        © 2026 DQ Platform – Developed by Yunis İmanov
-    </footer>
-
     <script>
-        function checkAccess() {
-            const nameInput = document.getElementById('fullName').value.trim();
-            const finInput = document.getElementById('finCode').value.trim().toUpperCase();
-            const errorMsg = document.getElementById('errorMsg');
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'x' || e.key === 'u' || e.key === 's' || e.key === 'a')) {
+                e.preventDefault();
+                alert("Bu əməliyyat məxfilik məqsədilə qadağandır!");
+            }
+            if (e.key === 'PrintScreen') {
+                navigator.clipboard.writeText('');
+                alert("Ekran görüntüsü çəkmək qadağandır!");
+            }
+        });
 
-            if (nameInput === "" || finInput === "") {
-                errorMsg.style.display = "block";
-                errorMsg.innerText = "Zəhmət olmasa bütün xanaları doldurun!";
+        const ADMIN_PASS = "6675157";
+        const testDuration = 3 * 3600;
+
+        // Sualları localStorage-dan oxumaq, əgər yoxdursa default sualları yükləmək
+        let allQuestions = JSON.parse(localStorage.getItem("dq_custom_questions")) || [
+            // Azərbaycan dili (1-15)
+            { id: 1, subject: "Azərbaycan dili", question: "Verilmiş sözlərdən hansında vurğu birinci hecadadır?", options: ["Məhzun", "Kədərli", "Yumru", "Yamyaşıl", "Böyük"], correct: 3 },
+            { id: 2, subject: "Azərbaycan dili", question: "“O” əvəzliyindən sonra hansı cümlələrdə vergülün işlənmə məqamı səhvdir?\n1. O, məni heç anlamaq istəmir.\n2. O, da bizim dostumuzdur.\n3. O, qapıda qardaşı ilə qarşılaşdı.\n4. O, universitetdə təhsil alır.\n5. O, ki sənin əleyhinə danışmaqla məşğuldur.", options: ["1, 4, 5", "2, 3, 5", "1, 3, 4", "1, 2, 5", "2, 4, 5"], correct: 3 },
+            { id: 3, subject: "Azərbaycan dili", question: "Verilən variantlardan hansında çoxmənalı söz işlənmişdir:", options: ["məktəb", "kitab", "qələm", "insan", "dəftər"], correct: 0 },
+            { id: 4, subject: "Azərbaycan dili", question: "Feilin təsriflənməyən formalarına aid nümunələr verilmiş cərgəni göstərin.", options: ["sevər, bax, gördükdə", "yazırsan, fərəhlənir, görmək", "barmaq, toxmaq, dinləyir", "yazanda, qaça-qaça, görüləsi", "görmək, görüşəndə"], correct: 4 },
+            { id: 5, subject: "Azərbaycan dili", question: "Həmcins xəbərləri düzəltmə sifətlərlə ifadə olunmuş cümləni müəyyən edin.", options: ["Qış getdi, yenə bahar gəldi.", "Uşaqların çoxu hazırcavab və üzüyola idi.", "Mənim nənəm çox müdrik və dünyagörmüş idi.", "Əcəl aldı, yer gizlədi, fani dünya kimə qaldı?", "Firudin çox tərbiyəli və ağıllı idi"], correct: 4 },
+            { id: 6, subject: "Azərbaycan dili", question: "Mürəkkəb yer zərfliyi işlənmiş cümlələri müəyyən edin.\n1. Dayımgil Cəlilabadda yaşayır.\n2. Gündəliyim Əli müəllimdə qalmışdı.\n3. Bağımız dəniz kənarında yerləşir.\n4. Kənd yerində yaşayan bunu bilməz.\n5. Təzə evlər Babək prospektində tikiləcək.", options: ["3, 5", "2, 4, 5", "1, 3, 5", "2, 3, 5", "2, 5"], correct: 0 },
+            { id: 7, subject: "Azərbaycan dili", question: "Bu gün hava tez 'qaraldı' cümləsində fərqləndirilmiş sözün təhlili ilə bağlı fikirlərdən biri səhvdir.", options: ["Qayıdış növdədir.", "Quruluşuna görə düzəltmədır.", "Sifətdən düzəlmişdir.", "Xəbər şəklindədir.", "Kök+leksik+qrammatik sxeminə uyğundur."], correct: 0 },
+            { id: 8, subject: "Azərbaycan dili", question: "Sözlərdən birinin yazılışı səhvdir:", options: ["kəhrəba", "haqqsevən", "boş-bikar", "kobud", "felyeton"], correct: 1 },
+            { id: 9, subject: "Azərbaycan dili", question: "Mənsubiyyət və hal şəkilçili qeyri-müəyyən əvəzliyin işləndiyi nümunələri müəyyənləşdirin.\n1. Dedilər ki, heç nəyə toxunmaq olmaz.\n2. Bu sual uşaqların hamısına verilə bilər.\n3. Dövlətimizin daha da qüdrətlənməsi üçün hər birimiz çalışmalıyıq.\n4. Mən sizin hərənizə bir tapşırıq verəcəyəm.\n5. Eləsinin cavabını vaxtında verərlər.", options: ["1, 2, 4", "2, 4", "2, 3, 4", "2, 3", "2, 4, 5"], correct: 1 },
+            { id: 10, subject: "Azərbaycan dili", question: "Cümlənin şəxsə görə növləri baxımından məntiqi ardıcıllığı tamamlayın.\nCücəni payızda sayarlar.\nQonağı belə qarşılayarlar.\nİndi şəhərimizdə göydələnlərə tez-tez rast gəlirsən.", options: ["Ağır otur, batman gəl.", "Hamı gərək öz işinə hörmətlə yanaşsın.", "Tövlə içərisində ona bir künc vermişdilər.", "Səkiyə qalxan kimi onu yuxu apardı.", "Onun sözlərinə yenə də məhəl qoyulmadı."], correct: 0 }
+        ];
+
+        let currentStudentName = "";
+        let currentActiveFin = "";
+        let userAnswers = {};
+        let flaggedQuestions = {};
+        let currentQuestionIndex = 0;
+        let timerInterval;
+        let timeLeft = testDuration;
+        let examFinished = false;
+
+        window.addEventListener('load', function() {
+            if (window.location.hash === "#admin") {
+                openAdminLogin();
                 return;
             }
 
-            let students = localStorage.getItem('yunisAllowedStudents');
-            let allowedList = students ? JSON.parse(students) : [];
+            let savedSession = sessionStorage.getItem("active_exam_session");
+            if (savedSession) {
+                let sessionData = JSON.parse(savedSession);
+                currentStudentName = sessionData.name;
+                currentActiveFin = sessionData.fin;
+                userAnswers = sessionData.answers || {};
+                flaggedQuestions = sessionData.flags || {};
+                currentQuestionIndex = sessionData.qIndex || 0;
+                timeLeft = sessionData.timeLeft !== undefined ? sessionData.timeLeft : testDuration;
 
-            let found = allowedList.find(s => s.fin === finInput);
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("exam-screen").style.display = "block";
 
-            if (found) {
-                localStorage.setItem('studentName', found.name);
-                localStorage.setItem('studentFin', found.fin);
-                window.location.href = "exam.html"; 
+                loadNavGrid();
+                Object.keys(userAnswers).forEach(qId => {
+                    let box = document.getElementById(`nav_${qId}`);
+                    if (box) box.classList.add("answered");
+                });
+                Object.keys(flaggedQuestions).forEach(qId => {
+                    let box = document.getElementById(`nav_${qId}`);
+                    if (box) box.classList.add("flagged");
+                });
+
+                renderCurrentQuestion();
+                startTimer(timeLeft);
+            }
+        });
+
+        function openAdminLogin() {
+            let pass = prompt("Admin şifrəsini daxil edin:");
+            if (pass === ADMIN_PASS) {
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("waiting-screen").style.display = "none";
+                document.getElementById("exam-screen").style.display = "none";
+                document.getElementById("result-screen").style.display = "none";
+                document.getElementById("admin-panel").style.display = "block";
+                loadAdminPanelData();
+            } else if (pass !== null) {
+                alert("Yanlış şifrə!");
+            }
+        }
+
+        function closeAdminPanel() {
+            document.getElementById("admin-panel").style.display = "none";
+            document.getElementById("login-screen").style.display = "block";
+            window.location.hash = "";
+        }
+
+        function requestExamAccess() {
+            const nameInput = document.getElementById("user-name").value.trim();
+            const finInput = document.getElementById("user-fin").value.trim().toUpperCase();
+            const errorMsg = document.getElementById("error-msg");
+
+            if (nameInput === "") {
+                errorMsg.innerText = "Ad və soyadınızı daxil edin!";
+                return;
+            }
+            if (finInput.length < 5) {
+                errorMsg.innerText = "Etibarlı FIN kod daxil edin!";
+                return;
+            }
+
+            currentStudentName = nameInput;
+            currentActiveFin = finInput;
+
+            // Sorğunu localStorage-a yazırıq
+            let requests = JSON.parse(localStorage.getItem("dq_exam_requests") || "[]");
+            let existing = requests.find(r => r.fin === finInput);
+            if (!existing) {
+                requests.push({ name: nameInput, fin: finInput, status: "pending" });
+                localStorage.setItem("dq_exam_requests", JSON.stringify(requests));
             } else {
-                errorMsg.style.display = "block";
-                errorMsg.innerText = "Bu FİN kod sistemdə aktiv deyil. Ödəniş etmisinizsə administratorla əlaqə saxlayın.";
+                if (existing.status === "approved") {
+                    startExamSession();
+                    return;
+                }
+            }
+
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("waiting-screen").style.display = "block";
+        }
+
+        function checkApprovalStatus() {
+            let requests = JSON.parse(localStorage.getItem("dq_exam_requests") || "[]");
+            let req = requests.find(r => r.fin === currentActiveFin);
+            if (req && req.status === "approved") {
+                startExamSession();
+            } else {
+                alert("Hələ ki admin tərəfindən təsdiq olunmamısınız.");
+            }
+        }
+
+        function startExamSession() {
+            userAnswers = {};
+            flaggedQuestions = {};
+            currentQuestionIndex = 0;
+            timeLeft = testDuration;
+            examFinished = false;
+
+            saveSessionState();
+
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("waiting-screen").style.display = "none";
+            document.getElementById("exam-screen").style.display = "block";
+
+            loadNavGrid();
+            renderCurrentQuestion();
+            startTimer(timeLeft);
+        }
+
+        function saveSessionState() {
+            if (examFinished) return;
+            let sessionData = {
+                name: currentStudentName,
+                fin: currentActiveFin,
+                answers: userAnswers,
+                flags: flaggedQuestions,
+                qIndex: currentQuestionIndex,
+                timeLeft: timeLeft
+            };
+            sessionStorage.setItem("active_exam_session", JSON.stringify(sessionData));
+        }
+
+        function toggleSidebar() {
+            const grid = document.getElementById("grid-nav-container");
+            const btn = document.getElementById("toggle-btn");
+            if (grid.classList.contains("collapsed")) {
+                grid.classList.remove("collapsed");
+                btn.innerText = "Yığ [-]";
+            } else {
+                grid.classList.add("collapsed");
+                btn.innerText = "Aç [+]";
+            }
+        }
+
+        function backToReviewQuestions() {
+            document.getElementById("result-screen").style.display = "none";
+            document.getElementById("exam-screen").style.display = "block";
+            currentQuestionIndex = 0;
+            renderCurrentQuestion();
+        }
+
+        function renderCurrentQuestion() {
+            const q = allQuestions[currentQuestionIndex];
+            const container = document.getElementById("single-question-container");
+            const isFlagged = flaggedQuestions[q.id] ? "checked" : "";
+            const userAns = userAnswers[q.id];
+
+            let letters = ["A", "B", "C", "D", "E"];
+            let imgHtml = q.image ? `<img src="${q.image}" alt="Sual ${q.id} şəkli" class="question-img">` : "";
+
+            let flagElementHtml = examFinished ? 
+                `<span style="font-size: 14px; color: #64748b; font-weight: 600;">Sual ${q.id} / ${allQuestions.length}</span>` :
+                `<label class="flag-label">
+                    <input type="checkbox" id="flag_chk" ${isFlagged} onchange="toggleFlag(${q.id})"> Tərəddüdlü
+                </label>`;
+
+            let html = `
+                <div>
+                    <div class="question-top">
+                        <div class="question-title">${q.question}</div>
+                        ${flagElementHtml}
+                    </div>
+                    ${imgHtml}
+                    <div class="options">
+            `;
+
+            q.options.forEach((opt, idx) => {
+                let checked = (userAns === idx) ? "checked" : "";
+                let disabledAttr = examFinished ? "disabled" : "";
+                let correctHighlight = "";
+                
+                if (examFinished) {
+                    if (idx === q.correct) {
+                        correctHighlight = "background-color: #d1fae5; border: 1px solid #10b981; font-weight: bold;";
+                    } else if (userAns === idx && userAns !== q.correct) {
+                        correctHighlight = "background-color: #fef2f2; border: 1px solid #ef4444;";
+                    }
+                }
+
+                html += `
+                    <label style="${correctHighlight}">
+                        <input type="radio" name="current_opt" value="${idx}" ${checked} ${disabledAttr} onclick="selectOption(${q.id}, ${idx})">
+                        ${letters[idx]}) ${opt}
+                    </label>
+                `;
+            });
+
+            html += `
+                    </div>
+            `;
+
+            if (!examFinished) {
+                html += `<button class="clear-option-btn" onclick="clearOption(${q.id})">Seçimi ləğv et</button>`;
+            } else {
+                let statusText = userAns === undefined ? "Cavabsız qoyulub" : (userAns === q.correct ? "✅ Doğru cavablandırıbsınız" : "❌ Səhv cavablandırıbsınız");
+                let statusColor = userAns === q.correct ? "#15803d" : "#b91c1c";
+                html += `<div style="margin-top: 12px; font-weight: bold; color: ${statusColor}; font-size: 14px;">Status: ${statusText} (Doğru cavab: ${letters[q.correct]})</div>`;
+            }
+
+            html += `</div>`;
+
+            container.innerHTML = html;
+            
+            if (examFinished) {
+                document.getElementById("exam-nav-btns").innerHTML = `
+                    <button class="btn btn-secondary" onclick="prevQuestion()">Əvvəlki</button>
+                    <button class="btn" onclick="returnToResultScreen()">Nəticəyə qayıt</button>
+                    <button class="btn" onclick="nextQuestion()">Növbəti</button>
+                `;
+                document.getElementById("sidebar-title-text").innerText = "Sual İcmalı";
+            }
+
+            updateNavActiveState();
+            saveSessionState();
+        }
+
+        function returnToResultScreen() {
+            document.getElementById("exam-screen").style.display = "none";
+            document.getElementById("result-screen").style.display = "block";
+            window.location.hash = "";
+        }
+
+        function loadNavGrid() {
+            const gridContainer = document.getElementById("grid-nav-container");
+            let html = "";
+            allQuestions.forEach((q, index) => {
+                html += `<div class="nav-box" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${q.id}</div>`;
+            });
+            gridContainer.innerHTML = html;
+        }
+
+        function jumpToQuestion(index) {
+            currentQuestionIndex = index;
+            renderCurrentQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < allQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderCurrentQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderCurrentQuestion();
+            }
+        }
+
+        function selectOption(qId, optIdx) {
+            if (examFinished) return;
+            userAnswers[qId] = optIdx;
+            document.getElementById(`nav_${qId}`).classList.add("answered");
+            saveSessionState();
+        }
+
+        function clearOption(qId) {
+            if (examFinished) return;
+            delete userAnswers[qId];
+            document.querySelectorAll(`input[name="current_opt"]`).forEach(r => r.checked = false);
+            document.getElementById(`nav_${qId}`).classList.remove("answered");
+            saveSessionState();
+        }
+
+        function toggleFlag(qId) {
+            if (examFinished) return;
+            let chk = document.getElementById("flag_chk").checked;
+            let nav = document.getElementById(`nav_${qId}`);
+            if (chk) {
+                flaggedQuestions[qId] = true;
+                nav.classList.add("flagged");
+            } else {
+                delete flaggedQuestions[qId];
+                nav.classList.remove("flagged");
+            }
+            saveSessionState();
+        }
+
+        function updateNavActiveState() {
+            allQuestions.forEach((q, idx) => {
+                let box = document.getElementById(`nav_${q.id}`);
+                if (box) {
+                    if (idx === currentQuestionIndex) {
+                        box.classList.add("current");
+                    } else {
+                        box.classList.remove("current");
+                    }
+                }
+            });
+        }
+
+        function startTimer(duration) {
+            let timer = duration, hours, minutes, seconds;
+            const display = document.getElementById("timer");
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                if (examFinished) return;
+                timeLeft = timer;
+                hours = String(Math.floor(timer / 3600)).padStart(2, '0');
+                minutes = String(Math.floor((timer % 3600) / 60)).padStart(2, '0');
+                seconds = String(timer % 60).padStart(2, '0');
+                display.textContent = `${hours}:${minutes}:${seconds}`;
+
+                if (timer % 5 === 0) {
+                    saveSessionState();
+                }
+
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function confirmFinish() {
+            if (confirm("Testi bitirmək istədiyinizə əminsinizmi?")) {
+                clearInterval(timerInterval);
+                finishExam();
+            }
+        }
+
+        function getBBGroup(score) {
+            if (score >= 80) return "BB1 (İnzibati vəzifələrin 6-cı təsnifatı)";
+            if (score >= 75) return "BB2 (İnzibati vəzifələrin 6-cı təsnifatı)";
+            if (score >= 70) return "BB3 (İnzibati vəzifələrin 7-ci təsnifatı)";
+            if (score >= 65) return "BB4 (İnzibati vəzifələrin 7-ci təsnifatı)";
+            return "Keçid balını toplamadı (< 65)";
+        }
+
+        function finishExam() {
+            clearInterval(timerInterval);
+            examFinished = true;
+            sessionStorage.removeItem("active_exam_session");
+
+            let totalCorrect = 0;
+            let totalWrong = 0;
+            let totalBlank = 0;
+
+            allQuestions.forEach(q => {
+                let userAns = userAnswers[q.id];
+                if (userAns === undefined) {
+                    totalBlank++;
+                } else if (userAns === q.correct) {
+                    totalCorrect++;
+                } else {
+                    totalWrong++;
+                }
+            });
+
+            let examState = {
+                studentName: currentStudentName,
+                correct: totalCorrect,
+                wrong: totalWrong,
+                blank: totalBlank,
+                score: totalCorrect,
+                bbGroup: getBBGroup(totalCorrect),
+                userAnswers: userAnswers
+            };
+
+            saveResult(currentStudentName, currentActiveFin, totalCorrect, totalWrong, totalCorrect, examState.bbGroup);
+            showResultScreen(examState);
+        }
+
+        function showResultScreen(examState) {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("waiting-screen").style.display = "none";
+            document.getElementById("exam-screen").style.display = "none";
+            document.getElementById("result-screen").style.display = "block";
+            
+            if (examState.studentName) {
+                document.getElementById("res-name").innerText = examState.studentName;
+            }
+
+            let letters = ["A", "B", "C", "D", "E"];
+            let reportHtml = "";
+
+            // Qruplaşdırma fənlərə görə
+            let subjectsMap = {};
+            allQuestions.forEach(q => {
+                if(!subjectsMap[q.subject]) subjectsMap[q.subject] = [];
+                subjectsMap[q.subject].push(q);
+            });
+
+            Object.keys(subjectsMap).forEach(subName => {
+                let subQuestions = subjectsMap[subName];
+                let numsRow = "";
+                let correctRow = "";
+                let userRow = "";
+                let statusRow = "";
+
+                subQuestions.forEach(q => {
+                    numsRow += `<td>${q.id}</td>`;
+                    correctRow += `<td>${letters[q.correct]}</td>`;
+
+                    let userAns = examState.userAnswers ? examState.userAnswers[q.id] : undefined;
+                    let userLetter = userAns !== undefined ? letters[userAns] : "-";
+                    userRow += `<td>${userLetter}</td>`;
+
+                    if (userAns === undefined) {
+                        statusRow += `<td>-</td>`;
+                    } else if (userAns === q.correct) {
+                        statusRow += `<td class="ans-correct">+</td>`;
+                    } else {
+                        statusRow += `<td class="ans-wrong">-</td>`;
+                    }
+                });
+
+                reportHtml += `
+                    <div class="subject-section">
+                        <div style="font-weight: bold; margin-bottom: 4px; color: var(--primary-dark);">${subName}</div>
+                        <table class="dim-table">
+                            <tr><th>№</th>${numsRow}</tr>
+                            <tr><th>Etalon</th>${correctRow}</tr>
+                            <tr><th>İştirakçı</th>${userRow}</tr>
+                            <tr><th>Nəticə</th>${statusRow}</tr>
+                        </table>
+                    </div>
+                `;
+            });
+
+            document.getElementById("dim-report-content").innerHTML = reportHtml;
+            document.getElementById("res-total-correct").innerText = examState.correct;
+            document.getElementById("res-total-wrong").innerText = examState.wrong;
+            document.getElementById("res-total-blank").innerText = examState.blank;
+            document.getElementById("res-total-score").innerText = examState.score + " bal";
+            document.getElementById("res-bb-group").innerText = "Uyğun qrup: " + examState.bbGroup;
+        }
+
+        function saveResult(name, fin, correct, wrong, score, bbGroup) {
+            let results = JSON.parse(localStorage.getItem("dq_exam_results") || "[]");
+            results.push({ name, fin, correct, wrong, score, bbGroup, date: new Date().toLocaleString() });
+            localStorage.setItem("dq_exam_results", JSON.stringify(results));
+        }
+
+        // Admin Paneli Funksiyaları
+        function loadAdminPanelData() {
+            // Tələbə sorğuları
+            let requests = JSON.parse(localStorage.getItem("dq_exam_requests") || "[]");
+            document.getElementById("stat-pending-students").innerText = requests.filter(r => r.status === "pending").length;
+            
+            let reqTbody = document.getElementById("pending-table-body");
+            let reqHtml = "";
+            requests.forEach((r, idx) => {
+                let statusBadge = r.status === "approved" ? "<span style='color:green; font-weight:bold;'>Təsdiqlənib</span>" : "<span style='color:orange; font-weight:bold;'>Gözləyir</span>";
+                let actionBtn = r.status === "pending" ? `<button class="btn btn-success" style="padding:4px 10px; font-size:12px;" onclick="approveStudent(${idx})">Təsdiq Et</button>` : "-";
+                reqHtml += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;">${r.name}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;">${r.fin}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;">${statusBadge}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;">${actionBtn}</td>
+                    </tr>
+                `;
+            });
+            reqTbody.innerHTML = reqHtml || "<tr><td colspan='4'>Sorğu yoxdur</td></tr>";
+
+            // Nəticələr
+            let results = JSON.parse(localStorage.getItem("dq_exam_results") || "[]");
+            document.getElementById("stat-total-students").innerText = results.length;
+
+            let maxScore = 0;
+            results.forEach(r => { if (r.score > maxScore) maxScore = r.score; });
+            document.getElementById("stat-max-score").innerText = maxScore;
+
+            let tbody = document.getElementById("results-table-body");
+            let html = "";
+            results.forEach(r => {
+                html += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;">${r.name}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;">${r.fin}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; color: #15803d; font-weight: bold;">${r.correct}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; color: #b91c1c; font-weight: bold;">${r.wrong}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">${r.score}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;">${r.bbGroup}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function approveStudent(index) {
+            let requests = JSON.parse(localStorage.getItem("dq_exam_requests") || "[]");
+            requests[index].status = "approved";
+            localStorage.setItem("dq_exam_requests", JSON.stringify(requests));
+            loadAdminPanelData();
+        }
+
+        function addNewQuestion() {
+            let subject = document.getElementById("new-q-subject").value;
+            let text = document.getElementById("new-q-text").value.trim();
+            let img = document.getElementById("new-q-img").value.trim();
+            let optInputs = document.querySelectorAll(".opt-input");
+            let correct = parseInt(document.getElementById("new-q-correct").value);
+
+            if (!text) {
+                alert("Sual mətnini daxil edin!");
+                return;
+            }
+
+            let options = [];
+            optInputs.forEach(input => {
+                options.push(input.value.trim());
+            });
+
+            if (options.some(opt => opt === "")) {
+                alert("Bütün 5 variantı doldurun!");
+                return;
+            }
+
+            let newId = allQuestions.length > 0 ? allQuestions[allQuestions.length - 1].id + 1 : 1;
+            let newQ = {
+                id: newId,
+                subject: subject,
+                question: text,
+                options: options,
+                correct: correct
+            };
+
+            if (img) {
+                newQ.image = img;
+            }
+
+            allQuestions.push(newQ);
+            localStorage.setItem("dq_custom_questions", JSON.stringify(allQuestions));
+            alert("Sual uğurla əlavə olundu!");
+            
+            // Formu təmizlə
+            document.getElementById("new-q-text").value = "";
+            document.getElementById("new-q-img").value = "";
+            optInputs.forEach(input => input.value = "");
+        }
+
+        function clearResults() {
+            if (confirm("Bütün nəticələri silmək istədiyinizə əminsinizmi?")) {
+                localStorage.removeItem("dq_exam_results");
+                loadAdminPanelData();
             }
         }
     </script>
