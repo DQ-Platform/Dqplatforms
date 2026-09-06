@@ -19,6 +19,7 @@
         .btn-danger { background-color: #dc2626; color: white; }
         .btn-secondary { background-color: #64748b; color: white; }
         .btn-success { background-color: var(--success-green); color: white; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 4px; }
         #exam-screen { display: none; }
         .exam-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary-dark); color: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; }
         .timer { font-size: 18px; font-weight: bold; color: var(--accent-gold); }
@@ -54,6 +55,10 @@
         .footer-text { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
         .secret-admin-trigger { cursor: default; user-select: none; }
         .error-msg { color: #ef4444; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
+        th, td { padding: 10px; border: 1px solid #cbd5e1; }
+        th { background: var(--primary-dark); color: white; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -131,33 +136,46 @@
         <!-- ADMİN PANELİ -->
         <div id="admin-panel">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>🔑 Admin Nəzarət Paneli (Supabase Mərkəzi Server)</h3>
+                <h3>🔑 Admin Nəzarət Paneli</h3>
                 <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="closeAdminPanel()">Paneli Bağla</button>
             </div>
 
-            <!-- Tələbələrə İcazə Bölməsi -->
+            <!-- Tələbələrin İcazə Bölməsi -->
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px;">
                 <h4>İştirakçıya İcazə Ver</h4>
-                <div class="form-group">
-                    <label>Adı Soyadı:</label>
-                    <input type="text" id="adm-student-name" class="form-control" placeholder="Məs: Əli Məmmədov">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 180px;">
+                    <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 120px;" maxlength="7">
+                    <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
                 </div>
-                <div class="form-group">
-                    <label>FİN Kod:</label>
-                    <input type="text" id="adm-student-fin" class="form-control" placeholder="Məs: 7ABC123" style="text-transform: uppercase;">
-                </div>
-                <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
                 <p id="adm-student-msg" style="margin-top: 5px; font-size: 13px;"></p>
+
+                <h4 style="text-align: left; margin-top: 20px;">İcazə Verilmiş Tələbələr Siyahısı</h4>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ad Soyad</th>
+                                <th>FIN Kod</th>
+                                <th>Əməliyyat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allowed-students-table-body">
+                            <tr><td colspan="3">Yüklənir...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="stats-grid" style="margin-top: 15px;">
+            <div class="stats-grid" style="margin-top: 20px;">
                 <div class="stat-card">
-                    <h5>Ümumi İştirakçı</h5>
+                    <h5>İmtahan Verən İştirakçılar</h5>
                     <div class="value" id="stat-total-students">0</div>
                 </div>
             </div>
 
             <hr>
+            <!-- Sual Əlavə Etmə Bölməsi -->
             <h4 style="text-align: left; margin-top: 20px;">Sınağa Sual Əlavə Et</h4>
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
                 <div class="form-group">
@@ -202,20 +220,18 @@
                 <button class="btn btn-success" onclick="addNewQuestionToExam()">Sualı Mərkəzi Bazaya Əlavə Et</button>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 25px 0 10px 0;">
-                <h4 style="margin: 0;">İştirakçılar və Nəticələr (Mərkəzi Server)</h4>
-            </div>
-
+            <!-- İmtahan Nəticələri -->
+            <h4 style="text-align: left; margin: 25px 0 10px 0;">İştirakçılar və Nəticələr</h4>
             <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <table>
                     <thead>
-                        <tr style="background: var(--primary-dark); color: white;">
-                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Ad Soyad</th>
-                            <th style="padding: 8px; border: 1px solid #cbd5e1;">FIN</th>
-                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Sınaq</th>
-                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Doğru</th>
-                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Yanlış</th>
-                            <th style="padding: 8px; border: 1px solid #cbd5e1;">Bal</th>
+                        <tr>
+                            <th>Ad Soyad</th>
+                            <th>FIN</th>
+                            <th>Sınaq</th>
+                            <th>Doğru</th>
+                            <th>Yanlış</th>
+                            <th>Bal</th>
                         </tr>
                     </thead>
                     <tbody id="results-table-body"></tbody>
@@ -269,7 +285,7 @@
 
             if (error || !data || data.length === 0) {
                 errorMsg.style.color = "#ef4444";
-                errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
+                errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilmiyib!";
                 return;
             }
 
@@ -479,10 +495,46 @@
 
             const { error } = await _supabase.from('allowed_students').insert([{ name, fin }]);
             if (error) { msg.style.color = "red"; msg.innerText = "Xəta: " + error.message; }
-            else { msg.style.color = "green"; msg.innerText = "Tələbəyə icazə verildi!"; loadAdminPanelData(); }
+            else { 
+                msg.style.color = "green"; 
+                msg.innerText = "Tələbəyə icazə verildi!"; 
+                document.getElementById("adm-student-name").value = "";
+                document.getElementById("adm-student-fin").value = "";
+                loadAllowedStudents(); 
+            }
+        }
+
+        async function removeStudentPermission(fin) {
+            if (confirm(`${fin} FİN kodlu tələbənin icazəsini ləğv etmək istədiyinizə əminsiniz?`)) {
+                const { error } = await _supabase.from('allowed_students').delete().eq('fin', fin);
+                if (error) alert("Xəta baş verdi: " + error.message);
+                else loadAllowedStudents();
+            }
+        }
+
+        async function loadAllowedStudents() {
+            const { data, error } = await _supabase.from('allowed_students').select('*');
+            let tbody = document.getElementById("allowed-students-table-body");
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3">İcazə verilmiş tələbə yoxdur</td></tr>`;
+                return;
+            }
+            let html = "";
+            data.forEach(s => {
+                html += `
+                    <tr>
+                        <td>${s.name || '-'}</td>
+                        <td><b>${s.fin}</b></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Deaktiv Et / Sil</button></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
         }
 
         async function loadAdminPanelData() {
+            loadAllowedStudents();
+
             const { data: results } = await _supabase.from('exam_results').select('*');
             if(results) {
                 document.getElementById("stat-total-students").innerText = results.length;
@@ -521,4 +573,3 @@
     </script>
 </body>
 </html>
-
