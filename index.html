@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DQ Platform - Pro Dövlət Qulluğu Sınaq İmtahanı</title>
+    <title>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 0; user-select: none; }
@@ -40,8 +40,8 @@
         .options label:hover { background: #e2e8f0; }
         .exam-navigation-buttons { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         #result-screen { display: none; font-size: 13px; }
-        .dim-report-title { text-align: center; font-weight: bold; font-size: 15px; color: #000; margin-bottom: 5px; }
-        .dim-student-name { text-align: center; font-weight: bold; font-size: 16px; color: #000; margin-bottom: 20px; text-transform: uppercase; }
+        .dim-report-title { text-align: center; font-weight: bold; font-size: 16px; color: #000; margin-bottom: 5px; text-transform: uppercase; }
+        .dim-student-name { text-align: center; font-weight: bold; font-size: 17px; color: #000; margin-bottom: 20px; text-transform: uppercase; }
         .final-score-box { text-align: center; border: 2px solid #b91c1c; padding: 15px; margin-top: 25px; font-size: 18px; font-weight: bold; color: #b91c1c; background: #fef2f2; border-radius: 6px; }
         #admin-panel { display: none; margin-top: 20px; border-top: 2px solid var(--accent-gold); padding-top: 20px; }
         .form-group { margin-bottom: 15px; text-align: left; }
@@ -51,7 +51,7 @@
         .footer-text { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
         .secret-admin-trigger { cursor: pointer; }
         .error-msg { color: #ef4444; font-weight: bold; }
-        .opt-grid-admin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px; }
+        .opt-grid-admin { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
         
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
         th, td { padding: 10px; border: 1px solid #cbd5e1; }
@@ -74,7 +74,7 @@
         <!-- SINAQ HİSSƏSİ -->
         <div id="exam-screen">
             <div class="exam-header">
-                <span id="active-exam-title">Dövlət Qulluğu Vəzifələri Üzrə Sınaq</span>
+                <span id="active-exam-title">Dövlət Qulluğu Sınaq İmtahanı</span>
                 <span class="timer" id="timer">03:00:00</span>
             </div>
 
@@ -97,7 +97,7 @@
             </div>
         </div>
 
-        <!-- NƏTİCƏ EKRANI -->
+        <!-- NƏTİCƏ EKRANI (DİM FORMATI) -->
         <div id="result-screen">
             <div class="dim-report-title">Dövlət qulluğu vəzifələri üzrə test imtahanının nəticələri</div>
             <div class="dim-student-name" id="res-name"></div>
@@ -111,8 +111,9 @@
                 <span id="res-bb-group" style="font-size: 15px; color: #0f172a; margin-top: 5px; display: inline-block;"></span>
             </div>
 
-            <div style="margin-top: 20px;">
-                <a href="#top" class="btn" style="width: 100%; box-sizing: border-box; text-align: center;" onclick="backToReviewQuestions()">⤴ Suallara qayıt (Baxış)</a>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" onclick="backToReviewQuestions()">📊 Suallara qayıt (Analiz et)</button>
+                <button class="btn btn-secondary" onclick="resetToHome()">🏠 Əsas səhifəyə qayıt</button>
             </div>
         </div>
 
@@ -123,13 +124,19 @@
                 <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="closeAdminPanel()">Paneli Bağla</button>
             </div>
 
-            <!-- Tələbələrə İcazə Bölməsi (İmtahan Seçimi İlə) -->
+            <!-- Tələbələrə İcazə Bölməsi (Kateqoriya ilə) -->
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px;">
-                <h4>İştirakçıya İcazə Ver və İmtahan Təyin Et</h4>
+                <h4>İştirakçıya İcazə Ver (Kateqoriya Və Sınaq Seçimi)</h4>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 150px;">
+                    <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 140px;">
                     <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 100px;" maxlength="7">
-                    <select id="adm-student-exam" class="form-control" style="flex: 1; min-width: 110px;">
+                    <select id="adm-student-category" class="form-control" style="flex: 1; min-width: 120px;">
+                        <option value="BB">BB</option>
+                        <option value="BA">BA</option>
+                        <option value="AC">AC</option>
+                        <option value="Hamsı">Hamsı (BB, BA, AC)</option>
+                    </select>
+                    <select id="adm-student-exam" class="form-control" style="flex: 1; min-width: 100px;">
                         <option value="1">Sınaq 1</option>
                         <option value="2">Sınaq 2</option>
                         <option value="3">Sınaq 3</option>
@@ -147,19 +154,20 @@
                             <tr>
                                 <th>Ad Soyad</th>
                                 <th>FIN Kod</th>
-                                <th>Təyin Olunmuş İmtahan</th>
+                                <th>Kateqoriya</th>
+                                <th>İmtahan</th>
                                 <th>Əməliyyat</th>
                             </tr>
                         </thead>
                         <tbody id="allowed-students-table-body">
-                            <tr><td colspan="4">Yüklənir...</td></tr>
+                            <tr><td colspan="5">Yüklənir...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Sual Əlavə Etmə / Şəkil / Redaktə Bölməsi -->
-            <h4 style="text-align: left; margin-top: 25px;">Sual və Variant İdarəetməsi (Şəkillərlə)</h4>
+            <!-- Sual Əlavə Etmə -->
+            <h4 style="text-align: left; margin-top: 25px;">Sual və Variant İdarəetməsi (Fayl / Şəkil / PDF)</h4>
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
                 
                 <div style="margin-bottom: 15px; background: #e2e8f0; padding: 10px; border-radius: 6px;">
@@ -181,17 +189,17 @@
                         </select>
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label>Sual Nömrəsi:</label>
-                        <input type="number" id="new-q-id" class="form-control" min="1" max="100" value="1">
+                        <label>Fənn Seçin:</label>
+                        <select id="new-q-subject" class="form-control" onchange="autoSetQuestionNumber()">
+                            <option value="Azərbaycan dili">Azərbaycan dili (1-15)</option>
+                            <option value="Qanunvericilik">Qanunvericilik (16-55)</option>
+                            <option value="İnformatika">İnformatika (56-70)</option>
+                            <option value="Məntiq">Məntiq (71-100)</option>
+                        </select>
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label>Fənn:</label>
-                        <select id="new-q-subject" class="form-control">
-                            <option value="Azərbaycan dili">Azərbaycan dili</option>
-                            <option value="Qanunvericilik">Qanunvericilik</option>
-                            <option value="İnformatika">İnformatika</option>
-                            <option value="Məntiq">Məntiq</option>
-                        </select>
+                        <label>Sual Nömrəsi:</label>
+                        <input type="number" id="new-q-id" class="form-control" min="1" max="100" value="1">
                     </div>
                 </div>
 
@@ -201,33 +209,13 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Sualın Şəkil Linki (URL - Könüllü):</label>
-                    <input type="text" id="new-q-img" class="form-control" placeholder="https://site.com/sual_seki.jpg">
+                    <label>Sual üçün Fayl / Şəkil / PDF Yüklə və ya URL Daxil Et:</label>
+                    <input type="text" id="new-q-img" class="form-control" placeholder="Şəkil URL..." style="margin-bottom: 5px;">
+                    <input type="file" id="new-q-file" class="form-control" accept="image/*,application/pdf" onchange="handleFileUpload(this, 'new-q-img')">
                 </div>
 
-                <label><b>Variantlar və Variant Şəkilləri (Könüllü):</b></label>
-                <div style="margin-top:5px;">
-                    <div class="opt-grid-admin">
-                        <input type="text" class="form-control opt-input" placeholder="A Variantı Mətni">
-                        <input type="text" class="form-control opt-img-input" placeholder="A Variantı Şəkil Linki (URL)">
-                    </div>
-                    <div class="opt-grid-admin">
-                        <input type="text" class="form-control opt-input" placeholder="B Variantı Mətni">
-                        <input type="text" class="form-control opt-img-input" placeholder="B Variantı Şəkil Linki (URL)">
-                    </div>
-                    <div class="opt-grid-admin">
-                        <input type="text" class="form-control opt-input" placeholder="C Variantı Mətni">
-                        <input type="text" class="form-control opt-img-input" placeholder="C Variantı Şəkil Linki (URL)">
-                    </div>
-                    <div class="opt-grid-admin">
-                        <input type="text" class="form-control opt-input" placeholder="D Variantı Mətni">
-                        <input type="text" class="form-control opt-img-input" placeholder="D Variantı Şəkil Linki (URL)">
-                    </div>
-                    <div class="opt-grid-admin">
-                        <input type="text" class="form-control opt-input" placeholder="E Variantı Mətni">
-                        <input type="text" class="form-control opt-img-input" placeholder="E Variantı Şəkil Linki (URL)">
-                    </div>
-                </div>
+                <label><b>Variantlar və Variant Faylları/Şəkilləri:</b></label>
+                <div style="margin-top:5px;" id="options-admin-container"></div>
 
                 <div class="form-group" style="margin-top: 10px;">
                     <label>Düzgün Cavab (0=A, 1=B, 2=C, 3=D, 4=E):</label>
@@ -243,7 +231,7 @@
             <!-- Toplu JSON Yükləmə -->
             <h4 style="text-align: left; margin-top: 25px;">Toplu Sual Yüklə (JSON)</h4>
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-                <textarea id="json-bulk-input" class="form-control" rows="3" placeholder='[{"exam_id": "1", "q_number": 1, "subject": "Məntiq", "question": "...", "image_url": "...", "options": ["A","B","C","D","E"], "option_images": ["","","","",""], "correct": 0}]'></textarea>
+                <textarea id="json-bulk-input" class="form-control" rows="3" placeholder='[{"exam_id": "1", "q_number": 1, "subject": "Azərbaycan dili", "question": "...", "image_url": "...", "options": ["A","B","C","D","E"], "option_images": ["","","","",""], "correct": 0}]'></textarea>
                 <button class="btn btn-success" style="margin-top: 10px;" onclick="uploadBulkQuestions()">Toplu Yüklə</button>
             </div>
 
@@ -294,6 +282,66 @@
         let examFinished = false;
         let isAdminLoggedIn = false;
 
+        window.onload = function() {
+            renderAdminOptionsInputs();
+            checkSavedSession();
+        };
+
+        function renderAdminOptionsInputs() {
+            let container = document.getElementById("options-admin-container");
+            let letters = ["A", "B", "C", "D", "E"];
+            let html = "";
+            letters.forEach((l, i) => {
+                html += `
+                    <div class="opt-grid-admin">
+                        <input type="text" class="form-control opt-input" placeholder="${l} Variantı Mətni">
+                        <input type="text" id="opt-img-url-${i}" class="form-control opt-img-input" placeholder="${l} Variantı Şəkil/Fayl URL">
+                        <input type="file" class="form-control" accept="image/*,application/pdf" onchange="handleFileUpload(this, 'opt-img-url-${i}')">
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function handleFileUpload(input, targetUrlInputId) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(targetUrlInputId).value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function autoSetQuestionNumber() {
+            let subj = document.getElementById("new-q-subject").value;
+            let qInput = document.getElementById("new-q-id");
+            if (subj === "Azərbaycan dili") qInput.value = 1;      // 1-15
+            else if (subj === "Qanunvericilik") qInput.value = 16; // 16-55
+            else if (subj === "İnformatika") qInput.value = 56;    // 56-70
+            else if (subj === "Məntiq") qInput.value = 71;         // 71-100
+        }
+
+        function checkSavedSession() {
+            let savedAdmin = localStorage.getItem("dq_admin_session");
+            let savedStudent = localStorage.getItem("dq_student_session");
+
+            if (savedAdmin === "true") {
+                isAdminLoggedIn = true;
+                openAdminPanelUI();
+            } else if (savedStudent) {
+                let data = JSON.parse(savedStudent);
+                currentStudentName = data.name;
+                currentActiveFin = data.fin;
+                selectedExamId = data.examId;
+                userAnswers = data.answers || {};
+                flaggedQuestions = data.flags || {};
+                timeLeft = data.timeLeft || testDuration;
+                fetchExamQuestionsAndStart(true);
+            }
+        }
+
         async function proceedToExam() {
             const nameInput = document.getElementById("user-name").value.trim();
             const finInput = document.getElementById("user-fin").value.trim().toUpperCase();
@@ -305,7 +353,7 @@
             }
 
             errorMsg.style.color = "blue";
-            errorMsg.innerText = "Sisteme giriş edilir...";
+            errorMsg.innerText = "Sistemə giriş edilir...";
 
             const { data, error } = await _supabase
                 .from('allowed_students')
@@ -322,10 +370,23 @@
             currentActiveFin = finInput;
             selectedExamId = data[0].exam_id || "1";
 
-            fetchExamQuestionsAndStart();
+            saveStudentState();
+            fetchExamQuestionsAndStart(false);
         }
 
-        async function fetchExamQuestionsAndStart() {
+        function saveStudentState() {
+            let sessionObj = {
+                name: currentStudentName,
+                fin: currentActiveFin,
+                examId: selectedExamId,
+                answers: userAnswers,
+                flags: flaggedQuestions,
+                timeLeft: timeLeft
+            };
+            localStorage.setItem("dq_student_session", JSON.stringify(sessionObj));
+        }
+
+        async function fetchExamQuestionsAndStart(isRestored) {
             const { data, error } = await _supabase
                 .from('exam_questions')
                 .select('*')
@@ -349,11 +410,13 @@
                 correct: q.correct
             }));
 
-            userAnswers = {};
-            flaggedQuestions = {};
-            currentQuestionIndex = 0;
-            timeLeft = testDuration;
-            examFinished = false;
+            if (!isRestored) {
+                userAnswers = {};
+                flaggedQuestions = {};
+                currentQuestionIndex = 0;
+                timeLeft = testDuration;
+                examFinished = false;
+            }
 
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("exam-screen").style.display = "block";
@@ -373,17 +436,24 @@
 
             let adminBtn = isAdminLoggedIn ? `<button class="btn btn-warning btn-sm" onclick="editQuestionDirect(${q.id})" style="margin-left: 10px;">✏ Redaktə Et</button>` : '';
 
-            let mainImageHtml = q.image_url ? `<img src="${q.image_url}" class="q-img" alt="Sual Şəkli">` : '';
+            let mainImgHtml = '';
+            if (q.image_url) {
+                if(q.image_url.includes("data:application/pdf")) {
+                    mainImgHtml = `<embed src="${q.image_url}" type="application/pdf" width="100%" height="400px" />`;
+                } else {
+                    mainImgHtml = `<img src="${q.image_url}" class="q-img" alt="Sual Şəkli">`;
+                }
+            }
 
             let html = `
                 <div>
                     <div class="question-top">
-                        <div class="question-title">Sual ${q.id}: ${q.question} ${adminBtn}</div>
+                        <div class="question-title">Sual ${q.id} (${q.subject}): ${q.question} ${adminBtn}</div>
                         <label style="color:#d97706; font-size:14px; font-weight:bold; cursor:pointer;">
                             <input type="checkbox" id="flag_chk" ${isFlagged} onchange="toggleFlag(${q.id})"> Tərəddüdlü
                         </label>
                     </div>
-                    ${mainImageHtml}
+                    ${mainImgHtml}
                     <div class="options">
             `;
 
@@ -398,7 +468,11 @@
                 }
 
                 let optImgUrl = (q.option_images && q.option_images[idx]) ? q.option_images[idx] : '';
-                let optImgHtml = optImgUrl ? `<img src="${optImgUrl}" class="opt-img" alt="Variant Şəkli">` : '';
+                let optImgHtml = '';
+                if(optImgUrl) {
+                    if(optImgUrl.includes("data:application/pdf")) optImgHtml = `<embed src="${optImgUrl}" type="application/pdf" width="100%" height="200px" />`;
+                    else optImgHtml = `<img src="${optImgUrl}" class="opt-img" alt="Variant Şəkli">`;
+                }
 
                 html += `
                     <label style="${correctHighlight}">
@@ -418,7 +492,9 @@
             const gridContainer = document.getElementById("grid-nav-container");
             let html = "";
             allQuestions.forEach((q, index) => {
-                html += `<div class="nav-box" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${q.id}</div>`;
+                let isAns = userAnswers[q.id] !== undefined ? "answered" : "";
+                let isFlg = flaggedQuestions[q.id] ? "flagged" : "";
+                html += `<div class="nav-box ${isAns} ${isFlg}" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${q.id}</div>`;
             });
             gridContainer.innerHTML = html;
         }
@@ -426,14 +502,23 @@
         function jumpToQuestion(index) { currentQuestionIndex = index; renderCurrentQuestion(); }
         function nextQuestion() { if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderCurrentQuestion(); } }
         function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderCurrentQuestion(); } }
-        function selectOption(qId, optIdx) { if(examFinished) return; userAnswers[qId] = optIdx; document.getElementById(`nav_${qId}`).classList.add("answered"); }
+        
+        function selectOption(qId, optIdx) { 
+            if(examFinished) return; 
+            userAnswers[qId] = optIdx; 
+            document.getElementById(`nav_${qId}`).classList.add("answered"); 
+            saveStudentState();
+        }
+
         function toggleFlag(qId) {
             if(examFinished) return;
             let chk = document.getElementById("flag_chk").checked;
             let nav = document.getElementById(`nav_${qId}`);
             if (chk) { flaggedQuestions[qId] = true; nav.classList.add("flagged"); } 
             else { delete flaggedQuestions[qId]; nav.classList.remove("flagged"); }
+            saveStudentState();
         }
+
         function updateNavActiveState() {
             allQuestions.forEach((q, idx) => {
                 let box = document.getElementById(`nav_${q.id}`);
@@ -445,16 +530,17 @@
         }
 
         function startTimer(duration) {
-            let timer = duration;
+            timeLeft = duration;
             const display = document.getElementById("timer");
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if (examFinished) return;
-                let hours = String(Math.floor(timer / 3600)).padStart(2, '0');
-                let minutes = String(Math.floor((timer % 3600) / 60)).padStart(2, '0');
-                let seconds = String(timer % 60).padStart(2, '0');
+                let hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let seconds = String(timeLeft % 60).padStart(2, '0');
                 display.textContent = `${hours}:${minutes}:${seconds}`;
-                if (--timer < 0) { clearInterval(timerInterval); finishExam(); }
+                if (--timeLeft < 0) { clearInterval(timerInterval); finishExam(); }
+                if(timeLeft % 10 === 0) saveStudentState();
             }, 1000);
         }
 
@@ -476,6 +562,8 @@
         async function finishExam() {
             clearInterval(timerInterval);
             examFinished = true;
+            localStorage.removeItem("dq_student_session");
+
             let totalCorrect = 0, totalWrong = 0, totalBlank = 0;
 
             allQuestions.forEach(q => {
@@ -514,27 +602,44 @@
             renderCurrentQuestion();
         }
 
+        function resetToHome() {
+            localStorage.removeItem("dq_student_session");
+            location.reload();
+        }
+
         function openAdminLogin() {
             let pass = prompt("Admin şifrəsini daxil edin:");
             if (pass === ADMIN_PASS) {
                 isAdminLoggedIn = true;
-                document.getElementById("login-screen").style.display = "none";
-                document.getElementById("exam-screen").style.display = "none";
-                document.getElementById("admin-panel").style.display = "block";
-                loadAdminPanelData();
+                localStorage.setItem("dq_admin_session", "true");
+                openAdminPanelUI();
             }
         }
-        function closeAdminPanel() { document.getElementById("admin-panel").style.display = "none"; document.getElementById("login-screen").style.display = "block"; }
+
+        function openAdminPanelUI() {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("exam-screen").style.display = "none";
+            document.getElementById("result-screen").style.display = "none";
+            document.getElementById("admin-panel").style.display = "block";
+            loadAdminPanelData();
+        }
+
+        function closeAdminPanel() { 
+            localStorage.removeItem("dq_admin_session");
+            document.getElementById("admin-panel").style.display = "none"; 
+            document.getElementById("login-screen").style.display = "block"; 
+        }
 
         async function allowStudent() {
             let name = document.getElementById("adm-student-name").value.trim();
             let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
+            let cat = document.getElementById("adm-student-category").value;
             let examId = document.getElementById("adm-student-exam").value;
             let msg = document.getElementById("adm-student-msg");
 
             if (!name || !fin) { msg.style.color = "red"; msg.innerText = "Xanaları doldurun!"; return; }
 
-            const { error } = await _supabase.from('allowed_students').upsert([{ name, fin, exam_id: examId }], { onConflict: 'fin' });
+            const { error } = await _supabase.from('allowed_students').upsert([{ name, fin, category: cat, exam_id: examId }], { onConflict: 'fin' });
             if (error) { msg.style.color = "red"; msg.innerText = "Xəta: " + error.message; }
             else { 
                 msg.style.color = "green"; 
@@ -565,7 +670,7 @@
             const { data, error } = await _supabase.from('allowed_students').select('*');
             let tbody = document.getElementById("allowed-students-table-body");
             if (error || !data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4">İcazə verilmiş tələbə yoxdur</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5">İcazə verilmiş tələbə yoxdur</td></tr>`;
                 return;
             }
             let html = "";
@@ -574,6 +679,7 @@
                     <tr>
                         <td>${s.name || '-'}</td>
                         <td><b>${s.fin}</b></td>
+                        <td><b style="color:#d97706;">${s.category || 'BB'}</b></td>
                         <td>Sınaq ${s.exam_id || '1'}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Deaktiv Et / Sil</button></td>
                     </tr>
@@ -657,7 +763,7 @@
             }
 
             document.getElementById("new-q-correct").value = data.correct;
-            alert(`Sınaq ${examId}, Sual ${qNo} mətni və şəkilləri sahələrə köçürüldü.`);
+            alert(`Sınaq ${examId}, Sual ${qNo} mətni sahələrə dolduruldu.`);
         }
 
         async function deleteQuestionFromAdmin() {
