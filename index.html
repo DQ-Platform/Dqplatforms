@@ -276,7 +276,7 @@ B) Variant 2
         let timeLeft = testDuration;
         let examFinished = false;
 
-        // BÜTÖV PDF YÜKLƏMƏ
+        // BÜTÖV PDF YÜKLƏMƏ (Düzəliş olunmuş hissə: delete + insert)
         async function uploadFullExamPDF() {
             let targetExam = document.getElementById("full-pdf-target-exam").value;
             let fileInput = document.getElementById("full-exam-pdf-file");
@@ -309,14 +309,15 @@ B) Variant 2
                     });
                 }
 
-                const { error } = await _supabase.from('exam_questions').upsert(questionsList, { onConflict: 'exam_id,q_number' });
+                await _supabase.from('exam_questions').delete().eq('exam_id', targetExam);
+                const { error } = await _supabase.from('exam_questions').insert(questionsList);
 
                 if (error) { alert("Xəta: " + error.message); } 
                 else { alert(`Sınaq ${targetExam} üçün PDF baza strukturuna yerləşdirildi!`); fileInput.value = ""; }
             };
         }
 
-        // COPY-PASTE MƏTNİNİ YÜKLƏMƏ
+        // COPY-PASTE MƏTNİNİ YÜKLƏMƏ (Düzəliş olunmuş hissə: delete + insert)
         async function parseAndSaveQuestions() {
             let examId = document.getElementById("full-pdf-target-exam").value;
             let rawText = document.getElementById("copy-text-area").value.trim();
@@ -370,12 +371,14 @@ B) Variant 2
 
             if (parsedQuestions.length === 0) { alert("Format uyğun deyil!"); return; }
 
-            const { error } = await _supabase.from('exam_questions').upsert(parsedQuestions, { onConflict: 'exam_id,q_number' });
+            await _supabase.from('exam_questions').delete().eq('exam_id', examId);
+            const { error } = await _supabase.from('exam_questions').insert(parsedQuestions);
+
             if (error) { alert("Xəta: " + error.message); } 
             else { alert(`Sınaq ${examId} üçün ${parsedQuestions.length} sual yükləndi!`); document.getElementById("copy-text-area").value = ""; }
         }
 
-        // FƏRDİ SUAL REDAK TƏSİ VA YADDA SAXLANMASI
+        // FƏRDİ SUAL REDAKTƏSİ VƏ YADDA SAXLANMASI (Düzəliş olunmuş hissə: delete + insert)
         async function loadSingleQuestionForEdit() {
             let examId = document.getElementById("search-exam-id").value;
             let qNo = document.getElementById("search-q-no").value;
@@ -413,14 +416,15 @@ B) Variant 2
             else if (qNo >= 56 && qNo <= 70) subject = "İnformatika";
             else if (qNo >= 71) subject = "Məntiq";
 
-            const { error } = await _supabase.from('exam_questions').upsert([{
+            await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+            const { error } = await _supabase.from('exam_questions').insert([{
                 exam_id: examId,
                 q_number: qNo,
                 subject: subject,
                 question: qText,
                 options: [optA, optB, optC, optD, optE],
                 correct: correct
-            }], { onConflict: 'exam_id,q_number' });
+            }]);
 
             if (error) { alert("Xəta: " + error.message); } 
             else {
