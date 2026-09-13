@@ -92,7 +92,7 @@
             <div class="overflow-x-auto rounded border">
                 <table>
                     <thead>
-                        <tr><th>Sınaq №</th><th>Tarix</th><th>Doğru</th><th>Yanlış</th><th>Bal</th></tr>
+                        <tr><th>Sınaq №</th><th>Kateqoriya</th><th>Tarix</th><th>Doğru</th><th>Yanlış</th><th>Bal</th></tr>
                     </thead>
                     <tbody id="cabinet-results-tbody"></tbody>
                 </table>
@@ -180,6 +180,7 @@
                                 <th>Tələbə Adı</th>
                                 <th>FIN</th>
                                 <th>Sınaq №</th>
+                                <th>Kateqoriya</th>
                                 <th>Doğru</th>
                                 <th>Yanlış</th>
                                 <th>Yekun Bal</th>
@@ -192,20 +193,19 @@
                 </div>
             </div>
 
-            <!-- İŞTİRAKÇI İCAZƏ BÖLMƏSİ -->
+            <!-- İŞTİRAKÇI İCAZƏ BÖLMƏSİ (Kateqoriyalı Sınaq Seçimi İlə) -->
             <div class="card-box p-4">
                 <h3 class="font-bold text-xs text-slate-700 uppercase mb-3">İştirakçıya İcazə Ver</h3>
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
                     <input type="text" id="adm-student-name" class="p-2 border rounded text-xs" placeholder="Ad Soyad">
                     <input type="text" id="adm-student-fin" class="p-2 border rounded text-xs uppercase font-bold" placeholder="FIN KOD" maxlength="7">
-                    <select id="adm-student-category" class="p-2 border rounded text-xs bg-white">
+                    <select id="adm-student-category" class="p-2 border rounded text-xs bg-white font-medium" onchange="updateExamDropdowns()">
                         <option value="BB">BB Kateqoriyası</option>
                         <option value="BA">BA Kateqoriyası</option>
                         <option value="AC">AC Kateqoriyası</option>
                     </select>
-                    <select id="adm-student-exam" class="p-2 border rounded text-xs bg-white">
-                        <option value="1">Sınaq 1</option>
-                        <option value="2">Sınaq 2</option>
+                    <select id="adm-student-exam" class="p-2 border rounded text-xs bg-white font-semibold text-slate-800">
+                        <!-- JS ilə dolacaq -->
                     </select>
                     <button class="btn-green text-xs rounded py-2 cursor-pointer" onclick="allowStudent()">İcazə Ver</button>
                 </div>
@@ -220,7 +220,7 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                     <div>
-                        <label class="block text-slate-500 mb-1">Kateqoriya</label>
+                        <label class="block text-slate-500 mb-1">Fənn / Bölmə</label>
                         <select id="adm-q-category" class="w-full p-2 border rounded bg-white font-medium">
                             <option value="Qanunvericilik">Qanunvericilik</option>
                             <option value="Informatika">İnformatika</option>
@@ -241,8 +241,7 @@
                             <button class="text-emerald-700 hover:text-emerald-800 font-bold text-[11px] cursor-pointer" onclick="addNewExamPrompt()">+ Yeni Sınaq</button>
                         </div>
                         <select id="single-exam-id" class="w-full p-2 border rounded bg-white font-medium">
-                            <option value="1">Sınaq 1</option>
-                            <option value="2">Sınaq 2</option>
+                            <!-- JS ilə dolacaq -->
                         </select>
                     </div>
                     <div>
@@ -319,6 +318,7 @@
             if (pass === ADMIN_PASS || pass === "yunis2026") {
                 document.getElementById("login-screen").classList.add("hidden");
                 document.getElementById("admin-panel").classList.remove("hidden");
+                updateExamDropdowns();
                 renderAdminOptions();
                 loadSavedQuestionsPreview();
                 loadLiveResults();
@@ -330,7 +330,29 @@
             document.getElementById("login-screen").classList.remove("hidden");
         }
 
-        /* 1. TƏLƏBƏ GİRİŞİ VƏ SEÇİMİ (Çoxlu sınaq olduqda) */
+        /* 1. KATEQORİYALI SINAQ DROPDOWNLARI */
+        function updateExamDropdowns() {
+            const singleSelect = document.getElementById("single-exam-id");
+            const studentSelect = document.getElementById("adm-student-exam");
+            const filterExamSelect = document.getElementById("preview-filter-exam");
+            const selectedCat = document.getElementById("adm-student-category").value || "BB";
+
+            let htmlSingle = "";
+            let htmlStudent = "";
+            let htmlFilter = `<option value="ALL">Bütün Sınaqlar</option>`;
+
+            availableExams.forEach(ex => { 
+                htmlSingle += `<option value="${ex}">Sınaq ${ex}</option>`;
+                htmlStudent += `<option value="${ex}">Sınaq ${ex} (${selectedCat} Kateqoriyası)</option>`;
+                htmlFilter += `<option value="${ex}">Sınaq ${ex}</option>`;
+            });
+
+            singleSelect.innerHTML = htmlSingle;
+            studentSelect.innerHTML = htmlStudent;
+            filterExamSelect.innerHTML = htmlFilter;
+        }
+
+        /* 2. TƏLƏBƏ GİRİŞİ VƏ SEÇİMİ */
         async function checkStudentExams() {
             const nameInput = document.getElementById("user-name").value.trim();
             const finInput = document.getElementById("user-fin").value.trim().toUpperCase();
@@ -373,7 +395,7 @@
 
         function closeSelectModal() { document.getElementById("exam-select-modal").classList.add("hidden"); }
 
-        /* 2. CANLI TƏLƏBƏ NƏTİCƏLƏRİNİN ADMINƏ GƏLMƏSİ VƏ İNCƏLƏ */
+        /* 3. CANLI TƏLƏBƏ NƏTİCƏLƏRİ VƏ İNCƏLƏ */
         async function loadLiveResults() {
             const { data, error } = await _supabase.from('exam_results').select('*').order('created_at', { ascending: false });
             if (error || !data) return;
@@ -387,6 +409,7 @@
                         <td class="font-bold text-slate-800">${r.name}</td>
                         <td class="font-bold tracking-widest text-slate-600">${r.fin}</td>
                         <td>Sınaq ${r.exam_no}</td>
+                        <td class="font-bold text-amber-600">${r.category || 'BB'}</td>
                         <td class="text-green-600 font-bold">${r.correct_count}</td>
                         <td class="text-red-600 font-bold">${r.wrong_count}</td>
                         <td class="text-amber-700 font-extrabold">${r.score} Bal</td>
@@ -400,17 +423,16 @@
             tbody.innerHTML = html;
         }
 
-        /* 3. DETALLI FƏNN ÜZRƏ ANALİZ (İNCƏLƏ) */
+        /* 4. DETALLI FƏNN ÜZRƏ ANALİZ (İNCƏLƏ) */
         async function inspectStudentResult(index) {
             const res = fetchedResultsCache[index];
             if (!res) return;
 
-            document.getElementById("insp-student-name").innerText = `${res.name} (Sınaq ${res.exam_no})`;
+            document.getElementById("insp-student-name").innerText = `${res.name} (Sınaq ${res.exam_no} - ${res.category || 'BB'})`;
             const container = document.getElementById("inspect-content");
             container.innerHTML = `<p class="text-xs text-slate-500">Məlumatlar analiz edilir...</p>`;
             document.getElementById("inspect-modal").classList.remove("hidden");
 
-            // Həmin sınağın suallarını çəkirik ki, fənnə görə ayıraq
             const { data: questions } = await _supabase.from('exam_questions').select('*').eq('exam_id', res.exam_no);
             if (!questions || questions.length === 0) {
                 container.innerHTML = `<p class="text-xs text-red-500">Bu sınaq üzrə bazada sual məlumatı tapılmadı.</p>`;
@@ -477,18 +499,6 @@
                     alert(`Sınaq ${val} əlavə olundu!`);
                 }
             }
-        }
-
-        function updateExamDropdowns() {
-            const singleSelect = document.getElementById("single-exam-id");
-            const studentSelect = document.getElementById("adm-student-exam");
-            const filterExamSelect = document.getElementById("preview-filter-exam");
-
-            let html = "";
-            availableExams.forEach(ex => { html += `<option value="${ex}">Sınaq ${ex}</option>`; });
-            singleSelect.innerHTML = html;
-            studentSelect.innerHTML = html;
-            filterExamSelect.innerHTML = `<option value="ALL">Bütün Sınaqlar</option>` + html;
         }
 
         function renderAdminOptions() {
@@ -653,7 +663,7 @@
 
             if (!name || !fin) { alert("Məlumatları daxil edin!"); return; }
             await _supabase.from('allowed_students').insert([{ name, fin, category: cat, exam_id: examId }]);
-            alert(`Tələbə (${name}) sistemə əlavə olundu!`);
+            alert(`Tələbə (${name}) Sınaq ${examId} - ${cat} kateqoriyasına əlavə olundu!`);
         }
 
         async function openStudentCabinet() {
@@ -673,6 +683,7 @@
                 html += `
                     <tr>
                         <td>Sınaq ${r.exam_no}</td>
+                        <td class="font-bold text-amber-600">${r.category || 'BB'}</td>
                         <td>${new Date(r.created_at).toLocaleDateString()}</td>
                         <td class="text-green-600 font-bold">${r.correct_count}</td>
                         <td class="text-red-600 font-bold">${r.wrong_count}</td>
@@ -802,7 +813,7 @@
             });
 
             await _supabase.from('exam_results').insert([{
-                name: currentStudentName, fin: currentActiveFin, exam_no: selectedExamId,
+                name: currentStudentName, fin: currentActiveFin, exam_no: selectedExamId, category: studentCategory,
                 correct_count: correct, wrong_count: wrong, score: score, user_answers: userAnswers
             }]);
 
@@ -818,3 +829,4 @@
     </script>
 </body>
 </html>
+
