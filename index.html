@@ -52,8 +52,6 @@
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
         th, td { padding: 10px; border: 1px solid #cbd5e1; }
         th { background: var(--primary-dark); color: white; }
-        .q-img-preview { max-width: 100%; max-height: 250px; margin: 10px 0; border-radius: 6px; display: block; }
-        .parsed-q-item { background: #ffffff; border: 1px solid #cbd5e1; padding: 12px; margin-bottom: 10px; border-radius: 6px; text-align: left; }
     </style>
 </head>
 <body>
@@ -131,11 +129,6 @@
                     <select id="adm-student-category" class="form-control" style="flex: 1;">
                         <option value="BB">BB</option><option value="BA">BA</option><option value="AC">AC</option>
                     </select>
-                    <select id="adm-student-exam-type" class="form-control" style="flex: 1;">
-                        <option value="Ümumi Sınaq">Ümumi Sınaq</option>
-                        <option value="Mövzu Sınağı">Mövzu Sınağı</option>
-                        <option value="Qanunvericilik Sınağı">Qanunvericilik Sınağı</option>
-                    </select>
                     <select id="adm-student-exam" class="form-control" style="flex: 1;">
                         <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
                     </select>
@@ -147,7 +140,7 @@
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
-                            <tr><th>Ad Soyad</th><th>FIN Kod</th><th>Kateqoriya</th><th>Sınaq Növü</th><th>İmtahan</th><th>Əməliyyat</th></tr>
+                            <tr><th>Ad Soyad</th><th>FIN Kod</th><th>Kateqoriya</th><th>İmtahan</th><th>Əməliyyat</th></tr>
                         </thead>
                         <tbody id="allowed-students-table-body"></tbody>
                     </table>
@@ -158,68 +151,41 @@
             <h4 style="text-align: left; margin-top: 25px;">Sual və Variant İdarəetməsi (Fərdi / Avto-Növbəti)</h4>
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <select id="search-exam-type" class="form-control" style="flex: 1;">
-                        <option value="Ümumi Sınaq">Ümumi Sınaq</option>
-                        <option value="Mövzu Sınağı">Mövzu Sınağı</option>
-                        <option value="Qanunvericilik Sınağı">Qanunvericilik Sınağı</option>
-                    </select>
                     <select id="search-exam-id" class="form-control" style="flex: 1;">
-                        <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
+                        <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option>
                     </select>
                     <input type="number" id="search-q-no" class="form-control" placeholder="Sual No" style="flex: 1;">
                     <button class="btn btn-warning" onclick="loadSingleQuestionForEdit()">Gətir</button>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <select id="single-exam-type" class="form-control" style="flex: 1;">
-                        <option value="Ümumi Sınaq">Ümumi Sınaq</option>
-                        <option value="Mövzu Sınağı">Mövzu Sınağı</option>
-                        <option value="Qanunvericilik Sınağı">Qanunvericilik Sınağı</option>
-                    </select>
-                    <select id="single-exam-id" class="form-control" style="flex: 1;">
-                        <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
-                    </select>
+                    <select id="single-exam-id" class="form-control" style="flex: 1;"><option value="1">Sınaq 1</option></select>
                     <select id="single-subject" class="form-control" style="flex: 2;">
-                        <option value="Azərbaycan dili">Azərbaycan dili (1-15)</option>
-                        <option value="Qanunvericilik">Qanunvericilik (16-55)</option>
-                        <option value="İnformatika">İnformatika (56-70)</option>
-                        <option value="Məntiq">Məntiq (71-100)</option>
+                        <option value="Azərbaycan dili (1-15)">Azərbaycan dili (1-15)</option>
+                        <option value="Qanunvericilik (16-55)">Qanunvericilik (16-55)</option>
+                        <option value="İnformatika (56-70)">İnformatika (56-70)</option>
+                        <option value="Məntiq (71-100)">Məntiq (71-100)</option>
                     </select>
                     <input type="number" id="single-q-no" class="form-control" placeholder="Sual Nömrəsi" style="flex: 1;" value="1">
                 </div>
 
                 <div class="form-group">
-                    <label>Sual Növü / Variant Sayı Seçin:</label>
-                    <select id="single-q-type" class="form-control" onchange="adjustOptionFields()">
-                        <option value="5">5 Variantlı (A, B, C, D, E)</option>
-                        <option value="3">3 Variantlı (A, B, C)</option>
-                        <option value="open">Açıq Sual (Yazılı Cavab)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
                     <label>Sual Mətni:</label>
-                    <textarea id="single-q-text" class="form-control" rows="3" placeholder="Sualın mətni..."></textarea>
+                    <textarea id="single-q-text" class="form-control" rows="2" placeholder="Sualın mətni..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>Sual Şəkli Əlavə Et (İstəyə bağlı):</label>
-                    <input type="file" id="single-q-image" class="form-control" accept="image/*">
-                    <input type="hidden" id="single-q-existing-image" value="">
-                </div>
-
-                <div class="form-group" id="options-container">
-                    <label>Variantlar:</label>
-                    <div style="margin-bottom: 5px;"><input type="text" id="opt-a" class="form-control" placeholder="A Variantı"></div>
-                    <div style="margin-bottom: 5px;"><input type="text" id="opt-b" class="form-control" placeholder="B Variantı"></div>
-                    <div style="margin-bottom: 5px;"><input type="text" id="opt-c" class="form-control" placeholder="C Variantı"></div>
-                    <div style="margin-bottom: 5px;" id="opt-d-box"><input type="text" id="opt-d" class="form-control" placeholder="D Variantı"></div>
-                    <div style="margin-bottom: 5px;" id="opt-e-box"><input type="text" id="opt-e" class="form-control" placeholder="E Variantı"></div>
+                    <label>A, B, C, D, E Variantları:</label>
+                    <input type="text" id="opt-a" class="form-control" placeholder="A Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-b" class="form-control" placeholder="B Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-c" class="form-control" placeholder="C Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-d" class="form-control" placeholder="D Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-e" class="form-control" placeholder="E Variantı Mətni" style="margin-bottom: 5px;">
                 </div>
 
                 <div class="form-group">
-                    <label>Düzgün Cavab (A=0, B=1, C=2, D=3, E=4 və ya Açıq Cavab Mətni):</label>
-                    <input type="text" id="single-correct" class="form-control" placeholder="Məsələn: 0 və ya Açıq Cavab" value="0">
+                    <label>Düzgün Cavab (0=A, 1=B, 2=C, 3=D, 4=E):</label>
+                    <input type="number" id="single-correct" class="form-control" value="0" min="0" max="4">
                 </div>
 
                 <div style="display: flex; gap: 10px;">
@@ -228,53 +194,40 @@
                 </div>
             </div>
 
-            <!-- COPY-PASTE İLƏ SUAL YÜKLƏMƏ -->
-            <h4 style="text-align: left; margin-top: 25px;">📑 Mətn ilə Toplu Sual Quraşdırma və Önizləmə</h4>
+            <!-- COPY-PASTE VƏ PDF İLƏ BÜTÖV SUAL YÜKLƏMƏ -->
+            <h4 style="text-align: left; margin-top: 25px;">📑 Ümumi PDF və ya Mətn ilə 1-100 Sual Quraşdırma</h4>
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-                <div class="form-group" style="display:flex; gap:10px;">
-                    <div style="flex:1;">
-                        <label>Sınaq Növü Seçin:</label>
-                        <select id="full-pdf-target-exam-type" class="form-control">
-                            <option value="Ümumi Sınaq">Ümumi Sınaq</option>
-                            <option value="Mövzu Sınağı">Mövzu Sınağı</option>
-                            <option value="Qanunvericilik Sınağı">Qanunvericilik Sınağı</option>
-                        </select>
-                    </div>
-                    <div style="flex:1;">
-                        <label>Hansı Sınaq Üçün Yüklənir?</label>
-                        <select id="full-pdf-target-exam" class="form-control">
-                            <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
-                        </select>
-                    </div>
-                </div>
-
                 <div class="form-group">
-                    <label>Sualları Mətn Kimi Kopyalayıb Bura Yapışdırın:</label>
-                    <textarea id="copy-text-area" class="form-control" rows="6" placeholder="1. Sual mətni...&#10;A) Variant 1&#10;B) Variant 2&#10;C) Variant 3&#10;D) Variant 4&#10;E) Variant 5"></textarea>
+                    <label>Hansı Sınaq Üçün Yüklənir?</label>
+                    <select id="full-pdf-target-exam" class="form-control">
+                        <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
+                    </select>
                 </div>
-                <button class="btn btn-warning" style="width: 100%; margin-bottom: 10px;" onclick="parseTextForPreview()">🔍 Pars Et və Önizləmə Redaktəsinə Keç</button>
+                
+                <div class="form-group">
+                    <label>Bütün İmtahan PDF Faylını Seçin (1-100 Suallar):</label>
+                    <input type="file" id="full-exam-pdf-file" class="form-control" accept=".pdf">
+                </div>
+                <button class="btn" style="width: 100%; background: #1e293b; color: white; margin-bottom: 15px;" onclick="uploadFullExamPDF()">1-100 Sualları Avtomatik Bazaya Quraşdır</button>
 
-                <!-- ÖNİZLƏMƏ BÖLMƏSİ -->
-                <div id="parsed-questions-preview-container" style="display:none; margin-top:15px; background:#e2e8f0; padding:10px; border-radius:8px;">
-                    <h4>Önizləmə və Ardıcıl Redaktə</h4>
-                    <div id="parsed-questions-list"></div>
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="btn btn-success" style="flex:1;" onclick="saveAllParsedQuestions()">💾 Bütün Sualları Bazaya Yadda Saxla</button>
-                        <button class="btn btn-danger" style="flex:1;" onclick="clearParsedQuestionsPreview()">🗑️ Hamısını Sil</button>
-                    </div>
+                <hr>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Və ya Sualları Mətn Kimi Kopyalayıb Bura Yapışdırın:</label>
+                    <textarea id="copy-text-area" class="form-control" rows="8" placeholder="1. Sual mətni...
+A) Variant 1
+B) Variant 2
+..."></textarea>
                 </div>
+                <button class="btn btn-success" style="width: 100%;" onclick="parseAndSaveQuestions()">🚀 Copy-Paste Mətnini Yüklə</button>
             </div>
 
             <!-- CAVAB AÇARLARI TOPLU ƏLAVƏ ETME -->
             <h4 style="text-align: left; margin-top: 25px;">🔑 Cavab Açarları Bölməsi (Toplu Cavab Daxil Et)</h4>
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-                <div style="display:flex; gap:10px;" class="form-group">
-                    <select id="bulk-answers-exam-type" class="form-control" style="flex:1;">
-                        <option value="Ümumi Sınaq">Ümumi Sınaq</option>
-                        <option value="Mövzu Sınağı">Mövzu Sınağı</option>
-                        <option value="Qanunvericilik Sınağı">Qanunvericilik Sınağı</option>
-                    </select>
-                    <select id="bulk-answers-exam-id" class="form-control" style="flex:1;">
+                <div class="form-group">
+                    <label>Sınaq Seçin:</label>
+                    <select id="bulk-answers-exam-id" class="form-control">
                         <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
                     </select>
                 </div>
@@ -286,11 +239,11 @@
             </div>
 
             <!-- İMTAHAN NƏTİCƏLƏRİ -->
-            <h4 style="text-align: left; margin-top: 25px;">📊 İmtahan Nəticələri və Fənn İncələməsi</h4>
+            <h4 style="text-align: left; margin-top: 25px;">İmtahan Nəticələri</h4>
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
-                        <tr><th>Ad Soyad</th><th>FIN</th><th>Sınaq Növü</th><th>Sınaq</th><th>Doğru</th><th>Yanlış</th><th>Bal</th><th>Fənn İncələməsi</th><th>Əməliyyat</th></tr>
+                        <tr><th>Ad Soyad</th><th>FIN</th><th>Sınaq</th><th>Doğru</th><th>Yanlış</th><th>Bal</th><th>Əməliyyat</th></tr>
                     </thead>
                     <tbody id="results-table-body"></tbody>
                 </table>
@@ -315,7 +268,6 @@
         let currentStudentName = "";
         let currentActiveFin = "";
         let selectedExamId = "1";
-        let selectedExamType = "Ümumi Sınaq";
         let allQuestions = [];
         let userAnswers = {};
         let flaggedQuestions = {};
@@ -323,145 +275,61 @@
         let timerInterval;
         let timeLeft = testDuration;
         let examFinished = false;
-        let tempParsedQuestions = [];
 
-        function adjustOptionFields() {
-            let type = document.getElementById("single-q-type").value;
-            let dBox = document.getElementById("opt-d-box");
-            let eBox = document.getElementById("opt-e-box");
-            let optContainer = document.getElementById("options-container");
+        // BÜTÖV PDF YÜKLƏMƏ (Düzəliş olunmuş hissə: delete + insert)
+        async function uploadFullExamPDF() {
+            let targetExam = document.getElementById("full-pdf-target-exam").value;
+            let fileInput = document.getElementById("full-exam-pdf-file");
+            let file = fileInput.files[0];
 
-            if (type === "3") {
-                optContainer.style.display = "block";
-                dBox.style.display = "none";
-                eBox.style.display = "none";
-            } else if (type === "open") {
-                optContainer.style.display = "none";
-            } else {
-                optContainer.style.display = "block";
-                dBox.style.display = "block";
-                eBox.style.display = "block";
-            }
+            if (!file) { alert("Zəhmət olmasa PDF faylını seçin!"); return; }
+
+            let reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async function () {
+                let base64Pdf = reader.result;
+                let questionsList = [];
+
+                for (let qNo = 1; qNo <= 100; qNo++) {
+                    let subject = "Azərbaycan dili";
+                    if (qNo >= 16 && qNo <= 55) subject = "Qanunvericilik";
+                    else if (qNo >= 56 && qNo <= 70) subject = "İnformatika";
+                    else if (qNo >= 71) subject = "Məntiq";
+
+                    questionsList.push({
+                        exam_id: targetExam,
+                        q_number: qNo,
+                        subject: subject,
+                        question: `Sual ${qNo}`,
+                        image_url: "",
+                        options: ["A", "B", "C", "D", "E"],
+                        option_images: ["", "", "", "", ""],
+                        correct: 0,
+                        pdf_data: qNo === 1 ? base64Pdf : ""
+                    });
+                }
+
+                await _supabase.from('exam_questions').delete().eq('exam_id', targetExam);
+                const { error } = await _supabase.from('exam_questions').insert(questionsList);
+
+                if (error) { alert("Xəta: " + error.message); } 
+                else { alert(`Sınaq ${targetExam} üçün PDF baza strukturuna yerləşdirildi!`); fileInput.value = ""; }
+            };
         }
 
-        async function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                if (!file) { resolve(""); return; }
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        // FƏRDİ SUAL YADDA SAXLANMASI
-        async function saveSingleQuestion() {
-            let examType = document.getElementById("single-exam-type").value;
-            let examId = document.getElementById("single-exam-id").value;
-            let qNo = parseInt(document.getElementById("single-q-no").value);
-            let qType = document.getElementById("single-q-type").value;
-            let qText = document.getElementById("single-q-text").value;
-            let subject = document.getElementById("single-subject").value;
-            
-            let qImgFile = document.getElementById("single-q-image").files[0];
-            let existingImg = document.getElementById("single-q-existing-image").value;
-            let qImgBase64 = qImgFile ? await fileToBase64(qImgFile) : existingImg;
-
-            let optA = document.getElementById("opt-a").value;
-            let optB = document.getElementById("opt-b").value;
-            let optC = document.getElementById("opt-c").value;
-            let optD = document.getElementById("opt-d").value;
-            let optE = document.getElementById("opt-e").value;
-
-            let correctVal = document.getElementById("single-correct").value;
-
-            let optionsArr = [];
-            if (qType === "5") optionsArr = [optA, optB, optC, optD, optE];
-            else if (qType === "3") optionsArr = [optA, optB, optC];
-            else optionsArr = [];
-
-            await _supabase.from('exam_questions').delete().eq('exam_type', examType).eq('exam_id', examId).eq('q_number', qNo);
-            
-            const { error } = await _supabase.from('exam_questions').insert([{
-                exam_type: examType,
-                exam_id: examId,
-                q_number: qNo,
-                q_type: qType,
-                subject: subject,
-                question: qText,
-                image_url: qImgBase64,
-                options: optionsArr,
-                correct: correctVal
-            }]);
-
-            if (error) { alert("Xəta: " + error.message); } 
-            else {
-                alert(`Sual ${qNo} yadda saxlanıldı!`);
-                document.getElementById("single-q-no").value = qNo + 1;
-                document.getElementById("single-q-text").value = "";
-                document.getElementById("single-q-image").value = "";
-                document.getElementById("single-q-existing-image").value = "";
-                document.getElementById("opt-a").value = "";
-                document.getElementById("opt-b").value = "";
-                document.getElementById("opt-c").value = "";
-                document.getElementById("opt-d").value = "";
-                document.getElementById("opt-e").value = "";
-            }
-        }
-
-        // FƏRDİ SUAL YÜKLƏMƏ (REDAKTƏ ÜÇÜN)
-        async function loadSingleQuestionForEdit() {
-            let examType = document.getElementById("search-exam-type").value;
-            let examId = document.getElementById("search-exam-id").value;
-            let qNo = document.getElementById("search-q-no").value;
-
-            if (!qNo) { alert("Sual nömrəsini yazın!"); return; }
-
-            const { data, error } = await _supabase.from('exam_questions').select('*').eq('exam_type', examType).eq('exam_id', examId).eq('q_number', qNo).single();
-
-            if (error || !data) { alert("Sual tapılmadı!"); return; }
-
-            document.getElementById("single-exam-type").value = data.exam_type || "Ümumi Sınaq";
-            document.getElementById("single-exam-id").value = data.exam_id;
-            document.getElementById("single-q-no").value = data.q_number;
-            document.getElementById("single-q-text").value = data.question;
-            document.getElementById("single-q-type").value = data.q_type || "5";
-            document.getElementById("single-subject").value = data.subject || "Azərbaycan dili";
-            document.getElementById("single-q-existing-image").value = data.image_url || "";
-            adjustOptionFields();
-
-            if (data.options) {
-                document.getElementById("opt-a").value = data.options[0] || "";
-                document.getElementById("opt-b").value = data.options[1] || "";
-                document.getElementById("opt-c").value = data.options[2] || "";
-                document.getElementById("opt-d").value = data.options[3] || "";
-                document.getElementById("opt-e").value = data.options[4] || "";
-            }
-            document.getElementById("single-correct").value = data.correct !== undefined ? data.correct : "0";
-        }
-
-        async function deleteSingleQuestion() {
-            let examType = document.getElementById("single-exam-type").value;
-            let examId = document.getElementById("single-exam-id").value;
-            let qNo = document.getElementById("single-q-no").value;
-
-            if (confirm(`${examType} Sınaq ${examId}, Sual ${qNo} silinsin?`)) {
-                await _supabase.from('exam_questions').delete().eq('exam_type', examType).eq('exam_id', examId).eq('q_number', qNo);
-                alert("Sual silindi!");
-            }
-        }
-
-        // COPY-PASTE MƏTNİNİ PARS EDİB ÖNİZLƏMƏ BÖLMƏSİ
-        function parseTextForPreview() {
+        // COPY-PASTE MƏTNİNİ YÜKLƏMƏ (Düzəliş olunmuş hissə: delete + insert)
+        async function parseAndSaveQuestions() {
+            let examId = document.getElementById("full-pdf-target-exam").value;
             let rawText = document.getElementById("copy-text-area").value.trim();
+
             if (!rawText) { alert("Mətn boşdur!"); return; }
 
             let blocks = rawText.split(/\n(?=\d+[\.\)])/g);
-            tempParsedQuestions = [];
+            let parsedQuestions = [];
 
             blocks.forEach(block => {
                 let lines = block.trim().split("\n").map(l => l.trim()).filter(l => l.length > 0);
-                if (lines.length < 1) return;
+                if (lines.length < 2) return;
 
                 let headerMatch = lines[0].match(/^(\d+)[\.\)]\s*(.*)/);
                 if (!headerMatch) return;
@@ -482,82 +350,107 @@
                     currentLineIdx++;
                 }
 
-                tempParsedQuestions.push({ q_number: qNo, question: qText, options: options, correct: 0 });
-            });
+                while (options.length < 5) options.push("");
 
-            renderParsedQuestionsPreview();
-        }
-
-        function renderParsedQuestionsPreview() {
-            let container = document.getElementById("parsed-questions-list");
-            let parentBox = document.getElementById("parsed-questions-preview-container");
-            if (tempParsedQuestions.length === 0) { parentBox.style.display = "none"; return; }
-
-            parentBox.style.display = "block";
-            let html = "";
-            tempParsedQuestions.forEach((q, idx) => {
-                html += `
-                    <div class="parsed-q-item">
-                        <b>Sual ${q.q_number}:</b>
-                        <textarea class="form-control" onchange="tempParsedQuestions[${idx}].question = this.value">${q.question}</textarea>
-                        <div style="margin-top:5px;">
-                            ${q.options.map((opt, oIdx) => `<div>${String.fromCharCode(65+oIdx)}) <input type="text" value="${opt}" class="form-control" style="display:inline-block; width:80%;" onchange="tempParsedQuestions[${idx}].options[${oIdx}] = this.value"></div>`).join('')}
-                        </div>
-                        <button class="btn btn-danger btn-sm" style="margin-top:5px;" onclick="removeParsedQuestion(${idx})">Bu Sualı Sil</button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function removeParsedQuestion(idx) {
-            tempParsedQuestions.splice(idx, 1);
-            renderParsedQuestionsPreview();
-        }
-
-        function clearParsedQuestionsPreview() {
-            tempParsedQuestions = [];
-            renderParsedQuestionsPreview();
-        }
-
-        async function saveAllParsedQuestions() {
-            let examType = document.getElementById("full-pdf-target-exam-type").value;
-            let examId = document.getElementById("full-pdf-target-exam").value;
-
-            if (tempParsedQuestions.length === 0) { alert("Sual yoxdur!"); return; }
-
-            let formattedList = tempParsedQuestions.map(q => {
                 let subject = "Azərbaycan dili";
-                if (q.q_number >= 16 && q.q_number <= 55) subject = "Qanunvericilik";
-                else if (q.q_number >= 56 && q.q_number <= 70) subject = "İnformatika";
-                else if (q.q_number >= 71) subject = "Məntiq";
+                if (qNo >= 16 && qNo <= 55) subject = "Qanunvericilik";
+                else if (qNo >= 56 && qNo <= 70) subject = "İnformatika";
+                else if (qNo >= 71) subject = "Məntiq";
 
-                return {
-                    exam_type: examType,
+                parsedQuestions.push({
                     exam_id: examId,
-                    q_number: q.q_number,
+                    q_number: qNo,
                     subject: subject,
-                    question: q.question,
-                    options: q.options,
-                    correct: q.correct || 0,
-                    q_type: q.options.length > 0 ? String(q.options.length) : "open"
-                };
+                    question: qText,
+                    image_url: "",
+                    options: options,
+                    option_images: ["", "", "", "", ""],
+                    correct: 0
+                });
             });
 
-            await _supabase.from('exam_questions').delete().eq('exam_type', examType).eq('exam_id', examId);
-            const { error } = await _supabase.from('exam_questions').insert(formattedList);
+            if (parsedQuestions.length === 0) { alert("Format uyğun deyil!"); return; }
 
-            if (error) alert("Xəta: " + error.message);
+            await _supabase.from('exam_questions').delete().eq('exam_id', examId);
+            const { error } = await _supabase.from('exam_questions').insert(parsedQuestions);
+
+            if (error) { alert("Xəta: " + error.message); } 
+            else { alert(`Sınaq ${examId} üçün ${parsedQuestions.length} sual yükləndi!`); document.getElementById("copy-text-area").value = ""; }
+        }
+
+        // FƏRDİ SUAL REDAKTƏSİ VƏ YADDA SAXLANMASI (Düzəliş olunmuş hissə: delete + insert)
+        async function loadSingleQuestionForEdit() {
+            let examId = document.getElementById("search-exam-id").value;
+            let qNo = document.getElementById("search-q-no").value;
+
+            if (!qNo) { alert("Sual nömrəsini yazın!"); return; }
+
+            const { data, error } = await _supabase.from('exam_questions').select('*').eq('exam_id', examId).eq('q_number', qNo).single();
+
+            if (error || !data) { alert("Sual tapılmadı!"); return; }
+
+            document.getElementById("single-exam-id").value = data.exam_id;
+            document.getElementById("single-q-no").value = data.q_number;
+            document.getElementById("single-q-text").value = data.question;
+            document.getElementById("opt-a").value = data.options[0] || "";
+            document.getElementById("opt-b").value = data.options[1] || "";
+            document.getElementById("opt-c").value = data.options[2] || "";
+            document.getElementById("opt-d").value = data.options[3] || "";
+            document.getElementById("opt-e").value = data.options[4] || "";
+            document.getElementById("single-correct").value = data.correct || 0;
+        }
+
+        async function saveSingleQuestion() {
+            let examId = document.getElementById("single-exam-id").value;
+            let qNo = parseInt(document.getElementById("single-q-no").value);
+            let qText = document.getElementById("single-q-text").value;
+            let optA = document.getElementById("opt-a").value;
+            let optB = document.getElementById("opt-b").value;
+            let optC = document.getElementById("opt-c").value;
+            let optD = document.getElementById("opt-d").value;
+            let optE = document.getElementById("opt-e").value;
+            let correct = parseInt(document.getElementById("single-correct").value);
+
+            let subject = "Azərbaycan dili";
+            if (qNo >= 16 && qNo <= 55) subject = "Qanunvericilik";
+            else if (qNo >= 56 && qNo <= 70) subject = "İnformatika";
+            else if (qNo >= 71) subject = "Məntiq";
+
+            await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+            const { error } = await _supabase.from('exam_questions').insert([{
+                exam_id: examId,
+                q_number: qNo,
+                subject: subject,
+                question: qText,
+                options: [optA, optB, optC, optD, optE],
+                correct: correct
+            }]);
+
+            if (error) { alert("Xəta: " + error.message); } 
             else {
-                alert(`${formattedList.length} sual uğurla bazaya saxlanıldı!`);
-                clearParsedQuestionsPreview();
-                document.getElementById("copy-text-area").value = "";
+                alert(`Sual ${qNo} yadda saxlanıldı!`);
+                document.getElementById("single-q-no").value = qNo + 1;
+                document.getElementById("single-q-text").value = "";
+                document.getElementById("opt-a").value = "";
+                document.getElementById("opt-b").value = "";
+                document.getElementById("opt-c").value = "";
+                document.getElementById("opt-d").value = "";
+                document.getElementById("opt-e").value = "";
+            }
+        }
+
+        async function deleteSingleQuestion() {
+            let examId = document.getElementById("single-exam-id").value;
+            let qNo = document.getElementById("single-q-no").value;
+
+            if (confirm(`Sınaq ${examId}, Sual ${qNo} silinsin?`)) {
+                await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+                alert("Sual silindi!");
             }
         }
 
         // CAVAB AÇARLARI TOPLU YÜKLƏMƏ
         async function saveBulkAnswers() {
-            let examType = document.getElementById("bulk-answers-exam-type").value;
             let examId = document.getElementById("bulk-answers-exam-id").value;
             let text = document.getElementById("bulk-answers-text").value.toUpperCase();
 
@@ -566,28 +459,29 @@
             let letterToNum = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4 };
             let matches = text.match(/([A-E])/g);
 
-            if (!matches) { alert("A-E arası hərflər tapılmadı!"); return; }
+            if (!matches) { alert("A-E arası harflər tapılmadı!"); return; }
 
             for (let i = 0; i < matches.length; i++) {
                 let qNo = i + 1;
-                await _supabase.from('exam_questions').update({ correct: letterToNum[matches[i]] }).eq('exam_type', examType).eq('exam_id', examId).eq('q_number', qNo);
+                if (qNo <= 100) {
+                    await _supabase.from('exam_questions').update({ correct: letterToNum[matches[i]] }).eq('exam_id', examId).eq('q_number', qNo);
+                }
             }
 
-            alert(`${examType} Sınaq ${examId} üçün cavab açarları saxlanıldı!`);
+            alert(`Sınaq ${examId} üçün ${matches.length} cavab açarı yerləşdirildi!`);
             document.getElementById("bulk-answers-text").value = "";
         }
 
-        // TƏLƏBƏ İCAZƏSİ VƏ GİRİŞ
+        // TƏLƏBƏ İCAZƏSİ VƏ SİSTEMƏ GİRİŞ
         async function allowStudent() {
             let name = document.getElementById("adm-student-name").value.trim();
             let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
             let cat = document.getElementById("adm-student-category").value;
-            let examType = document.getElementById("adm-student-exam-type").value;
             let examId = document.getElementById("adm-student-exam").value;
 
             if (!name || !fin) { alert("Məlumatları doldurun!"); return; }
 
-            const { error } = await _supabase.from('allowed_students').upsert([{ name, fin, category: cat, exam_type: examType, exam_id: examId }], { onConflict: 'fin' });
+            const { error } = await _supabase.from('allowed_students').upsert([{ name, fin, category: cat, exam_id: examId }], { onConflict: 'fin' });
             if (error) alert("Xəta: " + error.message);
             else { alert("İcazə verildi!"); loadAllowedStudents(); }
         }
@@ -595,9 +489,9 @@
         async function loadAllowedStudents() {
             const { data } = await _supabase.from('allowed_students').select('*');
             let tbody = document.getElementById("allowed-students-table-body");
-            if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6">Tələbə tapılmadı</td></tr>`; return; }
+            if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="5">Tələbə tapılmadı</td></tr>`; return; }
             let html = "";
-            data.forEach(s => { html += `<tr><td>${s.name}</td><td><b>${s.fin}</b></td><td>${s.category}</td><td>${s.exam_type || 'Ümumi Sınaq'}</td><td>Sınaq ${s.exam_id}</td><td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Sil</button></td></tr>`; });
+            data.forEach(s => { html += `<tr><td>${s.name}</td><td><b>${s.fin}</b></td><td>${s.category}</td><td>Sınaq ${s.exam_id}</td><td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Sil</button></td></tr>`; });
             tbody.innerHTML = html;
         }
 
@@ -622,24 +516,23 @@
             currentStudentName = nameInput;
             currentActiveFin = finInput;
             selectedExamId = data[0].exam_id || "1";
-            selectedExamType = data[0].exam_type || "Ümumi Sınaq";
 
             fetchExamQuestionsAndStart();
         }
 
         async function fetchExamQuestionsAndStart() {
-            const { data, error } = await _supabase.from('exam_questions').select('*').eq('exam_type', selectedExamType).eq('exam_id', selectedExamId).order('q_number', { ascending: true });
+            const { data, error } = await _supabase.from('exam_questions').select('*').eq('exam_id', selectedExamId).order('q_number', { ascending: true });
 
             if (error || !data || data.length === 0) { alert("Sual tapılmadı!"); return; }
 
-            allQuestions = data;
+            allQuestions = data.map(q => ({ id: q.q_number, subject: q.subject, question: q.question, options: q.options, correct: q.correct }));
             userAnswers = {};
             flaggedQuestions = {};
             currentQuestionIndex = 0;
 
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("exam-screen").style.display = "block";
-            document.getElementById("active-exam-title").innerText = `${selectedExamType} - Sınaq ${selectedExamId}`;
+            document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Sınaq ${selectedExamId}`;
 
             loadNavGrid();
             renderCurrentQuestion();
@@ -649,67 +542,51 @@
         function renderCurrentQuestion() {
             const q = allQuestions[currentQuestionIndex];
             const container = document.getElementById("single-question-container");
-            const isFlagged = flaggedQuestions[q.q_number] ? "checked" : "";
-            const userAns = userAnswers[q.q_number];
+            const isFlagged = flaggedQuestions[q.id] ? "checked" : "";
+            const userAns = userAnswers[q.id];
             let letters = ["A", "B", "C", "D", "E"];
 
             let html = `
                 <div>
                     <div class="question-top">
-                        <div class="question-title">Sual ${q.q_number} (${q.subject}):\n${q.question}</div>
+                        <div class="question-title">Sual ${q.id} (${q.subject}):\n${q.question}</div>
                         <label style="color:#d97706; font-size:14px; font-weight:bold; cursor:pointer;">
-                            <input type="checkbox" id="flag_chk" ${isFlagged} onchange="toggleFlag(${q.q_number})"> Tərəddüdlü
+                            <input type="checkbox" id="flag_chk" ${isFlagged} onchange="toggleFlag(${q.id})"> Tərəddüdlü
                         </label>
                     </div>
+                    <div class="options">
             `;
 
-            if (q.image_url) {
-                html += `<img src="${q.image_url}" class="q-img-preview">`;
-            }
+            q.options.forEach((opt, idx) => {
+                let checked = (userAns === idx) ? "checked" : "";
+                let disabledAttr = examFinished ? "disabled" : "";
+                let correctHighlight = "";
+                
+                if (examFinished) {
+                    if (idx === q.correct) correctHighlight = "background-color: #d1fae5; border: 1px solid #10b981; font-weight: bold;";
+                    else if (userAns === idx && userAns !== q.correct) correctHighlight = "background-color: #fef2f2; border: 1px solid #ef4444;";
+                }
 
-            if (q.q_type === "open") {
-                let openVal = userAns !== undefined ? userAns : "";
-                html += `<input type="text" class="form-control" style="margin-top:10px;" placeholder="Cavabınızı bura yazın..." value="${openVal}" onchange="saveOpenAnswer(${q.q_number}, this.value)">`;
-            } else if (q.options) {
-                html += `<div class="options">`;
-                q.options.forEach((opt, idx) => {
-                    let checked = (userAns === idx) ? "checked" : "";
-                    let disabledAttr = examFinished ? "disabled" : "";
-                    let correctHighlight = "";
-                    
-                    if (examFinished) {
-                        if (String(idx) === String(q.correct)) correctHighlight = "background-color: #d1fae5; border: 1px solid #10b981; font-weight: bold;";
-                        else if (userAns === idx && String(userAns) !== String(q.correct)) correctHighlight = "background-color: #fef2f2; border: 1px solid #ef4444;";
-                    }
+                html += `
+                    <label style="${correctHighlight}">
+                        <input type="radio" name="current_opt" value="${idx}" ${checked} ${disabledAttr} onclick="selectOption(${q.id}, ${idx})">
+                        ${letters[idx]}) ${opt}
+                    </label>
+                `;
+            });
 
-                    html += `
-                        <label style="${correctHighlight}">
-                            <input type="radio" name="current_opt" value="${idx}" ${checked} ${disabledAttr} onclick="selectOption(${q.q_number}, ${idx})">
-                            ${letters[idx]}) ${opt}
-                        </label>
-                    `;
-                });
-                html += `</div>`;
-            }
-
-            html += `</div>`;
+            html += `</div></div>`;
             container.innerHTML = html;
             updateNavActiveState();
-        }
-
-        function saveOpenAnswer(qId, val) {
-            if(examFinished) return;
-            userAnswers[qId] = val;
-            document.getElementById(`nav_${qId}`).classList.add("answered");
         }
 
         function loadNavGrid() {
             const gridContainer = document.getElementById("grid-nav-container");
             let html = "";
             allQuestions.forEach((q, index) => {
-                let isAns = userAnswers[q.q_number] !== undefined ? "answered" : "";
-                let isFlg = flaggedQuestions[q.q_number] ? "flagged" : "";
-                html += `<div class="nav-box ${isAns} ${isFlg}" id="nav_${q.q_number}" onclick="jumpToQuestion(${index})">${q.q_number}</div>`;
+                let isAns = userAnswers[q.id] !== undefined ? "answered" : "";
+                let isFlg = flaggedQuestions[q.id] ? "flagged" : "";
+                html += `<div class="nav-box ${isAns} ${isFlg}" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${q.id}</div>`;
             });
             gridContainer.innerHTML = html;
         }
@@ -722,7 +599,7 @@
 
         function updateNavActiveState() {
             allQuestions.forEach((q, idx) => {
-                let box = document.getElementById(`nav_${q.q_number}`);
+                let box = document.getElementById(`nav_${q.id}`);
                 if (box) {
                     if (idx === currentQuestionIndex) box.classList.add("current");
                     else box.classList.remove("current");
@@ -750,34 +627,21 @@
             clearInterval(timerInterval);
             examFinished = true;
             let totalCorrect = 0, totalWrong = 0, totalBlank = 0;
-            let subjectDetails = {};
 
             allQuestions.forEach(q => {
-                let subj = q.subject || "Ümumi";
-                if (!subjectDetails[subj]) subjectDetails[subj] = { correct: 0, wrong: 0, blank: 0 };
-
-                let userAns = userAnswers[q.q_number];
-                if (userAns === undefined || userAns === "") {
-                    totalBlank++;
-                    subjectDetails[subj].blank++;
-                } else if (String(userAns) === String(q.correct)) {
-                    totalCorrect++;
-                    subjectDetails[subj].correct++;
-                } else {
-                    totalWrong++;
-                    subjectDetails[subj].wrong++;
-                }
+                let userAns = userAnswers[q.id];
+                if (userAns === undefined) totalBlank++;
+                else if (userAns === q.correct) totalCorrect++;
+                else totalWrong++;
             });
 
             await _supabase.from('exam_results').insert([{
                 name: currentStudentName,
                 fin: currentActiveFin,
-                exam_type: selectedExamType,
                 exam_no: selectedExamId,
                 correct_count: totalCorrect,
                 wrong_count: totalWrong,
                 score: totalCorrect,
-                subject_details: JSON.stringify(subjectDetails),
                 bb_group: totalCorrect >= 65 ? "Keçdi" : "Kəsildi"
             }]);
 
@@ -788,7 +652,6 @@
             document.getElementById("res-total-wrong").innerText = totalWrong;
             document.getElementById("res-total-blank").innerText = totalBlank;
             document.getElementById("res-total-score").innerText = totalCorrect + " bal";
-            document.getElementById("res-bb-group").innerText = totalCorrect >= 65 ? "TƏBRİKLƏR, KEÇDİNİZ!" : "TƏƏSSÜF KI, KEÇƏ BİLMƏDİNİZ.";
         }
 
         function backToReviewQuestions() { document.getElementById("result-screen").style.display = "none"; document.getElementById("exam-screen").style.display = "block"; currentQuestionIndex = 0; renderCurrentQuestion(); }
@@ -813,36 +676,8 @@
             if(results) {
                 let tbody = document.getElementById("results-table-body");
                 let html = "";
-                results.forEach(r => { 
-                    html += `
-                        <tr>
-                            <td>${r.name}</td>
-                            <td>${r.fin}</td>
-                            <td>${r.exam_type || 'Ümumi Sınaq'}</td>
-                            <td>Sınaq ${r.exam_no}</td>
-                            <td style="color:green">${r.correct_count}</td>
-                            <td style="color:red">${r.wrong_count}</td>
-                            <td><b>${r.score}</b></td>
-                            <td><button class="btn btn-warning btn-sm" onclick="showSubjectDetails('${r.id}')">İncələ</button></td>
-                            <td><button class="btn btn-danger btn-sm" onclick="deleteResult(${r.id})">Sil</button></td>
-                        </tr>
-                    `; 
-                });
+                results.forEach(r => { html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score}</b></td><td><button class="btn btn-danger btn-sm" onclick="deleteResult(${r.id})">Sil</button></td></tr>`; });
                 tbody.innerHTML = html;
-            }
-        }
-
-        async function showSubjectDetails(resId) {
-            const { data } = await _supabase.from('exam_results').select('subject_details, name').eq('id', resId).single();
-            if (data && data.subject_details) {
-                let details = typeof data.subject_details === "string" ? JSON.parse(data.subject_details) : data.subject_details;
-                let msg = `${data.name} - Fənn Üzrə Nəticələr:\n\n`;
-                for (let subj in details) {
-                    msg += `${subj}: D: ${details[subj].correct} | Y: ${details[subj].wrong} | C: ${details[subj].blank}\n`;
-                }
-                alert(msg);
-            } else {
-                alert("Ətraflı fənn məlumatı tapılmadı.");
             }
         }
 
@@ -855,4 +690,3 @@
     </script>
 </body>
 </html>
-
