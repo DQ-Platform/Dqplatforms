@@ -3,147 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DQ Platform - Admin Panel (Yunis İmanov)</title>
+    <title>DQ Platform - Admin Redaktə Paneli (Yunis İmanov)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
-        h2 { color: #1a1a1a; margin-bottom: 20px; font-size: 22px; text-align: center; }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; }
-        input:focus { border-color: #007bff; }
-        button { width: 100%; padding: 11px; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
-        button:hover { background-color: #0056b3; }
-        .logout-btn { background-color: #dc3545; margin-top: 15px; }
-        .logout-btn:hover { background-color: #a71d2a; }
-        #adminPanel, #errorBox { display: none; }
-        .error { color: #dc3545; font-size: 13px; margin-top: 10px; text-align: center; }
-        .success { color: #28a745; font-size: 13px; margin-top: 10px; text-align: center; }
-        ul { list-style: none; margin-top: 15px; max-height: 150px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 5px; }
-        li { padding: 8px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        li:last-child { border-bottom: none; }
-        .delete-btn { background: #ff4d4d; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        body { background-color: #f1f5f9; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2, h3, h4 { color: #0f172a; margin-bottom: 15px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px; }
+
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 10px; font-size: 14px; }
+        .btn { padding: 10px 18px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: #0f172a; color: #d4af37; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+
+        /* WORD STYLE PREVIEW */
+        .paper-preview { background: white; padding: 25px; border: 1px solid #cbd5e1; box-shadow: 0 0 10px rgba(0,0,0,0.05); min-height: 300px; border-radius: 4px; }
+        .editable-area { outline: none; border: 1px dashed transparent; transition: 0.2s; }
+        .editable-area:hover, .editable-area:focus { border-color: #0f172a; background: #fffde7; }
+
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
+        th, td { padding: 8px; border: 1px solid #cbd5e1; }
+        th { background: #0f172a; color: white; }
     </style>
 </head>
 <body>
 
-    <!-- GİRİŞ HİSSƏSİ -->
-    <div class="container" id="loginBox">
-        <h2>Yunis İmanov - Admin Girişi</h2>
-        <div class="form-group">
-            <label>Admin Şifrəsi</label>
-            <input type="password" id="adminPassword" placeholder="Şifrəni daxil edin">
-        </div>
-        <button onclick="adminLogin()">Daxil ol</button>
-        <div id="loginError" class="error">Şifrə səhvdir!</div>
+    <div class="container" id="loginBox" style="max-width: 400px; margin: 100px auto; text-align: center;">
+        <h2>Yunis İmanov - Admin Panel</h2>
+        <input type="password" id="adminPassword" class="form-control" placeholder="Şifrəni daxil edin">
+        <button class="btn btn-primary" style="width: 100%;" onclick="adminLogin()">Daxil ol</button>
     </div>
 
-    <!-- İDARƏETMƏ PANELİ -->
-    <div class="container" id="adminPanel">
-        <h2>Sınaq İştirakçıları Paneli</h2>
-        
-        <div class="form-group">
-            <label>Tələbənin Adı və Soyadı</label>
-            <input type="text" id="studentName" placeholder="Məs: Əli Məmmədov">
-        </div>
-        
-        <div class="form-group">
-            <label>Tələbənin FİN Kodu</label>
-            <input type="text" id="studentFin" placeholder="Məs: 7P7GS57" style="text-transform: uppercase;">
+    <div class="container" id="adminPanel" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>🔑 DQ Platform - İnteraktiv Sual Redaktoru</h2>
+            <button class="btn btn-danger" onclick="adminLogout()">Çıxış</button>
         </div>
 
-        <button onclick="addStudent()">İcazə Ver (Əlavə et)</button>
-        <div id="actionMsg"></div>
+        <div class="grid-2">
+            <!-- SUAL ƏLAVƏ / REDAKTƏ FORMASI -->
+            <div class="card">
+                <h4>📝 Sual Parametrləri Və Şəkillər</h4>
+                
+                <div style="display: flex; gap: 10px;">
+                    <select id="q-category" class="form-control">
+                        <option value="BB">BB Kateqoriyası</option>
+                        <option value="BA">BA Kateqoriyası</option>
+                        <option value="AC">AC Kateqoriyası</option>
+                    </select>
+                    <select id="q-type" class="form-control" onchange="toggleQuestionType()">
+                        <option value="mcq">Çoxvariantlı (A-E)</option>
+                        <option value="open">Açıq Sual (BA üçün)</option>
+                    </select>
+                </div>
 
-        <div style="margin-top: 20px;">
-            <label>İcazə Verilən Şəxslər Siyahısı:</label>
-            <ul id="studentList"></ul>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="q-exam-id" class="form-control" placeholder="Sınaq No (1)" value="1">
+                    <input type="number" id="q-number" class="form-control" placeholder="Sual No" value="1">
+                </div>
+
+                <textarea id="q-text" class="form-control" rows="3" placeholder="Sualın mətni..." oninput="updateLivePreview()"></textarea>
+                
+                <label style="font-size: 12px; font-weight: bold;">Sual Şəkli (Qalereyadan):</label>
+                <input type="file" id="q-img-file" class="form-control" accept="image/*">
+
+                <div id="mcq-options-block">
+                    <h5 style="margin: 10px 0;">Variantlar:</h5>
+                    <input type="text" id="opt-a" class="form-control" placeholder="A Variantı" oninput="updateLivePreview()">
+                    <input type="text" id="opt-b" class="form-control" placeholder="B Variantı" oninput="updateLivePreview()">
+                    <input type="text" id="opt-c" class="form-control" placeholder="C Variantı" oninput="updateLivePreview()">
+                    <input type="text" id="opt-d" class="form-control" placeholder="D Variantı" oninput="updateLivePreview()">
+                    
+                    <div id="opt-e-wrapper" style="display: none;">
+                        <input type="text" id="opt-e" class="form-control" placeholder="E Variantı" oninput="updateLivePreview()">
+                    </div>
+
+                    <button type="button" class="btn btn-primary" style="padding: 4px 10px; font-size: 12px; margin-bottom: 10px;" onclick="enableEVariant()">➕ 5-ci Variantı Əlavə Et (E)</button>
+
+                    <label style="font-size: 12px; font-weight: bold;">Doğru Cavab (0=A, 1=B, 2=C, 3=D, 4=E):</label>
+                    <input type="number" id="q-correct" class="form-control" value="0" min="0" max="4">
+                </div>
+
+                <div id="open-q-block" style="display: none;">
+                    <label style="font-size: 12px; font-weight: bold;">Açıq Sual Doğru Cavabı (Mətn):</label>
+                    <input type="text" id="q-open-correct" class="form-control" placeholder="Doğru cavab ifadəsi...">
+                </div>
+
+                <button class="btn btn-success" style="width: 100%; margin-top: 10px;" onclick="saveQuestionToDatabase()">Sualı Yadda Saxla / Bazaya Yaz</button>
+            </div>
+
+            <!-- WORD ÜSLUBLU CANLI ÖNBAXIŞ VƏ REDAKTƏ -->
+            <div>
+                <h4>📄 Word Üslubunda Canlı Önbaxış (In-Place Redaktə)</h4>
+                <div class="paper-preview">
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">* Mətni birbaşa üzərinə klikləyərək MS Word-dəki kimi düzəldə bilərsiniz:</p>
+                    <div id="pv-title" style="font-weight: bold; margin-bottom: 10px;">Sual 1:</div>
+                    <div id="pv-text" class="editable-area" contenteditable="true" onblur="syncFromPreview()">Sualın mətni bura çıxacaq...</div>
+                    <div id="pv-options" style="margin-top: 15px;"></div>
+                </div>
+            </div>
         </div>
-
-        <button class="logout-btn" onclick="adminLogout()">Çıxış</button>
     </div>
 
     <script>
-        // Admin şifrəsini burdan dəyişə bilərsiniz:
-        const ADMIN_PASS = "yunis2026"; 
+        const ADMIN_PASS = "yunis2026";
+        const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         function adminLogin() {
-            const pass = document.getElementById('adminPassword').value;
-            if (pass === ADMIN_PASS) {
-                localStorage.setItem('yunisAdminLoggedIn', 'true');
-                showPanel();
+            if(document.getElementById('adminPassword').value === ADMIN_PASS) {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+            } else alert("Şifrə səhvdir!");
+        }
+
+        function adminLogout() { location.reload(); }
+
+        function toggleQuestionType() {
+            let type = document.getElementById("q-type").value;
+            document.getElementById("mcq-options-block").style.display = type === 'mcq' ? 'block' : 'none';
+            document.getElementById("open-q-block").style.display = type === 'open' ? 'block' : 'none';
+            updateLivePreview();
+        }
+
+        function enableEVariant() {
+            document.getElementById("opt-e-wrapper").style.display = "block";
+            updateLivePreview();
+        }
+
+        function updateLivePreview() {
+            let qNo = document.getElementById("q-number").value;
+            let qText = document.getElementById("q-text").value;
+            let type = document.getElementById("q-type").value;
+
+            document.getElementById("pv-title").innerText = `Sual ${qNo}:`;
+            document.getElementById("pv-text").innerText = qText || "Sualın mətni...";
+
+            let optsHtml = "";
+            if(type === 'mcq') {
+                let opts = [
+                    document.getElementById("opt-a").value,
+                    document.getElementById("opt-b").value,
+                    document.getElementById("opt-c").value,
+                    document.getElementById("opt-d").value,
+                    document.getElementById("opt-e").value
+                ];
+                let letters = ["A", "B", "C", "D", "E"];
+                opts.forEach((o, i) => {
+                    if(o || i < 4) {
+                        optsHtml += `<div class="editable-area" contenteditable="true" style="margin:5px 0;"><b>${letters[i]})</b> ${o}</div>`;
+                    }
+                });
             } else {
-                document.getElementById('loginError').style.display = 'block';
+                optsHtml = `<div style="color: #64748b;">[Açıq Cavablı Sual]</div>`;
             }
+            document.getElementById("pv-options").innerHTML = optsHtml;
         }
 
-        function showPanel() {
-            document.getElementById('loginBox').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            loadStudents();
+        function syncFromPreview() {
+            document.getElementById("q-text").value = document.getElementById("pv-text").innerText;
         }
 
-        function adminLogout() {
-            localStorage.removeItem('yunisAdminLoggedIn');
-            location.reload();
-        }
+        async function saveQuestionToDatabase() {
+            let examId = document.getElementById("q-exam-id").value;
+            let qNo = parseInt(document.getElementById("q-number").value);
+            let category = document.getElementById("q-category").value;
+            let qType = document.getElementById("q-type").value;
+            let qText = document.getElementById("q-text").value;
 
-        window.onload = function() {
-            if (localStorage.getItem('yunisAdminLoggedIn') === 'true') {
-                showPanel();
-            }
-        }
+            let fileInput = document.getElementById("q-img-file");
+            let imageUrl = "";
 
-        function getStudents() {
-            let students = localStorage.getItem('yunisAllowedStudents');
-            return students ? JSON.parse(students) : [];
-        }
-
-        function loadStudents() {
-            const listEl = document.getElementById('studentList');
-            listEl.innerHTML = '';
-            let students = getStudents();
-
-            students.forEach((s, index) => {
-                listEl.innerHTML += `<li><span><b>${s.name}</b> (${s.fin})</span> <button class="delete-btn" onclick="deleteStudent(${index})">Sil</button></li>`;
-            });
-        }
-
-        function addStudent() {
-            let name = document.getElementById('studentName').value.trim();
-            let fin = document.getElementById('studentFin').value.trim().toUpperCase();
-            let msgBox = document.getElementById('actionMsg');
-
-            if (name === "" || fin === "") {
-                msgBox.className = "error";
-                msgBox.innerText = "Bütün xanaları doldurun!";
-                return;
+            if(fileInput.files.length > 0) {
+                let file = fileInput.files[0];
+                let fileName = `q_${examId}_${qNo}_${Date.now()}`;
+                const { data, error } = await _supabase.storage.from('question_images').upload(fileName, file);
+                if(!error) {
+                    imageUrl = `${SUPABASE_URL}/storage/v1/object/public/question_images/${fileName}`;
+                }
             }
 
-            let students = getStudents();
-            
-            if (students.some(s => s.fin === fin)) {
-                msgBox.className = "error";
-                msgBox.innerText = "Bu FİN kod artıq siyahıda mövcuddur!";
-                return;
+            let payload = {
+                exam_id: examId,
+                q_number: qNo,
+                category: category,
+                question_type: qType,
+                question: qText,
+                image_url: imageUrl
+            };
+
+            if(qType === 'mcq') {
+                payload.options = [
+                    document.getElementById("opt-a").value,
+                    document.getElementById("opt-b").value,
+                    document.getElementById("opt-c").value,
+                    document.getElementById("opt-d").value,
+                    document.getElementById("opt-e").value
+                ];
+                payload.correct = parseInt(document.getElementById("q-correct").value);
+            } else {
+                payload.correct_open_text = document.getElementById("q-open-correct").value;
             }
 
-            students.push({ name: name, fin: fin });
-            localStorage.setItem('yunisAllowedStudents', JSON.stringify(students));
+            await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+            const { error } = await _supabase.from('exam_questions').insert([payload]);
 
-            document.getElementById('studentName').value = "";
-            document.getElementById('studentFin').value = "";
-            msgBox.className = "success";
-            msgBox.innerText = "Uğurla əlavə olundu!";
-            loadStudents();
-        }
-
-        function deleteStudent(index) {
-            let students = getStudents();
-            students.splice(index, 1);
-            localStorage.setItem('yunisAllowedStudents', JSON.stringify(students));
-            loadStudents();
+            if(error) alert("Xəta: " + error.message);
+            else {
+                alert(`Sual ${qNo} uğurla saxlanıldı!`);
+                document.getElementById("q-number").value = qNo + 1;
+                updateLivePreview();
+            }
         }
     </script>
 </body>
