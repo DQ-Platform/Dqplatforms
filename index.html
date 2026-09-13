@@ -272,11 +272,19 @@
                 </div>
             </div>
 
-            <!-- PREVIEW -->
+            <!-- PREVIEW (YENİ KATEQORİYA FİLTRİ İLƏ) -->
             <div class="card-box p-5 space-y-4">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b pb-3">
                     <h3 class="font-bold text-xs text-slate-800 uppercase">📝 Canlı Önbaxış (Baza Sualları)</h3>
                     <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <!-- YENİ: Kateqoriya Filtri -->
+                        <select id="preview-filter-cat" class="p-1.5 border rounded bg-white font-semibold text-slate-700" onchange="loadSavedQuestionsPreview()">
+                            <option value="ALL">Bütün Kateqoriyalar</option>
+                            <option value="BB">BB Kateqoriyası</option>
+                            <option value="BA">BA Kateqoriyası</option>
+                            <option value="AC">AC Kateqoriyası</option>
+                        </select>
+                        <!-- Sınaq Filtri -->
                         <select id="preview-filter-exam" class="p-1.5 border rounded bg-white font-semibold text-slate-700" onchange="loadSavedQuestionsPreview()">
                             <option value="ALL">Bütün Sınaqlar</option>
                         </select>
@@ -582,6 +590,7 @@
             let qText = document.getElementById("single-q-text").value.trim();
             let cat = document.getElementById("adm-q-category").value;
             let qType = document.getElementById("adm-q-type").value;
+            let mainCategory = document.getElementById("adm-student-category") ? document.getElementById("adm-student-category").value : "BB";
 
             let optionsArr = [];
             let correctVal = "0";
@@ -598,13 +607,13 @@
                 correctVal = selectedRadio ? selectedRadio.value : "0";
             }
 
-            await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+            await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo).eq('main_category', mainCategory);
             await _supabase.from('exam_questions').insert([{
                 exam_id: examId, q_number: qNo, category: cat, q_type: qType,
-                question: qText, image_url: mainQImage, options: optionsArr, correct: correctVal
+                question: qText, image_url: mainQImage, options: optionsArr, correct: correctVal, main_category: mainCategory
             }]);
 
-            alert(`Sual #${qNo} saxlanıldı!`);
+            alert(`Sual #${qNo} (${mainCategory} Kateqoriyası) saxlanıldı!`);
             resetQuestionForm();
             loadSavedQuestionsPreview();
         }
@@ -618,20 +627,29 @@
             renderAdminOptions();
         }
 
+        /* YENİLƏNMİŞ CANLI ÖNBAXIŞ LOAD FUNKSİYASI */
         async function loadSavedQuestionsPreview() {
+            const filterCat = document.getElementById("preview-filter-cat").value;
             const filterExam = document.getElementById("preview-filter-exam").value;
             const { data } = await _supabase.from('exam_questions').select('*').order('q_number', { ascending: true });
             if (!data) return;
 
-            let filteredData = data.filter(q => filterExam === "ALL" || String(q.exam_id) === String(filterExam));
+            let filteredData = data.filter(q => {
+                let matchCat = (filterCat === "ALL" || q.main_category === filterCat || q.category === filterCat);
+                let matchExam = (filterExam === "ALL" || String(q.exam_id) === String(filterExam));
+                return matchCat && matchExam;
+            });
+
             const previewContainer = document.getElementById("live-preview-list");
-            if (filteredData.length === 0) { previewContainer.innerHTML = `<p class="text-xs text-slate-400">Sual tapılmadı.</p>`; return; }
+            if (filteredData.length === 0) { previewContainer.innerHTML = `<p class="text-xs text-slate-400">Seçilmiş kriteriyalara uyğun sual tapılmadı.</p>`; return; }
 
             let html = "";
             filteredData.forEach(q => {
                 html += `
                     <div class="border rounded p-3 text-xs bg-slate-50">
-                        <div class="font-bold text-amber-700 mb-1">Sınaq ${q.exam_id} | Sual #${q.q_number} (${q.category})</div>
+                        <div class="font-bold text-amber-700 mb-1">
+                            Sınaq ${q.exam_id} | ${q.main_category ? q.main_category + ' - ' : ''}Sual #${q.q_number} (${q.category})
+                        </div>
                         ${q.question ? `<p class="font-medium">${q.question}</p>` : ''}
                     </div>
                 `;
@@ -639,11 +657,24 @@
             previewContainer.innerHTML = html;
         }
 
+        /* YENİLƏNMİŞ SEÇİLMİŞ SİNAQ SİL FUNKSİYASI */
         async function deleteQuestionsBySelectedExam() {
             const filterExam = document.getElementById("preview-filter-exam").value;
+            const filterCat = document.getElementById("preview-filter-cat").value;
+
             if (filterExam === "ALL") { alert("Zəhmət olmasa konkret sınaq seçin!"); return; }
-            if (confirm(`Sınaq ${filterExam} suallarını silmək istəyirsiniz?`)) {
-                await _supabase.from('exam_questions').delete().eq('exam_id', filterExam);
+
+            let confirmMsg = `Sınaq ${filterExam} suallarını silmək istəyirsiniz?`;
+            if (filterCat !== "ALL") {
+                confirmMsg = `${filterCat} kateqoriyasına aid Sınaq ${filterExam} suallarını silmək istəyirsiniz?`;
+            }
+
+            if (confirm(confirmMsg)) {
+                let query = _supabase.from('exam_questions').delete().eq('exam_id', filterExam);
+                if (filterCat !== "ALL") {
+                    query = query.eq('main_category', filterCat);
+                }
+                await query;
                 loadSavedQuestionsPreview();
             }
         }
@@ -829,3 +860,4 @@
     </script>
 </body>
 </html>
+
