@@ -36,7 +36,7 @@
 
     <main class="max-w-6xl mx-auto px-4">
 
-        <!-- GİRİŞ SƏHİFƏSİ (Üst Zolaqsız) -->
+        <!-- GİRİŞ SƏHİFƏSİ -->
         <div id="login-screen" class="card-box p-8 max-w-lg mx-auto text-center mt-6">
             <div class="flex justify-between items-center border-b pb-4 mb-6">
                 <div class="text-left">
@@ -77,7 +77,7 @@
             <div class="overflow-x-auto rounded border">
                 <table>
                     <thead>
-                        <tr><th>Sınaq №</th><th>Tarix</th><th>Doğru</th><th>Yanlış</th><th>Bal</th><th>Əməliyyat</th></tr>
+                        <tr><th>Sınaq №</th><th>Tarix</th><th>Doğru</th><th>Yanlış</th><th>Bal</th></tr>
                     </thead>
                     <tbody id="cabinet-results-tbody"></tbody>
                 </table>
@@ -128,8 +128,6 @@
             <h2 class="font-extrabold text-xl text-slate-900 uppercase mb-1">İmtahan Nəticəsi</h2>
             <p id="res-name" class="font-bold text-amber-600 mb-6"></p>
 
-            <div id="subject-tables-container" class="space-y-6 text-left overflow-x-auto mb-6"></div>
-
             <div class="grid grid-cols-3 gap-4 text-center font-bold text-xs bg-slate-50 p-3 rounded border mb-6">
                 <div>Doğru: <span id="res-total-correct" class="text-green-600 text-base block">0</span></div>
                 <div>Yanlış: <span id="res-total-wrong" class="text-red-600 text-base block">0</span></div>
@@ -141,7 +139,6 @@
             </div>
 
             <div class="flex gap-3 justify-center">
-                <button class="btn-gold px-5 py-2 rounded text-xs font-bold cursor-pointer" onclick="backToReviewQuestions()">📊 Sualları İncələ</button>
                 <button class="bg-slate-700 text-white px-5 py-2 rounded text-xs font-bold cursor-pointer" onclick="resetToHome()">🏠 Əsas Səhifə</button>
             </div>
         </div>
@@ -149,7 +146,6 @@
         <!-- ADMIN PANELİ -->
         <div id="admin-panel" class="hidden space-y-4">
             
-            <!-- ADMIN BANNER -->
             <div class="bg-slate-900 text-white p-3.5 rounded-lg flex justify-between items-center shadow-sm">
                 <h2 class="font-extrabold text-amber-400 text-sm flex items-center gap-2">🔑 Admin Nəzarət Paneli</h2>
                 <button class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded font-bold cursor-pointer" onclick="closeAdminPanel()">Paneli Bağla</button>
@@ -157,7 +153,7 @@
 
             <!-- İŞTİRAKÇI İCAZƏ BÖLMƏSİ -->
             <div class="card-box p-4">
-                <h3 class="font-bold text-xs text-slate-700 uppercase mb-3">İştirakçıya İcazə Ver (Kateqoriya və Sınaq)</h3>
+                <h3 class="font-bold text-xs text-slate-700 uppercase mb-3">İştirakçıya İcazə Ver</h3>
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
                     <input type="text" id="adm-student-name" class="p-2 border rounded text-xs" placeholder="Ad Soyad">
                     <input type="text" id="adm-student-fin" class="p-2 border rounded text-xs uppercase font-bold" placeholder="FIN KOD" maxlength="7">
@@ -173,9 +169,9 @@
                 </div>
             </div>
 
-            <!-- SUAL TƏRTİBATI (KATEQORİYA, AÇIQ SUAL, DİNAMİK VARİANT) -->
+            <!-- SUAL TƏRTİBATI (ŞƏKİLLİ SUAL VƏ ŞƏKİLLİ VARIANT DƏSTƏYİ) -->
             <div class="card-box p-5 space-y-4">
-                <h3 class="font-bold text-xs text-slate-800 uppercase">Sual Tərtibatı (Kateqoriya, Açıq Sual, Dinamik Variant)</h3>
+                <h3 class="font-bold text-xs text-slate-800 uppercase">Sual Tərtibatı (Mətnli və ya Yalnız Şəkilli)</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                     <div>
@@ -206,17 +202,22 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs text-slate-500 mb-1">Sual Mətni</label>
-                    <textarea id="single-q-text" class="w-full p-2.5 border rounded text-xs outline-none focus:border-slate-400" rows="3" placeholder="Sualın mətni..."></textarea>
+                    <label class="block text-xs text-slate-500 mb-1">Sual Mətni (Əgər sual yalnız şəkildən ibarətdirsə, boş saxlaya bilərsiniz):</label>
+                    <textarea id="single-q-text" class="w-full p-2.5 border rounded text-xs outline-none focus:border-slate-400" rows="2" placeholder="Sualın mətni (istəyə bağlı)..."></textarea>
                 </div>
 
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="text-slate-600 font-medium">📷 Sual Şəkli (Qalereyadan):</span>
+                <!-- SUALIN ŞƏKLİ -->
+                <div class="p-3 bg-slate-50 border rounded text-xs space-y-2">
+                    <span class="text-slate-700 font-bold block">📷 Sualın Əsas Şəkli (Əgər sual şəkildirsə bura yükləyin):</span>
                     <input type="file" id="q-main-img" accept="image/*" class="text-xs" onchange="handleMainImgUpload(this)">
+                    <div id="main-img-preview" class="hidden mt-2">
+                        <img id="main-img-tag" src="" class="max-h-36 border rounded p-1 bg-white">
+                        <button class="text-red-500 text-[11px] font-bold mt-1 underline cursor-pointer" onclick="removeMainImg()">Şəkli Sil</button>
+                    </div>
                 </div>
 
                 <!-- DİNAMİK VARİANTLAR / AÇIQ CAVAB XANASI -->
-                <div id="variant-inputs-container" class="space-y-2 pt-2"></div>
+                <div id="variant-inputs-container" class="space-y-3 pt-2"></div>
 
                 <div class="flex justify-between items-center pt-2">
                     <button id="add-opt-btn" class="btn-navy text-xs px-3 py-2 rounded cursor-pointer" onclick="addOptionRow()">+ Dinamik Variant Əlavə Et</button>
@@ -224,13 +225,12 @@
                 </div>
             </div>
 
-            <!-- CANLI ÖNBAXIŞ (WORD ÜSLUBUNDA BİRBAŞA REDAKTO) -->
+            <!-- CANLI ÖNBAXIŞ -->
             <div class="card-box p-5 space-y-3">
                 <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="font-bold text-xs text-slate-800 uppercase flex items-center gap-1">📝 Canlı Önbaxış (Word Üslubunda Baza Sualları)</h3>
-                    <button class="bg-slate-800 text-white text-[10px] px-2.5 py-1 rounded font-bold" onclick="loadSavedQuestionsPreview()">Yenilə</button>
+                    <h3 class="font-bold text-xs text-slate-800 uppercase flex items-center gap-1">📝 Canlı Önbaxış (Baza Sualları)</h3>
+                    <button class="bg-slate-800 text-white text-[10px] px-2.5 py-1 rounded font-bold cursor-pointer" onclick="loadSavedQuestionsPreview()">Yenilə</button>
                 </div>
-                <p class="text-[11px] text-slate-400">Aşağıdakı mətndə bazada olan suallara nəzarət edə bilərsiniz.</p>
 
                 <div id="live-preview-list" class="space-y-4 pt-2"></div>
             </div>
@@ -240,7 +240,7 @@
     </main>
 
     <footer class="text-center mt-12 text-xs font-bold text-slate-400">
-        © 2026 DQ Platform – Developed <span class="cursor-pointer text-amber-500" onclick="openAdminLogin()">by</span> Yunis İmanov
+        © 2026 DQ Platform – Developed <span class="cursor-pointer" onclick="openAdminLogin()">by</span> Yunis İmanov
     </footer>
 
     <script>
@@ -287,14 +287,21 @@
                 addBtn.style.display = "block";
                 let html = "";
                 activeOptions.forEach((letter, idx) => {
+                    let imgPreview = optionImages[idx] ? `<img src="${optionImages[idx]}" class="h-10 border rounded ml-2">` : '';
                     html += `
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="font-bold w-4">${letter})</span>
-                            <input type="text" id="opt-text-${idx}" class="flex-1 p-2 border rounded text-xs" placeholder="Variant mətni...">
-                            <input type="file" accept="image/*" class="text-[10px] w-48" onchange="handleOptionImgUpload(this, ${idx})">
-                            <label class="inline-flex items-center gap-1 font-semibold text-slate-700 cursor-pointer ml-2">
-                                <input type="radio" name="correct-opt" value="${idx}" ${idx===0?'checked':''}> Düzgün
-                            </label>
+                        <div class="p-2 border rounded bg-slate-50 space-y-2">
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="font-bold w-4">${letter})</span>
+                                <input type="text" id="opt-text-${idx}" class="flex-1 p-2 border rounded text-xs" placeholder="Variant mətni (və ya boş saxlayın)...">
+                                <label class="inline-flex items-center gap-1 font-semibold text-slate-700 cursor-pointer ml-2">
+                                    <input type="radio" name="correct-opt" value="${idx}" ${idx===0?'checked':''}> Düzgün
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs pl-6">
+                                <span class="text-slate-500">📷 Variant Şəkli:</span>
+                                <input type="file" accept="image/*" class="text-[11px]" onchange="handleOptionImgUpload(this, ${idx})">
+                                ${imgPreview}
+                            </div>
                         </div>
                     `;
                 });
@@ -314,16 +321,29 @@
             let file = el.files[0];
             if(file) {
                 let r = new FileReader();
-                r.onload = function(e){ mainQImage = e.target.result; }
+                r.onload = function(e){ 
+                    mainQImage = e.target.result;
+                    document.getElementById("main-img-tag").src = mainQImage;
+                    document.getElementById("main-img-preview").classList.remove("hidden");
+                }
                 r.readAsDataURL(file);
             }
+        }
+
+        function removeMainImg() {
+            mainQImage = "";
+            document.getElementById("q-main-img").value = "";
+            document.getElementById("main-img-preview").classList.add("hidden");
         }
 
         function handleOptionImgUpload(el, idx) {
             let file = el.files[0];
             if(file) {
                 let r = new FileReader();
-                r.onload = function(e){ optionImages[idx] = e.target.result; }
+                r.onload = function(e){ 
+                    optionImages[idx] = e.target.result;
+                    renderAdminOptions();
+                }
                 r.readAsDataURL(file);
             }
         }
@@ -342,7 +362,9 @@
                 correctVal = document.getElementById("open-correct-ans").value.trim();
             } else {
                 activeOptions.forEach((_, idx) => {
-                    optionsArr.push(document.getElementById(`opt-text-${idx}`)?.value || "");
+                    let txt = document.getElementById(`opt-text-${idx}`)?.value || "";
+                    let img = optionImages[idx] || "";
+                    optionsArr.push({ text: txt, image: img });
                 });
                 let selectedRadio = document.querySelector('input[name="correct-opt"]:checked');
                 correctVal = selectedRadio ? selectedRadio.value : "0";
@@ -365,7 +387,9 @@
                 alert(`Sual ${qNo} uğurla saxlanıldı!`);
                 document.getElementById("single-q-no").value = qNo + 1;
                 document.getElementById("single-q-text").value = "";
-                mainQImage = "";
+                removeMainImg();
+                optionImages = {};
+                renderAdminOptions();
                 loadSavedQuestionsPreview();
             }
         }
@@ -387,14 +411,25 @@
                             <span>Sual #${q.q_number} (${q.category})</span>
                             <button class="text-red-500 font-bold hover:underline cursor-pointer text-[11px]" onclick="deleteQ(${q.id})">🗑️ Sil</button>
                         </div>
-                        <p class="text-slate-800 mb-2">${q.question || 'Mətn yoxdur'}</p>
+                        ${q.question ? `<p class="text-slate-800 mb-2 font-medium">${q.question}</p>` : ''}
+                        ${q.image_url ? `<img src="${q.image_url}" class="max-h-48 border rounded my-2">` : ''}
                 `;
                 if(q.q_type === 'open') {
-                    html += `<div class="text-amber-700 font-bold">[Açıq Cavab Etalonu]: ${q.correct}</div>`;
+                    html += `<div class="text-amber-700 font-bold mt-1">[Açıq Cavab Etalonu]: ${q.correct}</div>`;
                 } else if(q.options) {
+                    html += `<div class="space-y-1 mt-2">`;
                     q.options.forEach((opt, i) => {
-                        html += `<div class="ml-2 ${i == q.correct ? 'font-bold text-emerald-700': 'text-slate-600'}">${letters[i]}) ${opt || 'undefined'}</div>`;
+                        let optTxt = typeof opt === 'object' ? opt.text : opt;
+                        let optImg = typeof opt === 'object' ? opt.image : '';
+                        
+                        html += `
+                            <div class="ml-2 flex items-center gap-2 ${i == q.correct ? 'font-bold text-emerald-700': 'text-slate-600'}">
+                                <span>${letters[i]}) ${optTxt}</span>
+                                ${optImg ? `<img src="${optImg}" class="h-10 border rounded">` : ''}
+                            </div>
+                        `;
                     });
+                    html += `</div>`;
                 }
                 html += `</div>`;
             });
@@ -440,7 +475,6 @@
                         <td class="text-green-600 font-bold">${r.correct_count}</td>
                         <td class="text-red-600 font-bold">${r.wrong_count}</td>
                         <td><b>${r.score} Bal</b></td>
-                        <td><button class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1 rounded text-xs cursor-pointer" onclick="reviewPastResult(${r.id})">Nəticəyə Bax</button></td>
                     </tr>
                 `;
             });
@@ -483,8 +517,9 @@
             document.getElementById('q-number-title').innerText = `Sual ${currentQuestionIndex + 1}`;
             document.getElementById('hesitant-check').checked = !!hesitantQuestions[q.id];
 
-            let html = `<div class="font-semibold text-slate-800 text-sm mb-3">${q.question}</div>`;
-            if (q.image_url) html += `<img src="${q.image_url}" class="max-h-52 my-2 rounded"><br>`;
+            let html = "";
+            if (q.question) html += `<div class="font-semibold text-slate-800 text-sm mb-3">${q.question}</div>`;
+            if (q.image_url) html += `<img src="${q.image_url}" class="max-h-72 my-2 rounded border"><br>`;
 
             if (q.q_type === 'open') {
                 let openVal = userAnswers[q.id] !== undefined ? userAnswers[q.id] : '';
@@ -495,13 +530,19 @@
                     </div>
                 `;
             } else if (q.options) {
-                html += `<div class="space-y-2">`;
+                html += `<div class="space-y-2 mt-2">`;
                 q.options.forEach((opt, idx) => {
                     let checked = (userAnswers[q.id] == idx) ? "checked" : "";
+                    let optTxt = typeof opt === 'object' ? opt.text : opt;
+                    let optImg = typeof opt === 'object' ? opt.image : '';
+
                     html += `
-                        <label class="flex items-center p-2.5 bg-slate-50 border rounded cursor-pointer text-xs hover:bg-slate-100">
-                            <input type="radio" name="current_opt" value="${idx}" ${checked} onclick="selectOption('${q.id}', '${idx}')" class="mr-2">
-                            <b>${letters[idx]})</b> &nbsp; ${opt}
+                        <label class="flex flex-col sm:flex-row sm:items-center p-3 bg-slate-50 border rounded cursor-pointer text-xs hover:bg-slate-100 gap-2">
+                            <div class="flex items-center">
+                                <input type="radio" name="current_opt" value="${idx}" ${checked} onclick="selectOption('${q.id}', '${idx}')" class="mr-2">
+                                <b>${letters[idx]})</b> &nbsp; ${optTxt}
+                            </div>
+                            ${optImg ? `<img src="${optImg}" class="max-h-32 border rounded mt-1 sm:mt-0 sm:ml-4">` : ''}
                         </label>
                     `;
                 });
@@ -585,9 +626,7 @@
             document.getElementById("res-total-score").innerText = score;
         }
 
-        function backToReviewQuestions() { document.getElementById("result-screen").classList.add("hidden"); document.getElementById("exam-screen").classList.remove("hidden"); }
         function resetToHome() { location.reload(); }
     </script>
 </body>
 </html>
-
