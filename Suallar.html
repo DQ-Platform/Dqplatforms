@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sualların Redaktəsi - DQ Platform</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; padding: 20px; color: #333; }
+
+    /* Breadcrumb / İyerarxiya Naviqasiyası */
+    .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .breadcrumb-nav span { color: #007bff; cursor: pointer; font-weight: 600; }
+    .breadcrumb-nav span:hover { text-decoration: underline; }
+    .breadcrumb-nav .active { color: #6c757d; cursor: default; }
+
+    /* Qovluq Grid Şəbəkəsi */
+    .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .folder-card { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e1e8ed; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 8px; }
+    .folder-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); border-color: #007bff; }
+    .folder-icon { width: 42px; height: 42px; background: #eef2ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .folder-title { font-size: 16px; font-weight: 700; color: #2e7d32; }
+    .folder-desc { font-size: 12px; color: #777; }
+
+    /* Redaktə Forması (Gizli başlamaq üçün) */
+    .editor-section { display: none; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-top: 15px; }
+    .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 15px; letter-spacing: 0.5px; }
+    
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 5px; }
+    .form-control { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; }
+    textarea.form-control { resize: vertical; min-height: 70px; }
+
+    .option-row { display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px; }
+    .option-label { font-weight: bold; width: 25px; }
+    .option-input { flex: 1; }
+    .correct-radio { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: #2b9348; }
+
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .btn-success { background-color: #2b9348; color: white; }
+    .btn-dark { background-color: #1d3557; color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- Yuxarı Mərhələ Naviqasiyası -->
+  <div class="breadcrumb-nav">
+    <span onclick="showStep(1)">Sınaqlar</span> &gt; 
+    <span onclick="showStep(2)" id="navExam">Sınaq 1</span> &gt; 
+    <span onclick="showStep(3)" id="navCategory">BA Kateqoriyası</span> &gt; 
+    <span class="active" id="navSubject">Fənn Seçimi</span>
+  </div>
+
+  <!-- MƏRHƏLƏ 1: Sınaq Seçimi (Qovluqlar) -->
+  <div id="stepExams">
+    <h3 style="margin-bottom: 15px; color: #1d3557;">Sınaq Seçin</h3>
+    <div class="folder-grid">
+      <div class="folder-card" onclick="selectExam('Sınaq 1')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-title">Sınaq 1</div>
+        <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
+      </div>
+      <div class="folder-card" onclick="selectExam('Sınaq 2')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-title">Sınaq 2</div>
+        <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MƏRHƏLƏ 2: Kateqoriya Seçimi -->
+  <div id="stepCategories" style="display: none;">
+    <h3 style="margin-bottom: 15px; color: #1d3557;">Kateqoriya Seçin</h3>
+    <div class="folder-grid">
+      <div class="folder-card" onclick="selectCategory('BA')">
+        <div class="folder-icon">🏷️</div>
+        <div class="folder-title" style="color: #1976d2;">BA Kateqoriyası</div>
+        <div class="folder-desc">100 Sual (Açıq və qapalı fənn bloku)</div>
+      </div>
+      <div class="folder-card" onclick="selectCategory('BB')">
+        <div class="folder-icon">🏷️</div>
+        <div class="folder-title" style="color: #1976d2;">BB Kateqoriyası</div>
+        <div class="folder-desc">100 Sual (Qapalı testlər)</div>
+      </div>
+      <div class="folder-card" onclick="selectCategory('AC')">
+        <div class="folder-icon">🏷️</div>
+        <div class="folder-title" style="color: #1976d2;">AC Kateqoriyası</div>
+        <div class="folder-desc">100 Sual (Qapalı testlər)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MƏRHƏLƏ 3: Fənn Qovluqları -->
+  <div id="stepSubjects" style="display: none;">
+    <h3 style="margin-bottom: 15px; color: #1d3557;">Fənn Seçin</h3>
+    <div class="folder-grid">
+      <div class="folder-card" onclick="openEditor('Azərbaycan dili')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-title">Azərbaycan dili</div>
+        <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
+      </div>
+      <div class="folder-card" onclick="openEditor('İnformatika')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-title">İnformatika</div>
+        <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
+      </div>
+      <div class="folder-card" onclick="openEditor('Məntiq')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-title">Məntiq</div>
+        <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
+      </div>
+      <div class="folder-card" onclick="openEditor('Qanunvericilik')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-title">Qanunvericilik</div>
+        <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MƏRHƏLƏ 4: Sual Redaktə Forması (Seçilmiş fənn üzrə) -->
+  <div id="stepEditor" class="editor-section">
+    <div class="card-title">SUAL TƏRTİBATI (ƏLAVƏ ET / REDAKTƏ ET)</div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Fənn / Bölmə</label>
+        <input type="text" class="form-control" id="activeSubjectInput" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Sual Tipi</label>
+        <select class="form-control">
+          <option value="closed">Çoxseçimli (Test)</option>
+          <option value="open">Açıq Sual</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Sual Nömrəsi</label>
+        <input type="number" class="form-control" value="1" min="1" max="100">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 15px;">
+      <label>Sual Mətni:</label>
+      <textarea class="form-control" placeholder="Sualın mətnini daxil edin..."></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 15px;">
+      <label>📷 Sualın Əsas Şəkli:</label>
+      <input type="file" class="form-control">
+    </div>
+
+    <!-- Variantlar -->
+    <div class="option-row">
+      <span class="option-label">A)</span>
+      <input type="text" class="form-control option-input" placeholder="Variant mətni...">
+      <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
+    </div>
+    <div class="option-row">
+      <span class="option-label">B)</span>
+      <input type="text" class="form-control option-input" placeholder="Variant mətni...">
+      <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
+    </div>
+    <div class="option-row">
+      <span class="option-label">C)</span>
+      <input type="text" class="form-control option-input" placeholder="Variant mətni...">
+      <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
+    </div>
+    <div class="option-row">
+      <span class="option-label">D)</span>
+      <input type="text" class="form-control option-input" placeholder="Variant mətni...">
+      <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+      <button class="btn btn-dark">+ Dinamik Variant Əlavə Et</button>
+      <button class="btn btn-success">💾 Sualı Yadda Saxla</button>
+    </div>
+  </div>
+
+  <script>
+    let currentExam = "Sınaq 1";
+    let currentCategory = "BA";
+
+    function selectExam(exam) {
+      currentExam = exam;
+      document.getElementById('navExam').innerText = exam;
+      document.getElementById('stepExams').style.display = 'none';
+      document.getElementById('stepCategories').style.display = 'block';
+    }
+
+    function selectCategory(cat) {
+      currentCategory = cat;
+      document.getElementById('navCategory').innerText = cat + " Kateqoriyası";
+      document.getElementById('stepCategories').style.display = 'none';
+      document.getElementById('stepSubjects').style.display = 'block';
+    }
+
+    function openEditor(subject) {
+      document.getElementById('navSubject').innerText = subject;
+      document.getElementById('activeSubjectInput').value = subject;
+      document.getElementById('stepSubjects').style.display = 'none';
+      document.getElementById('stepEditor').style.display = 'block';
+    }
+
+    function showStep(step) {
+      document.getElementById('stepEditor').style.display = 'none';
+      if (step === 1) {
+        document.getElementById('stepExams').style.display = 'block';
+        document.getElementById('stepCategories').style.display = 'none';
+        document.getElementById('stepSubjects').style.display = 'none';
+      } else if (step === 2) {
+        document.getElementById('stepExams').style.display = 'none';
+        document.getElementById('stepCategories').style.display = 'block';
+        document.getElementById('stepSubjects').style.display = 'none';
+      } else if (step === 3) {
+        document.getElementById('stepExams').style.display = 'none';
+        document.getElementById('stepCategories').style.display = 'none';
+        document.getElementById('stepSubjects').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
