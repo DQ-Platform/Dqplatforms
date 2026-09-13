@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DQ Platform - Dövlət Qulluğu İmtahan İdarəetmə Paneli</title>
+    <title>DQ Platform - Dövlət Qulluğu İmtahan Portalı</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -43,9 +43,8 @@
                     <h1 class="text-xl font-extrabold text-slate-800 tracking-wide">DQ Platform</h1>
                     <p class="text-[11px] text-slate-500">Dövlət Qulluğu İmtahan Portalı</p>
                 </div>
-                <div class="flex gap-2">
-                    <button class="btn-gold text-xs px-3 py-1.5 rounded font-bold cursor-pointer" onclick="openAdminLogin()">🔑 Admin Girişi</button>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded font-bold cursor-pointer" onclick="openStudentCabinet()">👤 Kabinet</button>
+                <div>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-1.5 rounded-md font-bold cursor-pointer" onclick="openStudentCabinet()">👤 Kabinet</button>
                 </div>
             </div>
 
@@ -163,15 +162,19 @@
                         <option value="AC">AC Kateqoriyası</option>
                     </select>
                     <select id="adm-student-exam" class="p-2 border rounded text-xs bg-white">
-                        <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option>
+                        <option value="1">Sınaq 1</option>
+                        <option value="2">Sınaq 2</option>
                     </select>
                     <button class="btn-green text-xs rounded py-2 cursor-pointer" onclick="allowStudent()">İcazə Ver</button>
                 </div>
             </div>
 
-            <!-- SUAL TƏRTİBATI (ŞƏKİLLİ SUAL VƏ ŞƏKİLLİ VARIANT DƏSTƏYİ) -->
-            <div class="card-box p-5 space-y-4">
-                <h3 class="font-bold text-xs text-slate-800 uppercase">Sual Tərtibatı (Mətnli və ya Yalnız Şəkilli)</h3>
+            <!-- SUAL TƏRTİBATI -->
+            <div class="card-box p-5 space-y-4" id="question-form-container">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="font-bold text-xs text-slate-800 uppercase" id="form-title">Sual Tərtibatı (Əlavə et / Redaktə et)</h3>
+                    <button id="cancel-edit-btn" class="hidden text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1 rounded font-bold cursor-pointer" onclick="resetQuestionForm()">Redaktədən Çıx</button>
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                     <div>
@@ -190,9 +193,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-500 mb-1">Sınaq Seçin</label>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-slate-500">Sınaq Seçin</label>
+                            <button class="text-emerald-700 hover:text-emerald-800 font-bold text-[11px] cursor-pointer" onclick="addNewExamPrompt()">+ Yeni Sınaq</button>
+                        </div>
                         <select id="single-exam-id" class="w-full p-2 border rounded bg-white font-medium">
-                            <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option>
+                            <option value="1">Sınaq 1</option>
+                            <option value="2">Sınaq 2</option>
                         </select>
                     </div>
                     <div>
@@ -208,7 +215,7 @@
 
                 <!-- SUALIN ŞƏKLİ -->
                 <div class="p-3 bg-slate-50 border rounded text-xs space-y-2">
-                    <span class="text-slate-700 font-bold block">📷 Sualın Əsas Şəkli (Əgər sual şəkildirsə bura yükləyin):</span>
+                    <span class="text-slate-700 font-bold block">📷 Sualın Əsas Şəkli:</span>
                     <input type="file" id="q-main-img" accept="image/*" class="text-xs" onchange="handleMainImgUpload(this)">
                     <div id="main-img-preview" class="hidden mt-2">
                         <img id="main-img-tag" src="" class="max-h-36 border rounded p-1 bg-white">
@@ -225,14 +232,31 @@
                 </div>
             </div>
 
-            <!-- CANLI ÖNBAXIŞ -->
-            <div class="card-box p-5 space-y-3">
-                <div class="flex justify-between items-center border-b pb-2">
+            <!-- CANLI ÖNBAXIŞ (FİLTR VƏ REDAKTƏ) -->
+            <div class="card-box p-5 space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b pb-3">
                     <h3 class="font-bold text-xs text-slate-800 uppercase flex items-center gap-1">📝 Canlı Önbaxış (Baza Sualları)</h3>
-                    <button class="bg-slate-800 text-white text-[10px] px-2.5 py-1 rounded font-bold cursor-pointer" onclick="loadSavedQuestionsPreview()">Yenilə</button>
+                    
+                    <!-- FİLTR NƏZARƏTİ -->
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <div>
+                            <select id="preview-filter-exam" class="p-1.5 border rounded bg-white font-semibold text-slate-700" onchange="loadSavedQuestionsPreview()">
+                                <option value="ALL">Bütün Sınaqlar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="preview-filter-cat" class="p-1.5 border rounded bg-white font-semibold text-slate-700" onchange="loadSavedQuestionsPreview()">
+                                <option value="ALL">Bütün Kateqoriyalar</option>
+                                <option value="BB">BB Kateqoriyası</option>
+                                <option value="BA">BA Kateqoriyası</option>
+                                <option value="AC">AC Kateqoriyası</option>
+                            </select>
+                        </div>
+                        <button class="bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-bold cursor-pointer" onclick="loadSavedQuestionsPreview()">Yenilə</button>
+                    </div>
                 </div>
 
-                <div id="live-preview-list" class="space-y-4 pt-2"></div>
+                <div id="live-preview-list" class="space-y-4 pt-1"></div>
             </div>
 
         </div>
@@ -240,7 +264,7 @@
     </main>
 
     <footer class="text-center mt-12 text-xs font-bold text-slate-400">
-        © 2026 DQ Platform – Developed <span class="cursor-pointer" onclick="openAdminLogin()">by</span> Yunis İmanov
+        © 2026 DQ Platform – Developed <span class="cursor-pointer select-none" onclick="openAdminLogin()">by</span> Yunis İmanov
     </footer>
 
     <script>
@@ -249,9 +273,13 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const ADMIN_PASS = "6675157";
+        let availableExams = ["1", "2"];
         let activeOptions = ["A", "B", "C", "D"];
         let optionImages = {};
         let mainQImage = "";
+        let fetchedQuestionsCache = [];
+        let editingQuestionId = null; // Redaktə rejimi üçün
+
         let currentStudentName = "", currentActiveFin = "", selectedExamId = "1", studentCategory = "BB";
         let allQuestions = [], userAnswers = {}, hesitantQuestions = {}, currentQuestionIndex = 0, timerInterval;
 
@@ -268,6 +296,38 @@
         function closeAdminPanel() {
             document.getElementById("admin-panel").classList.add("hidden");
             document.getElementById("login-screen").classList.remove("hidden");
+        }
+
+        function addNewExamPrompt() {
+            let newExamNo = prompt("Yeni Sınaq Nömrəsini daxil edin (Məsələn: 3 və ya 4):");
+            if (newExamNo && newExamNo.trim() !== "") {
+                let val = newExamNo.trim();
+                if (!availableExams.includes(val)) {
+                    availableExams.push(val);
+                    updateExamDropdowns();
+                    document.getElementById("single-exam-id").value = val;
+                    alert(`Sınaq ${val} əlavə olundu!`);
+                } else {
+                    alert("Bu sınaq artıq siyahıda var!");
+                }
+            }
+        }
+
+        function updateExamDropdowns() {
+            const singleSelect = document.getElementById("single-exam-id");
+            const studentSelect = document.getElementById("adm-student-exam");
+            const filterExamSelect = document.getElementById("preview-filter-exam");
+
+            let html = "";
+            availableExams.forEach(ex => {
+                html += `<option value="${ex}">Sınaq ${ex}</option>`;
+            });
+
+            singleSelect.innerHTML = html;
+            studentSelect.innerHTML = html;
+
+            let filterHtml = `<option value="ALL">Bütün Sınaqlar</option>` + html;
+            filterExamSelect.innerHTML = filterHtml;
         }
 
         function renderAdminOptions() {
@@ -292,7 +352,7 @@
                         <div class="p-2 border rounded bg-slate-50 space-y-2">
                             <div class="flex items-center gap-2 text-xs">
                                 <span class="font-bold w-4">${letter})</span>
-                                <input type="text" id="opt-text-${idx}" class="flex-1 p-2 border rounded text-xs" placeholder="Variant mətni (və ya boş saxlayın)...">
+                                <input type="text" id="opt-text-${idx}" class="flex-1 p-2 border rounded text-xs" placeholder="Variant mətni...">
                                 <label class="inline-flex items-center gap-1 font-semibold text-slate-700 cursor-pointer ml-2">
                                     <input type="radio" name="correct-opt" value="${idx}" ${idx===0?'checked':''}> Düzgün
                                 </label>
@@ -370,52 +430,102 @@
                 correctVal = selectedRadio ? selectedRadio.value : "0";
             }
 
-            await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
-            const { error } = await _supabase.from('exam_questions').insert([{
-                exam_id: examId,
-                q_number: qNo,
-                category: cat,
-                q_type: qType,
-                question: qText,
-                image_url: mainQImage,
-                options: optionsArr,
-                correct: correctVal
-            }]);
+            if (editingQuestionId) {
+                // Redaktə rejimi: Yalnız mövcud ID-yə malik sualı yeniləyirik
+                const { error } = await _supabase.from('exam_questions').update({
+                    exam_id: examId,
+                    q_number: qNo,
+                    category: cat,
+                    q_type: qType,
+                    question: qText,
+                    image_url: mainQImage,
+                    options: optionsArr,
+                    correct: correctVal
+                }).eq('id', editingQuestionId);
 
-            if (error) alert("Xəta: " + error.message);
-            else {
-                alert(`Sual ${qNo} uğurla saxlanıldı!`);
-                document.getElementById("single-q-no").value = qNo + 1;
-                document.getElementById("single-q-text").value = "";
-                removeMainImg();
-                optionImages = {};
-                renderAdminOptions();
-                loadSavedQuestionsPreview();
+                if (error) alert("Yenilənmə Xətası: " + error.message);
+                else alert(`Sual #${qNo} uğurla yeniləndi!`);
+            } else {
+                // Yeni Sual əlavə olunur
+                await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+                const { error } = await _supabase.from('exam_questions').insert([{
+                    exam_id: examId,
+                    q_number: qNo,
+                    category: cat,
+                    q_type: qType,
+                    question: qText,
+                    image_url: mainQImage,
+                    options: optionsArr,
+                    correct: correctVal
+                }]);
+
+                if (error) alert("Xəta: " + error.message);
+                else alert(`Sual #${qNo} uğurla saxlanıldı!`);
             }
+
+            resetQuestionForm();
+            loadSavedQuestionsPreview();
+        }
+
+        function resetQuestionForm() {
+            editingQuestionId = null;
+            document.getElementById("form-title").innerText = "Sual Tərtibatı (Mətnli və ya Yalnız Şəkilli)";
+            document.getElementById("cancel-edit-btn").classList.add("hidden");
+            document.getElementById("single-q-no").value = 1;
+            document.getElementById("single-q-text").value = "";
+            removeMainImg();
+            optionImages = {};
+            activeOptions = ["A", "B", "C", "D"];
+            renderAdminOptions();
         }
 
         async function loadSavedQuestionsPreview() {
+            const filterExam = document.getElementById("preview-filter-exam").value;
+            const filterCat = document.getElementById("preview-filter-cat").value;
+
             const { data } = await _supabase.from('exam_questions').select('*').order('q_number', { ascending: true });
+            if (!data) return;
+
+            fetchedQuestionsCache = data;
+
+            // Sınaq nömrələrini dinamik yeniləyirik
+            data.forEach(q => {
+                if(q.exam_id && !availableExams.includes(String(q.exam_id))) {
+                    availableExams.push(String(q.exam_id));
+                }
+            });
+            updateExamDropdowns();
+
+            // Filtr tətbiqi
+            let filteredData = data.filter(q => {
+                let matchExam = (filterExam === "ALL" || String(q.exam_id) === String(filterExam));
+                let matchCat = (filterCat === "ALL" || q.category === filterCat);
+                return matchExam && matchCat;
+            });
+
             const previewContainer = document.getElementById("live-preview-list");
-            if (!data || data.length === 0) {
-                previewContainer.innerHTML = `<p class="text-xs text-slate-400">Hələ ki, bazaya sual daxil edilməyib.</p>`;
+            if (filteredData.length === 0) {
+                previewContainer.innerHTML = `<p class="text-xs text-slate-400 p-2">Axtarış filtrinə uyğun sual tapılmadı.</p>`;
                 return;
             }
 
             let html = "";
             const letters = ["A", "B", "C", "D", "E", "F"];
-            data.forEach(q => {
+            filteredData.forEach(q => {
                 html += `
                     <div class="border rounded p-3 text-xs bg-slate-50 relative">
-                        <div class="flex justify-between items-center font-bold text-slate-700 mb-1">
-                            <span>Sual #${q.q_number} (${q.category})</span>
-                            <button class="text-red-500 font-bold hover:underline cursor-pointer text-[11px]" onclick="deleteQ(${q.id})">🗑️ Sil</button>
+                        <div class="flex justify-between items-center font-bold text-slate-700 mb-2 border-b pb-1">
+                            <span class="text-amber-700">Sınaq ${q.exam_id} | Sual #${q.q_number} (${q.category}) - <span class="uppercase">${q.q_type}</span></span>
+                            <div class="flex items-center gap-3">
+                                <button class="text-blue-600 font-bold hover:underline cursor-pointer text-[11px]" onclick="startEditQuestion(${q.id})">✏️ Redaktə et</button>
+                                <button class="text-red-500 font-bold hover:underline cursor-pointer text-[11px]" onclick="deleteQ(${q.id})">🗑️ Sil</button>
+                            </div>
                         </div>
                         ${q.question ? `<p class="text-slate-800 mb-2 font-medium">${q.question}</p>` : ''}
                         ${q.image_url ? `<img src="${q.image_url}" class="max-h-48 border rounded my-2">` : ''}
                 `;
                 if(q.q_type === 'open') {
-                    html += `<div class="text-amber-700 font-bold mt-1">[Açıq Cavab Etalonu]: ${q.correct}</div>`;
+                    html += `<div class="text-amber-700 font-bold mt-1 bg-amber-50 p-1.5 border border-amber-200 rounded">[Açıq Cavab Etalonu]: ${q.correct}</div>`;
                 } else if(q.options) {
                     html += `<div class="space-y-1 mt-2">`;
                     q.options.forEach((opt, i) => {
@@ -423,7 +533,7 @@
                         let optImg = typeof opt === 'object' ? opt.image : '';
                         
                         html += `
-                            <div class="ml-2 flex items-center gap-2 ${i == q.correct ? 'font-bold text-emerald-700': 'text-slate-600'}">
+                            <div class="ml-2 flex items-center gap-2 ${i == q.correct ? 'font-bold text-emerald-700 bg-emerald-50 p-1 rounded': 'text-slate-600'}">
                                 <span>${letters[i]}) ${optTxt}</span>
                                 ${optImg ? `<img src="${optImg}" class="h-10 border rounded">` : ''}
                             </div>
@@ -434,6 +544,62 @@
                 html += `</div>`;
             });
             previewContainer.innerHTML = html;
+        }
+
+        function startEditQuestion(qId) {
+            const q = fetchedQuestionsCache.find(item => item.id === qId);
+            if (!q) return;
+
+            editingQuestionId = q.id;
+            document.getElementById("form-title").innerText = `Sual Redaktə Edilir (#${q.q_number} - Sınaq ${q.exam_id})`;
+            document.getElementById("cancel-edit-btn").classList.remove("hidden");
+
+            document.getElementById("single-exam-id").value = q.exam_id;
+            document.getElementById("single-q-no").value = q.q_number;
+            document.getElementById("adm-q-category").value = q.category;
+            document.getElementById("adm-q-type").value = q.q_type || "test";
+            document.getElementById("single-q-text").value = q.question || "";
+
+            if (q.image_url) {
+                mainQImage = q.image_url;
+                document.getElementById("main-img-tag").src = mainQImage;
+                document.getElementById("main-img-preview").classList.remove("hidden");
+            } else {
+                removeMainImg();
+            }
+
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            optionImages = {};
+
+            if (q.q_type === "open") {
+                renderAdminOptions();
+                document.getElementById("open-correct-ans").value = q.correct || "";
+            } else {
+                if (q.options && q.options.length > 0) {
+                    activeOptions = q.options.map((_, i) => alphabet[i]);
+                    q.options.forEach((opt, i) => {
+                        if (typeof opt === 'object' && opt.image) {
+                            optionImages[i] = opt.image;
+                        }
+                    });
+                } else {
+                    activeOptions = ["A", "B", "C", "D"];
+                }
+
+                renderAdminOptions();
+
+                if (q.options) {
+                    q.options.forEach((opt, i) => {
+                        let txtInput = document.getElementById(`opt-text-${i}`);
+                        if (txtInput) txtInput.value = (typeof opt === 'object' ? opt.text : opt) || "";
+                    });
+                }
+
+                let radio = document.querySelector(`input[name="correct-opt"][value="${q.correct}"]`);
+                if (radio) radio.checked = true;
+            }
+
+            document.getElementById("question-form-container").scrollIntoView({ behavior: 'smooth' });
         }
 
         async function deleteQ(id) {
