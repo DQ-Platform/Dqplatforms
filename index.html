@@ -3,220 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dövlət Qulluğu Vəzifələri Üzrə Sınaq</title>
+    <title>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .word-editable { border: 1px dashed #cbd5e1; padding: 6px; border-radius: 4px; background-color: #ffffff; }
-        .nav-box { font-weight: 600; cursor: pointer; font-size: 11px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 3px; border: 1px solid #cbd5e1; background-color: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 0; user-select: none; }
+        :root { --primary-dark: #0f172a; --accent-gold: #d4af37; --success-green: #10b981; --danger-red: #ef4444; }
+        .container { max-width: 1100px; margin: 20px auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); border-top: 4px solid var(--accent-gold); }
+        h2, h3, h4 { color: var(--primary-dark); text-align: center; }
+        #login-screen, #result-screen { text-align: center; padding: 20px; }
+        .code-input, .select-control { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border: 2px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px; outline: none; text-align: center; }
+        .code-input:focus, .select-control:focus { border-color: var(--accent-gold); }
+        .token-field { letter-spacing: 2px; text-transform: uppercase; }
+        .btn { background-color: var(--primary-dark); color: var(--accent-gold); border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.3s; display: inline-block; text-decoration: none; text-align: center; }
+        .btn:hover { background-color: #1e293b; }
+        .btn-danger { background-color: #dc2626; color: white; }
+        .btn-secondary { background-color: #64748b; color: white; }
+        .btn-success { background-color: var(--success-green); color: white; }
+        .btn-warning { background-color: #d97706; color: white; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 4px; }
+        #exam-screen { display: none; }
+        .exam-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary-dark); color: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; }
+        .timer { font-size: 18px; font-weight: bold; color: var(--accent-gold); }
+        .exam-layout { display: flex; gap: 20px; position: relative; }
+        .questions-area { flex: 3; background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 350px; display: flex; flex-direction: column; justify-content: space-between; }
+        .answer-card-sidebar { flex: 1; background: #f1f5f9; padding: 15px; border-radius: 8px; height: fit-content; border: 1px solid #cbd5e1; }
+        .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-height: 400px; overflow-y: auto; }
+        .nav-box { padding: 6px 0; text-align: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
         .nav-box.answered { background-color: #1e293b; color: #ffffff; border-color: #1e293b; }
-        .nav-box.current { border: 2px solid #0f172a; outline: 1px solid #0f172a; font-weight: bold; }
+        .nav-box.current { border: 2px solid var(--primary-dark); outline: 1px solid var(--primary-dark); font-weight: bold; }
         .nav-box.hesitant { background-color: #f59e0b; color: #ffffff; border-color: #d97706; }
+        .question-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+        .question-title { font-weight: 600; color: var(--primary-dark); font-size: 15px; line-height: 1.5; white-space: pre-line; }
+        .options label { display: block; padding: 10px 14px; margin: 8px 0; background: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .options label:hover { background: #e2e8f0; }
+        .exam-navigation-buttons { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        #result-screen { display: none; font-size: 13px; }
+        .dim-report-title { text-align: center; font-weight: bold; font-size: 14px; color: #334155; margin-bottom: 5px; text-transform: uppercase; }
+        .dim-student-name { text-align: center; font-weight: bold; font-size: 16px; color: #0f172a; margin-bottom: 15px; text-transform: uppercase; }
+        .final-score-box { text-align: center; border: 2px solid #b91c1c; padding: 15px; margin-top: 20px; font-size: 18px; font-weight: bold; color: #b91c1c; background: #fef2f2; border-radius: 6px; }
+        #admin-panel { display: none; margin-top: 20px; border-top: 2px solid var(--accent-gold); padding-top: 20px; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .footer { text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        .footer-text { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
+        .secret-admin-trigger { cursor: pointer; }
+        .error-msg { color: #ef4444; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; }
+        th, td { padding: 6px 4px; border: 1px solid #cbd5e1; }
+        th { background: var(--primary-dark); color: white; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 md:p-4 select-none flex flex-col justify-between">
+<body>
 
-    <div class="max-w-6xl w-full mx-auto bg-white rounded-lg shadow-md border overflow-hidden mb-4">
-        
-        <!-- HEADER -->
-        <header class="bg-[#0f172a] text-white px-4 py-2.5 flex justify-between items-center text-xs md:text-sm font-semibold">
-            <div id="header-title">Dövlət Qulluğu Vəzifələri Üzrə Sınaq</div>
-            <div class="flex items-center gap-3">
-                <span id="timer" class="font-mono font-bold bg-slate-800 px-2 py-1 rounded">02:59:58</span>
-                <button id="studentCabinetBtn" onclick="showScreen('student-cabinet-screen')" class="bg-slate-700 text-white px-2 py-1 rounded text-xs hover:bg-slate-600">👤 Kabinet</button>
-            </div>
-        </header>
+    <div class="container" id="top">
+        <!-- GİRİŞ EKRANI -->
+        <div id="login-screen">
+            <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
+            <p>Zəhmət olmasa məlumatlarınızı daxil edin:</p>
+            <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız"><br>
+            <input type="text" id="user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7"><br>
+            <button class="btn" onclick="proceedToExam()">İmtahana Başla</button>
+            <p id="error-msg" class="error-msg" style="margin-top: 10px;"></p>
+        </div>
 
-        <div class="p-3 md:p-6">
-
-            <!-- 1. GİRİŞ EKRANI -->
-            <div id="login-screen" class="max-w-md mx-auto text-center space-y-4 py-8">
-                <h2 class="text-lg font-bold text-slate-900">Sınaq İmtahanına Giriş</h2>
-                <input type="text" id="user-name" placeholder="Ad və Soyadınız" class="w-full p-2.5 border rounded-md text-sm text-center">
-                <input type="text" id="user-fin" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7" class="w-full p-2.5 border rounded-md uppercase tracking-wider text-center text-sm">
-                <button onclick="proceedToExam()" class="w-full bg-[#0f172a] text-white py-2.5 rounded-md font-bold text-sm shadow hover:bg-slate-800">İmtahana Başla</button>
-                <p id="login-error" class="text-red-500 text-xs font-semibold min-h-[16px]"></p>
+        <!-- SINAQ EKRANI -->
+        <div id="exam-screen">
+            <div class="exam-header">
+                <span id="active-exam-title">Dövlət Qulluğu Sınaq İmtahanı</span>
+                <span class="timer" id="timer">03:00:00</span>
             </div>
 
-            <!-- 2. İMTAHAN EKRANI -->
-            <div id="exam-screen" class="hidden space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <!-- Sual Sahəsi -->
-                    <div class="md:col-span-3 border rounded-md p-4 bg-white min-h-[420px] flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start border-b pb-2 mb-4">
-                                <span id="q-number-title" class="text-xs font-bold text-slate-500">Sual 1</span>
-                                <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer select-none">
-                                    <input type="checkbox" id="hesitant-check" onchange="toggleHesitant()" class="rounded border-slate-300">
-                                    <span class="text-amber-600 font-semibold">Tərəddüdlü</span>
-                                </label>
-                            </div>
-                            <div id="single-question-container"></div>
+            <div class="exam-layout">
+                <div class="questions-area">
+                    <div>
+                        <div class="question-top">
+                            <span id="q-number-title" class="font-bold text-slate-700">Sual 1</span>
+                            <label style="color:#d97706; font-size:13px; font-weight:bold; cursor:pointer;">
+                                <input type="checkbox" id="hesitant-check" onchange="toggleHesitant()"> Tərəddüdlü
+                            </label>
                         </div>
-
-                        <div>
-                            <button onclick="clearCurrentAnswer()" class="text-xs text-red-500 underline mb-4 block">Cavabı ləğv et</button>
-                            <div class="flex justify-between border-t pt-3">
-                                <button onclick="prevQuestion()" class="bg-[#475569] text-white px-5 py-2 rounded text-xs font-bold">Əvvəlki</button>
-                                <button onclick="confirmFinish()" class="bg-[#dc2626] text-white px-5 py-2 rounded text-xs font-bold">Testi Bitir</button>
-                                <button onclick="nextQuestion()" class="bg-[#0f172a] text-white px-5 py-2 rounded text-xs font-bold">Növbəti</button>
-                            </div>
-                        </div>
+                        <div id="single-question-container"></div>
                     </div>
 
-                    <!-- Cavab Kartı SideBar -->
-                    <div class="border rounded-md p-3 bg-slate-50">
-                        <div class="flex justify-between items-center border-b pb-2 mb-3">
-                            <span class="font-bold text-xs text-slate-700">Cavab Kartı</span>
-                            <span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded font-mono">100</span>
+                    <div>
+                        <button onclick="clearCurrentAnswer()" style="color:#ef4444; font-size:12px; text-decoration:underline; border:none; background:none; cursor:pointer; margin-bottom:10px;">Cavabı ləğv et</button>
+                        <div class="exam-navigation-buttons" id="exam-nav-btns">
+                            <button class="btn btn-secondary" onclick="prevQuestion()">Əvvəlki</button>
+                            <button class="btn btn-danger" onclick="confirmFinish()">Testi Bitir</button>
+                            <button class="btn" onclick="nextQuestion()">Növbəti</button>
                         </div>
-                        <div id="grid-nav-container" class="grid grid-cols-5 gap-1 max-h-[360px] overflow-y-auto pr-1"></div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 3. NƏTİCƏ EKRANI (ŞƏKİLDƏKİ CƏDVƏL DİZAYNI) -->
-            <div id="result-screen" class="hidden space-y-4 py-2">
-                <div class="text-center space-y-1">
-                    <h3 class="text-xs font-bold text-slate-700 uppercase">Dövlət qulluğu vəzifələri üzrə test imtahanının nəticələri haqqında məlumat</h3>
-                    <h4 id="res-name" class="text-sm font-bold text-slate-900"></h4>
-                </div>
-                
-                <!-- Fənlər Üzrə Etalon və Cavablar Cədvəli -->
-                <div id="subject-tables-container" class="space-y-3 overflow-x-auto text-[10px]"></div>
-
-                <div class="text-xs space-y-1 font-semibold text-slate-700 pt-2">
-                    <div>Doğru cavabların sayı: <b id="res-total-correct">0</b></div>
-                    <div>Yanlış cavabların sayı: <b id="res-total-wrong">0</b></div>
-                    <div>Cavablandırılmayan test tapşırıqlarının sayı: <b id="res-total-blank">0</b></div>
-                </div>
-
-                <div class="border border-red-200 bg-red-50/50 p-3 rounded text-center my-3">
-                    <div class="text-xs font-bold text-red-600 uppercase">YEKUN BAL: <span id="res-total-score">0</span> bal</div>
-                    <div id="pass-status-text" class="text-[11px] text-slate-600 mt-0.5">Uyğun qrup: Keçid balını toplamadı (< 65)</div>
-                </div>
-
-                <div class="flex justify-center">
-                    <button onclick="showScreen('login-screen')" class="bg-[#0f172a] text-white px-6 py-2 rounded text-xs font-bold">↺ Suallara qayıt (Baxış)</button>
+                <div class="answer-card-sidebar" id="sidebar-container">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0;">Cavab Kartı</h4>
+                        <span style="font-size:11px; background:#cbd5e1; padding:2px 6px; border-radius:4px; font-weight:bold;">100</span>
+                    </div>
+                    <div class="grid-nav" id="grid-nav-container"></div>
                 </div>
             </div>
+        </div>
 
-            <!-- 4. TƏLƏBƏ ŞƏXSİ KABİNETİ -->
-            <div id="student-cabinet-screen" class="hidden space-y-4">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h2 class="text-base font-bold text-slate-800">👤 Tələbə Şəxsi Kabineti</h2>
-                    <button onclick="showScreen('login-screen')" class="text-xs bg-slate-200 px-2.5 py-1 rounded font-bold">Geri Dön</button>
+        <!-- NƏTİCƏ EKRANI (DİM FORMATINDA CƏDVƏLLƏR) -->
+        <div id="result-screen">
+            <div class="dim-report-title">Dövlət qulluğu vəzifələri üzrə test imtahanının nəticələri haqqında məlumat</div>
+            <div class="dim-student-name" id="res-name"></div>
+
+            <!-- Fənlər üzrə Etalon və İştirakçı cədvəlləri -->
+            <div id="subject-tables-container" style="display:flex; flex-direction:column; gap:15px; overflow-x:auto;"></div>
+
+            <div style="margin-top: 20px; font-weight: bold; font-size: 14px; line-height: 1.6; text-align:left;">
+                <div>Doğru cavabların sayı: <b id="res-total-correct">0</b></div>
+                <div>Yanlış cavabların sayı: <b id="res-total-wrong">0</b></div>
+                <div>Cavablandırılmayan test tapşırıqlarının sayı: <b id="res-total-blank">0</b></div>
+            </div>
+
+            <div class="final-score-box">
+                YEKUN BAL: <span id="res-total-score">0</span> BAL<br>
+                <span id="res-bb-group" style="font-size: 13px; color: #475569; margin-top: 5px; display: inline-block;"></span>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" onclick="backToReviewQuestions()">📊 Suallara qayıt (Baxış)</button>
+                <button class="btn btn-secondary" onclick="resetToHome()">🏠 Əsas səhifəyə qayıt</button>
+            </div>
+        </div>
+
+        <!-- MƏRKƏZİ ADMİN PANELİ (YUNİS İMANOV) -->
+        <div id="admin-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; color: white; padding: 10px 15px; border-radius: 6px;">
+                <h3 style="margin:0; color:white; font-size:16px;">🔑 Admin Mərkəzi Nəzarət Paneli (Yunis İmanov)</h3>
+                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="closeAdminPanel()">Paneli Bağla</button>
+            </div>
+
+            <!-- İŞTİRAKÇIYA İCAZƏ VER -->
+            <h4 style="text-align: left; margin-top: 20px;">🌐 İştirakçıya İcazə Ver (Kateqoriya və Sınaq Seçimi)</h4>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2;">
+                    <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN KOD" style="flex: 1;" maxlength="7">
+                    <select id="adm-student-category" class="form-control" style="flex: 1.5;">
+                        <option value="BB">BB Kateqoriyası</option>
+                        <option value="BA">BA Kateqoriyası (Açıq suallar 2 bal)</option>
+                        <option value="AC">AC Kateqoriyası</option>
+                    </select>
+                    <select id="adm-student-exam" class="form-control" style="flex: 1;">
+                        <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
+                    </select>
+                    <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
                 </div>
-                <div class="bg-slate-50 p-3 rounded border flex gap-3">
-                    <input type="text" id="kabinet-fin-search" placeholder="FIN Kod daxil edin" class="p-2 border rounded text-xs uppercase">
-                    <button onclick="loadStudentCabinetData()" class="bg-slate-900 text-white px-4 py-2 rounded text-xs font-bold">Nəticələri Gətir</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-center border-collapse">
-                        <thead class="bg-slate-900 text-white">
-                            <tr><th class="p-2">Sınaq</th><th class="p-2">Doğru</th><th class="p-2">Yanlış</th><th class="p-2">Bal</th><th class="p-2">Status</th></tr>
+
+                <h4 style="text-align: left; margin-top: 15px;">İcazə Verilmiş Tələbələr</h4>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr><th>Ad Soyad</th><th>FIN Kod</th><th>Kateqoriya</th><th>İmtahan</th><th>Əməliyyat</th></tr>
                         </thead>
-                        <tbody id="kabinet-history-table" class="divide-y border"><tr><td colspan="5" class="p-3 text-slate-400">FIN kodu yazın.</td></tr></tbody>
+                        <tbody id="allowed-students-table-body"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- 5. MƏRKƏZİ ADMİN PANELİ -->
-            <div id="admin-panel" class="hidden space-y-6">
-                <div class="flex justify-between items-center bg-slate-900 text-white p-3 rounded">
-                    <h2 class="text-sm font-bold">🔑 Admin Mərkəzi Nəzarət Paneli (Yunis İmanov)</h2>
-                    <button onclick="showScreen('login-screen')" class="bg-red-600 text-white px-2.5 py-1 rounded text-xs font-bold">Bağla</button>
+            <!-- FƏRDİ SUAL İDARƏETMƏSİ (AÇIQ VƏ TEST SUALLARI MƏRKƏZİ BAZAYA YAZILIR) -->
+            <h4 style="text-align: left; margin-top: 25px;">✏️ Sual və Variant İdarəetməsi (BA / BB Dəstəyi)</h4>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap:wrap;">
+                    <select id="adm-q-category" class="form-control" style="flex:1;" onchange="handleAdminCatChange()">
+                        <option value="BB">BB Kateqoriyası</option>
+                        <option value="BA">BA Kateqoriyası</option>
+                    </select>
+                    <select id="single-exam-id" class="form-control" style="flex: 1;"><option value="1">Sınaq 1</option></select>
+                    <select id="single-subject" class="form-control" style="flex: 2;">
+                        <option value="Azərbaycan dili">Azərbaycan dili (1-15)</option>
+                        <option value="Qanunvericilik">Qanunvericilik (16-55)</option>
+                        <option value="İnformatika">İnformatika (56-70)</option>
+                        <option value="Məntiq">Məntiq (71-100)</option>
+                    </select>
+                    <select id="adm-q-type" class="form-control" style="flex:1;" onchange="renderAdminQuestionInputs()">
+                        <option value="test">Variantlı (Test)</option>
+                        <option value="open" id="adm-open-opt" class="hidden">Açıq Sual (2 Bal)</option>
+                    </select>
+                    <input type="number" id="single-q-no" class="form-control" placeholder="Sual Nö" style="flex: 1;" value="1" min="1" max="100">
                 </div>
 
-                <div class="bg-slate-50 p-3 rounded border space-y-2">
-                    <h3 class="font-bold text-xs text-slate-800">🌐 Tələbə Cihaz İcazəsi</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-                        <input type="text" id="adm-student-name" placeholder="Ad Soyad" class="p-2 border rounded text-xs">
-                        <input type="text" id="adm-student-fin" placeholder="FIN Kod" maxlength="7" class="p-2 border rounded text-xs uppercase">
-                        <select id="adm-student-category" class="p-2 border rounded text-xs">
-                            <option value="BB">BB Kateqoriyası</option>
-                            <option value="BA">BA Kateqoriyası (Açıq suallar 2 bal)</option>
-                            <option value="AC">AC Kateqoriyası</option>
-                        </select>
-                        <select id="adm-student-exam" class="p-2 border rounded text-xs"><option value="1">Sınaq 1</option></select>
-                        <button onclick="allowStudent()" class="bg-emerald-600 text-white p-2 rounded text-xs font-bold">İcazə Ver</button>
-                    </div>
+                <div class="form-group">
+                    <label>Sual Mətni:</label>
+                    <textarea id="single-q-text" class="form-control" rows="2" placeholder="Sualın mətni..."></textarea>
                 </div>
 
-                <div class="bg-white p-4 rounded border space-y-3 shadow-sm">
-                    <h3 class="font-bold text-xs text-slate-800 border-b pb-1">✏️ Sual Əlavə Et / Düzəliş Et</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
-                        <div>
-                            <label class="block font-bold mb-1">Kateqoriya</label>
-                            <select id="qCategorySelect" onchange="handleCategoryChange()" class="w-full p-2 border rounded bg-slate-50">
-                                <option value="BB">BB Kateqoriyası</option>
-                                <option value="BA">BA Kateqoriyası</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold mb-1">Fənn</label>
-                            <select id="qSubjectSelect" class="w-full p-2 border rounded bg-slate-50">
-                                <option value="Azərbaycan dili">Azərbaycan dili</option>
-                                <option value="Qanunvericilik">Qanunvericilik</option>
-                                <option value="İnformatika">İnformatika</option>
-                                <option value="Məntiq">Məntiq</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold mb-1">Sual Tipi</label>
-                            <select id="qTypeSelect" onchange="renderOptionsAdminForm()" class="w-full p-2 border rounded bg-slate-50">
-                                <option value="test">Variantlı (Test)</option>
-                                <option value="open" id="openOptType" class="hidden">Açıq Sual (2 Bal)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold mb-1">Sual № (1-100)</label>
-                            <input type="number" id="qNumberInput" value="1" min="1" max="100" class="w-full p-2 border rounded">
-                        </div>
-                    </div>
-
-                    <div class="space-y-1">
-                        <textarea id="qTextAdmin" rows="2" class="w-full p-2 border rounded text-xs" placeholder="Sualın mətni..."></textarea>
-                    </div>
-
-                    <div id="adminOptionsContainer" class="space-y-1"></div>
-
-                    <div class="flex justify-between items-center pt-2">
-                        <button id="addFifthBtn" onclick="addFifthOptionAdmin()" class="bg-slate-700 text-white px-2.5 py-1 rounded text-xs font-bold">+ E Variantı</button>
-                        <button onclick="saveQuestionAdmin()" class="bg-emerald-600 text-white px-5 py-1.5 rounded text-xs font-bold">Mərkəzi Bazaya Yaz</button>
-                    </div>
+                <div id="admin-options-container" class="form-group">
+                    <label>A, B, C, D, E Variantları:</label>
+                    <input type="text" id="opt-a" class="form-control" placeholder="A Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-b" class="form-control" placeholder="B Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-c" class="form-control" placeholder="C Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-d" class="form-control" placeholder="D Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-e" class="form-control" placeholder="E Variantı Mətni" style="margin-bottom: 5px;">
+                    
+                    <label style="margin-top:10px;">Düzgün Cavab (0=A, 1=B, 2=C, 3=D, 4=E):</label>
+                    <input type="number" id="single-correct" class="form-control" value="0" min="0" max="4">
                 </div>
 
-                <!-- Bütün Nəticələr -->
-                <div class="bg-white p-4 rounded border space-y-2">
-                    <div class="flex justify-between items-center border-b pb-1">
-                        <h3 class="font-bold text-xs text-slate-800">📊 Bütün Tələbələrin Nəticələri</h3>
-                        <button onclick="loadAllStudentResultsAdmin()" class="bg-blue-800 text-white px-2 py-0.5 rounded text-xs">Yenilə</button>
-                    </div>
-                    <div class="overflow-x-auto max-h-[250px] overflow-y-auto">
-                        <table class="w-full text-[11px] text-center border-collapse">
-                            <thead class="bg-slate-900 text-white sticky top-0">
-                                <tr><th class="p-1.5">Ad Soyad</th><th class="p-1.5">FIN</th><th class="p-1.5">Sınaq №</th><th class="p-1.5">Doğru</th><th class="p-1.5">Yanlış</th><th class="p-1.5">Bal</th></tr>
-                            </thead>
-                            <tbody id="admin-results-table-body" class="divide-y border"><tr><td colspan="6" class="p-2 text-slate-400">Yüklənir...</td></tr></tbody>
-                        </table>
-                    </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success" style="flex: 3;" onclick="saveSingleQuestion()">Mərkəzi Bazaya Yaz və Növbətiyə Keç</button>
+                    <button class="btn btn-danger" style="flex: 1;" onclick="deleteSingleQuestion()">Sualı Sil</button>
                 </div>
             </div>
 
+            <!-- CAVAB AÇARLARI TOPLU ƏLAVƏ ETME -->
+            <h4 style="text-align: left; margin-top: 25px;">🔑 Cavab Açarları Bölməsi (Toplu Cavab Daxil Et)</h4>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                <div class="form-group">
+                    <label>Sınaq Seçin:</label>
+                    <select id="bulk-answers-exam-id" class="form-control">
+                        <option value="1">Sınaq 1</option><option value="2">Sınaq 2</option><option value="3">Sınaq 3</option><option value="4">Sınaq 4</option><option value="5">Sınaq 5</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cavabları Ardıcıl Daxil Edin (Məsələn: 1A 2B 3C... və ya A B C D E...):</label>
+                    <textarea id="bulk-answers-text" class="form-control" rows="3" placeholder="1A 2B 3C 4D 5E 6A 7B 8C 9D 10E..."></textarea>
+                </div>
+                <button class="btn btn-warning" style="width: 100%;" onclick="saveBulkAnswers()">Cavab Açarlarını Yadda Saxla</button>
+            </div>
+
+            <!-- İMTAHAN NƏTİCƏLƏRİ -->
+            <h4 style="text-align: left; margin-top: 25px;">📊 Bütün İmtahan Nəticələri</h4>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr><th>Ad Soyad</th><th>FIN</th><th>Sınaq</th><th>Doğru</th><th>Yanlış</th><th>Bal</th><th>Əməliyyat</th></tr>
+                    </thead>
+                    <tbody id="results-table-body"></tbody>
+                </table>
+            </div>
         </div>
 
+        <div class="footer">
+            <div class="footer-text">
+                © 2026 DQ Platform – Developed <span class="secret-admin-trigger" onclick="openAdminLogin()">by</span> Yunis İmanov
+            </div>
+        </div>
     </div>
-
-    <!-- FOOTER (EXACT IMAGE FOOTER) -->
-    <footer class="text-center py-3 text-[11px] text-slate-500 font-normal border-t border-slate-200">
-        © 2026 DQ Platform – Developed <span onclick="openAdminModal()" class="cursor-pointer">by</span> Yunis İmanov
-    </footer>
 
     <script>
         const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
         const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const ADMIN_PASS = "6675157"; // Alternativ: yunis2026
+        const testDuration = 3 * 3600;
 
         let currentStudentName = "";
         let currentActiveFin = "";
@@ -226,305 +263,322 @@
         let userAnswers = {};
         let hesitantQuestions = {};
         let currentQuestionIndex = 0;
-        let adminOptionCount = 5;
         let timerInterval;
+        let timeLeft = testDuration;
+        let examFinished = false;
 
-        function showScreen(screenId) {
-            ['login-screen', 'exam-screen', 'result-screen', 'student-cabinet-screen', 'admin-panel'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(screenId).classList.remove('hidden');
-        }
-
-        function openAdminModal() {
-            let pass = prompt("Admin Şifrəsini girin:");
-            if (pass === "yunis2026" || pass === "6675157") {
-                showScreen('admin-panel');
-                renderOptionsAdminForm();
-                loadAllStudentResultsAdmin();
-            } else if (pass) alert("Yanlış şifrə!");
-        }
-
-        function handleCategoryChange() {
-            const cat = document.getElementById('qCategorySelect').value;
-            const openOpt = document.getElementById('openOptType');
-            if (cat === 'BA') openOpt.classList.remove('hidden');
-            else {
-                openOpt.classList.add('hidden');
-                document.getElementById('qTypeSelect').value = 'test';
+        function handleAdminCatChange() {
+            const cat = document.getElementById("adm-q-category").value;
+            const openOpt = document.getElementById("adm-open-opt");
+            if (cat === "BA") {
+                openOpt.classList.remove("hidden");
+            } else {
+                openOpt.classList.add("hidden");
+                document.getElementById("adm-q-type").value = "test";
             }
-            renderOptionsAdminForm();
+            renderAdminQuestionInputs();
         }
 
-        function renderOptionsAdminForm() {
-            const type = document.getElementById('qTypeSelect').value;
-            const container = document.getElementById('adminOptionsContainer');
-            const addBtn = document.getElementById('addFifthBtn');
-            container.innerHTML = '';
-
-            if (type === 'open') {
-                addBtn.classList.add('hidden');
+        function renderAdminQuestionInputs() {
+            const qType = document.getElementById("adm-q-type").value;
+            const container = document.getElementById("admin-options-container");
+            if (qType === "open") {
                 container.innerHTML = `
-                    <div class="p-2 bg-amber-50 border border-amber-200 rounded text-xs space-y-1">
-                        <label class="block font-bold text-amber-900">Açıq Cavab (Mətni/Rəqəmi daxil edin - 2 Bal):</label>
-                        <input type="text" id="openCorrectAnswer" class="w-full p-1.5 border rounded bg-white">
-                    </div>
+                    <label style="color:#b91c1c; font-weight:bold;">Açıq Cavab Mətni / Rəqəmi (BA Kateqoriyası - 2 Bal):</label>
+                    <input type="text" id="adm-open-correct" class="form-control" placeholder="Düzgün cavab yazın...">
                 `;
             } else {
-                addBtn.classList.remove('hidden');
-                const labels = ['A', 'B', 'C', 'D', 'E'];
-                for (let i = 0; i < adminOptionCount; i++) {
-                    container.innerHTML += `
-                        <div class="flex items-center gap-2 p-1 border rounded bg-slate-50 text-xs">
-                            <span class="font-bold w-4">${labels[i]})</span>
-                            <input type="text" id="adminOptTxt_${i}" class="flex-1 p-1 border rounded" placeholder="Variant mətni...">
-                            <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="radio" name="adminCorrectRadio" value="${i}" ${i===0?'checked':''}> Düzgün
-                            </label>
-                        </div>
-                    `;
-                }
+                container.innerHTML = `
+                    <label>A, B, C, D, E Variantları:</label>
+                    <input type="text" id="opt-a" class="form-control" placeholder="A Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-b" class="form-control" placeholder="B Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-c" class="form-control" placeholder="C Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-d" class="form-control" placeholder="D Variantı Mətni" style="margin-bottom: 5px;">
+                    <input type="text" id="opt-e" class="form-control" placeholder="E Variantı Mətni" style="margin-bottom: 5px;">
+                    
+                    <label style="margin-top:10px;">Düzgün Cavab (0=A, 1=B, 2=C, 3=D, 4=E):</label>
+                    <input type="number" id="single-correct" class="form-control" value="0" min="0" max="4">
+                `;
             }
         }
 
-        function addFifthOptionAdmin() {
-            if (adminOptionCount === 4) {
-                adminOptionCount = 5;
-                renderOptionsAdminForm();
-            }
-        }
+        async function saveSingleQuestion() {
+            let examId = document.getElementById("single-exam-id").value;
+            let qNo = parseInt(document.getElementById("single-q-no").value);
+            let qText = document.getElementById("single-q-text").value.trim();
+            let cat = document.getElementById("adm-q-category").value;
+            let qType = document.getElementById("adm-q-type").value;
+            let subject = document.getElementById("single-subject").value;
 
-        async function saveQuestionAdmin() {
-            const cat = document.getElementById('qCategorySelect').value;
-            const subject = document.getElementById('qSubjectSelect').value;
-            const type = document.getElementById('qTypeSelect').value;
-            const qNum = parseInt(document.getElementById('qNumberInput').value);
-            const qText = document.getElementById('qTextAdmin').value.trim();
-
-            if (!qText) return alert("Sual mətni yazın!");
+            if (!qText) { alert("Sual mətni daxil edin!"); return; }
 
             let optionsArr = [];
-            let correctVal = "";
+            let correctVal = "0";
 
-            if (type === 'open') {
-                correctVal = document.getElementById('openCorrectAnswer').value.trim();
+            if (qType === "open") {
+                correctVal = document.getElementById("adm-open-correct").value.trim();
             } else {
-                const radio = document.querySelector('input[name="adminCorrectRadio"]:checked');
-                correctVal = radio ? radio.value : "0";
-                const labels = ['A', 'B', 'C', 'D', 'E'];
-                for (let i = 0; i < adminOptionCount; i++) {
-                    const txt = document.getElementById(`adminOptTxt_${i}`).value.trim();
-                    optionsArr.push({ label: labels[i], text: txt });
-                }
+                let optA = document.getElementById("opt-a").value;
+                let optB = document.getElementById("opt-b").value;
+                let optC = document.getElementById("opt-c").value;
+                let optD = document.getElementById("opt-d").value;
+                let optE = document.getElementById("opt-e").value;
+                optionsArr = [optA, optB, optC, optD, optE];
+                correctVal = document.getElementById("single-correct").value;
             }
 
-            const payload = {
-                exam_id: "1",
-                q_number: qNum,
+            await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+            const { error } = await _supabase.from('exam_questions').insert([{
+                exam_id: examId,
+                q_number: qNo,
                 category: cat,
+                q_type: qType,
                 subject: subject,
-                q_type: type,
                 question: qText,
                 options: optionsArr,
                 correct: correctVal
-            };
+            }]);
 
-            await _supabase.from('exam_questions').delete().eq('exam_id', "1").eq('q_number', qNum);
-            const { error } = await _supabase.from('exam_questions').insert([payload]);
-
-            if (error) alert("Xəta: " + error.message);
+            if (error) { alert("Xəta: " + error.message); } 
             else {
-                alert(`Sual #${qNum} Mərkəzi Bazaya Yazıldı!`);
-                document.getElementById('qNumberInput').value = qNum + 1;
-                document.getElementById('qTextAdmin').value = "";
-                renderOptionsAdminForm();
+                alert(`Sual ${qNo} mərkəzi bazaya yazıldı!`);
+                document.getElementById("single-q-no").value = qNo + 1;
+                document.getElementById("single-q-text").value = "";
+                renderAdminQuestionInputs();
             }
         }
 
-        async function loadAllStudentResultsAdmin() {
-            const { data } = await _supabase.from('exam_results').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('admin-results-table-body');
-            tbody.innerHTML = '';
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-2 text-slate-400">Nəticə tapılmadı.</td></tr>`;
-                return;
+        async function deleteSingleQuestion() {
+            let examId = document.getElementById("single-exam-id").value;
+            let qNo = document.getElementById("single-q-no").value;
+
+            if (confirm(`Sınaq ${examId}, Sual ${qNo} silinsin?`)) {
+                await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+                alert("Sual silindi!");
             }
-            data.forEach(r => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="p-1.5 font-bold">${r.name}</td>
-                        <td class="p-1.5 font-mono uppercase">${r.fin}</td>
-                        <td class="p-1.5">Sınaq ${r.exam_no}</td>
-                        <td class="p-1.5 text-emerald-600 font-bold">${r.correct_count}</td>
-                        <td class="p-1.5 text-red-600 font-bold">${r.wrong_count}</td>
-                        <td class="p-1.5 font-bold text-blue-900">${r.score} Bal</td>
-                    </tr>
-                `;
-            });
+        }
+
+        async function saveBulkAnswers() {
+            let examId = document.getElementById("bulk-answers-exam-id").value;
+            let text = document.getElementById("bulk-answers-text").value.toUpperCase();
+
+            if (!text.trim()) { alert("Cavab mətni boş ola bilməz!"); return; }
+
+            let letterToNum = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4 };
+            let matches = text.match(/([A-E])/g);
+
+            if (!matches) { alert("A-E arası hərflər tapılmadı!"); return; }
+
+            for (let i = 0; i < matches.length; i++) {
+                let qNo = i + 1;
+                if (qNo <= 100) {
+                    await _supabase.from('exam_questions').update({ correct: letterToNum[matches[i]] }).eq('exam_id', examId).eq('q_number', qNo);
+                }
+            }
+
+            alert(`Sınaq ${examId} üçün ${matches.length} cavab açarı yerləşdirildi!`);
+            document.getElementById("bulk-answers-text").value = "";
+        }
+
+        async function allowStudent() {
+            let name = document.getElementById("adm-student-name").value.trim();
+            let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
+            let cat = document.getElementById("adm-student-category").value;
+            let examId = document.getElementById("adm-student-exam").value;
+
+            if (!name || !fin) { alert("Məlumatları doldurun!"); return; }
+
+            const { error } = await _supabase.from('allowed_students').upsert([{ name, fin, category: cat, exam_id: examId }], { onConflict: 'fin' });
+            if (error) alert("Xəta: " + error.message);
+            else { alert(`Tələbə (${name}) sistemə əlavə edildi!`); loadAllowedStudents(); }
+        }
+
+        async function loadAllowedStudents() {
+            const { data } = await _supabase.from('allowed_students').select('*');
+            let tbody = document.getElementById("allowed-students-table-body");
+            if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="5">Tələbə tapılmadı</td></tr>`; return; }
+            let html = "";
+            data.forEach(s => { html += `<tr><td>${s.name}</td><td><b>${s.fin}</b></td><td>${s.category}</td><td>Sınaq ${s.exam_id}</td><td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Sil</button></td></tr>`; });
+            tbody.innerHTML = html;
+        }
+
+        async function removeStudentPermission(fin) {
+            if (confirm(`${fin} silinsin?`)) {
+                await _supabase.from('allowed_students').delete().eq('fin', fin);
+                loadAllowedStudents();
+            }
         }
 
         async function proceedToExam() {
-            const name = document.getElementById('user-name').value.trim();
-            const fin = document.getElementById('user-fin').value.trim().toUpperCase();
-            const err = document.getElementById('login-error');
+            const nameInput = document.getElementById("user-name").value.trim();
+            const finInput = document.getElementById("user-fin").value.trim().toUpperCase();
+            const errorMsg = document.getElementById("error-msg");
 
-            if (!name || fin.length < 5) {
-                err.innerText = "Lütfən Ad və FIN daxil edin.";
-                return;
-            }
+            if (!nameInput || finInput.length < 5) { errorMsg.innerText = "Ad və etibarlı FIN kod daxil edin!"; return; }
 
-            const { data, error } = await _supabase.from('allowed_students').select('*').eq('fin', fin);
-            if (error || !data || data.length === 0) {
-                err.innerText = "Bu FIN üçün icazə tapılmadı! Adminlə əlaqə saxlayın.";
-                return;
-            }
+            // 1. Mərkəzi Supabase-dən icazəni yoxla
+            const { data, error } = await _supabase.from('allowed_students').select('*').eq('fin', finInput);
 
-            currentStudentName = name;
-            currentActiveFin = fin;
+            if (error || !data || data.length === 0) { errorMsg.innerText = "Bu FIN üçün icazə tapılmadı!"; return; }
+
+            currentStudentName = nameInput;
+            currentActiveFin = finInput;
             selectedExamId = data[0].exam_id || "1";
             studentCategory = data[0].category || "BB";
 
-            const { data: qData } = await _supabase.from('exam_questions').select('*').eq('exam_id', selectedExamId).order('q_number', { ascending: true });
-            
-            if (!qData || qData.length === 0) {
-                // Sınaq boşdursa nümunə 100 sual generatoru (Demo üçün)
-                allQuestions = Array.from({length: 100}, (_, i) => ({
-                    id: i+1,
-                    q_number: i+1,
-                    subject: i < 15 ? "Azərbaycan dili" : i < 55 ? "Qanunvericilik" : i < 70 ? "İnformatika" : "Məntiq",
-                    q_type: (studentCategory === 'BA' && i >= 95) ? 'open' : 'test',
-                    question: i === 0 ? "Verilmiş sözlərdən hansında vurğu birinci hecadadır?" : `Nümunə Sual #${i+1}`,
-                    options: [
-                        {label: 'A', text: 'Məhsul'}, {label: 'B', text: 'Kədərli'}, 
-                        {label: 'C', text: 'Yumru'}, {label: 'D', text: 'Yazıçı'}, {label: 'E', text: 'Böyük'}
-                    ],
-                    correct: "0"
-                }));
-            } else {
-                allQuestions = qData;
-            }
+            fetchExamQuestionsAndStart();
+        }
 
+        async function fetchExamQuestionsAndStart() {
+            // 2. Mərkəzi Supabase-dən sualları çək
+            const { data, error } = await _supabase.from('exam_questions').select('*').eq('exam_id', selectedExamId).order('q_number', { ascending: true });
+
+            if (error || !data || data.length === 0) { alert("Sual tapılmadı!"); return; }
+
+            allQuestions = data;
             userAnswers = {};
             hesitantQuestions = {};
             currentQuestionIndex = 0;
+            examFinished = false;
 
-            showScreen('exam-screen');
-            renderNavGrid();
-            renderQuestion();
-            startTimer(3 * 3600);
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("exam-screen").style.display = "block";
+            document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Sınaq ${selectedExamId} (${studentCategory})`;
+
+            loadNavGrid();
+            renderCurrentQuestion();
+            startTimer(testDuration);
         }
 
-        function renderQuestion() {
+        function renderCurrentQuestion() {
             const q = allQuestions[currentQuestionIndex];
-            const container = document.getElementById('single-question-container');
+            const container = document.getElementById("single-question-container");
+            const isHesitant = hesitantQuestions[q.id] ? "checked" : "";
             const userAns = userAnswers[q.id];
+            let letters = ["A", "B", "C", "D", "E"];
 
-            document.getElementById('q-number-title').innerText = `Sual ${currentQuestionIndex + 1}`;
+            document.getElementById('q-number-title').innerText = `Sual ${currentQuestionIndex + 1} (${q.subject || ''})`;
             document.getElementById('hesitant-check').checked = !!hesitantQuestions[q.id];
 
-            let optionsContent = '';
+            let html = `<div class="question-title">${q.question}</div>`;
+
             if (q.q_type === 'open') {
-                optionsContent = `
-                    <div class="mt-4 p-3 bg-slate-50 rounded border">
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Açıq Cavab daxil edin (BA Kateqoriyası - 2 Bal):</label>
-                        <input type="text" value="${userAns || ''}" oninput="recordAnswer('${q.id}', this.value)" class="w-full p-2 border rounded text-xs bg-white" placeholder="Cavabınızı yazın...">
+                let openVal = userAns !== undefined ? userAns : '';
+                let disabledAttr = examFinished ? "disabled" : "";
+                html += `
+                    <div style="margin-top:15px; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:6px;">
+                        <label style="display:block; font-weight:bold; font-size:13px; margin-bottom:5px;">Açıq Cavab daxil edin (BA Kateqoriyası - 2 Bal):</label>
+                        <input type="text" value="${openVal}" ${disabledAttr} oninput="selectOption('${q.id}', this.value)" class="form-control" placeholder="Cavabınızı yazın...">
                     </div>
                 `;
             } else if (q.options) {
-                const labels = ['A', 'B', 'C', 'D', 'E'];
-                optionsContent = q.options.map((opt, idx) => `
-                    <label class="flex items-center gap-2 p-2.5 my-1.5 border rounded-md bg-slate-50/50 hover:bg-slate-100 cursor-pointer text-xs">
-                        <input type="radio" name="examRadio" value="${idx}" ${userAns == idx ? 'checked' : ''} onchange="recordAnswer('${q.id}', '${idx}')">
-                        <span class="font-medium text-slate-700">${labels[idx]}) ${opt.text}</span>
-                    </label>
-                `).join('');
+                html += `<div class="options">`;
+                q.options.forEach((opt, idx) => {
+                    let checked = (userAns == idx) ? "checked" : "";
+                    let disabledAttr = examFinished ? "disabled" : "";
+                    let correctHighlight = "";
+                    
+                    if (examFinished) {
+                        if (idx == q.correct) correctHighlight = "background-color: #d1fae5; border: 1px solid #10b981; font-weight: bold;";
+                        else if (userAns == idx && userAns != q.correct) correctHighlight = "background-color: #fef2f2; border: 1px solid #ef4444;";
+                    }
+
+                    html += `
+                        <label style="${correctHighlight}">
+                            <input type="radio" name="current_opt" value="${idx}" ${checked} ${disabledAttr} onclick="selectOption('${q.id}', '${idx}')">
+                            ${letters[idx]}) ${opt}
+                        </label>
+                    `;
+                });
+                html += `</div>`;
             }
 
-            container.innerHTML = `
-                <div class="space-y-3">
-                    <h3 class="text-xs font-bold text-slate-800 leading-relaxed">${q.question}</h3>
-                    <div>${optionsContent}</div>
-                </div>
-            `;
-            updateNavState();
-        }
-
-        function recordAnswer(qId, val) {
-            userAnswers[qId] = val;
-            updateNavState();
+            container.innerHTML = html;
+            updateNavActiveState();
         }
 
         function clearCurrentAnswer() {
+            if (examFinished) return;
             const q = allQuestions[currentQuestionIndex];
             delete userAnswers[q.id];
-            renderQuestion();
+            renderCurrentQuestion();
+        }
+
+        function loadNavGrid() {
+            const gridContainer = document.getElementById("grid-nav-container");
+            let html = "";
+            allQuestions.forEach((q, index) => {
+                let isAns = (userAnswers[q.id] !== undefined && userAnswers[q.id] !== "") ? "answered" : "";
+                let isFlg = hesitantQuestions[q.id] ? "hesitant" : "";
+                html += `<div class="nav-box ${isAns} ${isFlg}" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${index + 1}</div>`;
+            });
+            gridContainer.innerHTML = html;
+        }
+
+        function jumpToQuestion(index) { currentQuestionIndex = index; renderCurrentQuestion(); }
+        function nextQuestion() { if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderCurrentQuestion(); } }
+        function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderCurrentQuestion(); } }
+
+        function selectOption(qId, optIdx) {
+            if (examFinished) return;
+            userAnswers[qId] = optIdx;
+            updateNavActiveState();
         }
 
         function toggleHesitant() {
+            if (examFinished) return;
             const q = allQuestions[currentQuestionIndex];
-            const isChecked = document.getElementById('hesitant-check').checked;
-            if (isChecked) hesitantQuestions[q.id] = true;
+            let chk = document.getElementById("hesitant-check").checked;
+            if (chk) hesitantQuestions[q.id] = true;
             else delete hesitantQuestions[q.id];
-            updateNavState();
+            updateNavActiveState();
         }
 
-        function renderNavGrid() {
-            const grid = document.getElementById('grid-nav-container');
-            grid.innerHTML = allQuestions.map((q, idx) => `
-                <div id="nav_${q.id}" onclick="jumpToQuestion(${idx})" class="nav-box">${idx + 1}</div>
-            `).join('');
-        }
-
-        function updateNavState() {
+        function updateNavActiveState() {
             allQuestions.forEach((q, idx) => {
-                const box = document.getElementById(`nav_${q.id}`);
+                let box = document.getElementById(`nav_${q.id}`);
                 if (box) {
-                    box.className = 'nav-box';
-                    if (userAnswers[q.id] !== undefined && userAnswers[q.id] !== "") box.classList.add('answered');
-                    if (hesitantQuestions[q.id]) box.classList.add('hesitant');
-                    if (idx === currentQuestionIndex) box.classList.add('current');
+                    box.className = "nav-box";
+                    if (userAnswers[q.id] !== undefined && userAnswers[q.id] !== "") box.classList.add("answered");
+                    if (hesitantQuestions[q.id]) box.classList.add("hesitant");
+                    if (idx === currentQuestionIndex) box.classList.add("current");
                 }
             });
         }
 
-        function jumpToQuestion(idx) { currentQuestionIndex = idx; renderQuestion(); }
-        function nextQuestion() { if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderQuestion(); } }
-        function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); } }
-
         function startTimer(duration) {
-            let timeLeft = duration;
-            const display = document.getElementById('timer');
+            timeLeft = duration;
+            const display = document.getElementById("timer");
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
-                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
-                let s = String(timeLeft % 60).padStart(2, '0');
-                display.textContent = `${h}:${m}:${s}`;
+                if (examFinished) return;
+                let hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let seconds = String(timeLeft % 60).padStart(2, '0');
+                display.textContent = `${hours}:${minutes}:${seconds}`;
                 if (--timeLeft < 0) { clearInterval(timerInterval); finishExam(); }
             }, 1000);
         }
 
-        function confirmFinish() {
-            if (confirm("Testi bitirmək istədiyinizə əminsiniz?")) finishExam();
-        }
+        function confirmFinish() { if (confirm("Testi bitirmək istədiyinizə əminsinizmi?")) { clearInterval(timerInterval); finishExam(); } }
 
         async function finishExam() {
             clearInterval(timerInterval);
-            let correct = 0, wrong = 0, blank = 0, totalScore = 0;
+            examFinished = true;
+            let totalCorrect = 0, totalWrong = 0, totalBlank = 0, totalScore = 0;
 
             allQuestions.forEach(q => {
-                const ans = userAnswers[q.id];
-                const isCorrect = ans !== undefined && String(ans).trim().toLowerCase() === String(q.correct).trim().toLowerCase();
+                let userAns = userAnswers[q.id];
+                let isCorrect = userAns !== undefined && String(userAns).trim().toLowerCase() === String(q.correct).trim().toLowerCase();
 
-                if (ans === undefined || ans === "") {
-                    blank++;
+                if (userAns === undefined || userAns === "") {
+                    totalBlank++;
                 } else if (isCorrect) {
-                    correct++;
-                    // BA kateqoriyasında açıq sual 2 bal
+                    totalCorrect++;
                     if (studentCategory === 'BA' && q.q_type === 'open') totalScore += 2;
                     else totalScore += 1;
                 } else {
-                    wrong++;
+                    totalWrong++;
                 }
             });
 
@@ -532,26 +586,27 @@
                 name: currentStudentName,
                 fin: currentActiveFin,
                 exam_no: selectedExamId,
-                correct_count: correct,
-                wrong_count: wrong,
+                correct_count: totalCorrect,
+                wrong_count: totalWrong,
                 score: totalScore,
                 user_answers: userAnswers
             }]);
 
-            showScreen('result-screen');
-            document.getElementById('res-name').innerText = currentStudentName;
-            document.getElementById('res-total-correct').innerText = correct;
-            document.getElementById('res-total-wrong').innerText = wrong;
-            document.getElementById('res-total-blank').innerText = blank;
-            document.getElementById('res-total-score').innerText = totalScore;
+            document.getElementById("exam-screen").style.display = "none";
+            document.getElementById("result-screen").style.display = "block";
+            document.getElementById("res-name").innerText = currentStudentName;
+            document.getElementById("res-total-correct").innerText = totalCorrect;
+            document.getElementById("res-total-wrong").innerText = totalWrong;
+            document.getElementById("res-total-blank").innerText = totalBlank;
+            document.getElementById("res-total-score").innerText = totalScore;
+            document.getElementById("res-bb-group").innerText = totalScore >= 65 ? "Status: Keçdi (≥65 bal)" : "Status: Kəsildi (<65 bal)";
 
-            renderExactResultTables();
+            renderExactDimTables();
         }
 
-        // ŞƏKİLDƏKİ FƏNN CƏDVƏLLƏRİNİN TAM ANALOQU
-        function renderExactResultTables() {
-            const container = document.getElementById('subject-tables-container');
-            container.innerHTML = '';
+        function renderExactDimTables() {
+            const container = document.getElementById("subject-tables-container");
+            container.innerHTML = "";
 
             const subjects = [
                 { name: "Azərbaycan dili", range: [1, 15] },
@@ -560,35 +615,36 @@
                 { name: "Məntiq", range: [71, 100] }
             ];
 
-            const labels = ['A', 'B', 'C', 'D', 'E'];
+            const letters = ['A', 'B', 'C', 'D', 'E'];
 
             subjects.forEach(sub => {
-                const subQuestions = allQuestions.filter(q => q.q_number >= sub.range[0] && q.q_number <= sub.range[1]);
+                const subQuestions = allQuestions.filter((q, idx) => (idx + 1) >= sub.range[0] && (idx + 1) <= sub.range[1]);
                 if (subQuestions.length === 0) return;
 
-                let headRow = `<tr class="bg-slate-100 font-bold"><td class="p-1 border w-16">№</td>`;
-                let etalonRow = `<tr><td class="p-1 border font-bold bg-slate-50">Etalon</td>`;
-                let userRow = `<tr><td class="p-1 border font-bold bg-slate-50">İştirakçı</td>`;
-                let resultRow = `<tr><td class="p-1 border font-bold bg-slate-50">Nəticə</td>`;
+                let headRow = `<tr style="background:#f1f5f9; font-weight:bold;"><td style="width:70px;">№</td>`;
+                let etalonRow = `<tr><td style="font-weight:bold; background:#f8fafc;">Etalon</td>`;
+                let userRow = `<tr><td style="font-weight:bold; background:#f8fafc;">İştirakçı</td>`;
+                let resultRow = `<tr><td style="font-weight:bold; background:#f8fafc;">Nəticə</td>`;
 
-                subQuestions.forEach(q => {
-                    const ans = userAnswers[q.id];
-                    const etalonTxt = q.q_type === 'open' ? q.correct : labels[q.correct] || q.correct;
-                    const userTxt = ans !== undefined ? (q.q_type === 'open' ? ans : labels[ans] || ans) : "-";
-                    const isCorrect = ans !== undefined && String(ans).trim().toLowerCase() === String(q.correct).trim().toLowerCase();
+                subQuestions.forEach((q, idx) => {
+                    let qNum = sub.range[0] + idx;
+                    let ans = userAnswers[q.id];
+                    let etalonTxt = q.q_type === 'open' ? q.correct : (letters[q.correct] || q.correct);
+                    let userTxt = ans !== undefined && ans !== "" ? (q.q_type === 'open' ? ans : (letters[ans] || ans)) : "-";
+                    let isCorrect = ans !== undefined && String(ans).trim().toLowerCase() === String(q.correct).trim().toLowerCase();
 
-                    headRow += `<td class="p-1 border text-center w-6">${q.q_number}</td>`;
-                    etalonRow += `<td class="p-1 border text-center font-semibold">${etalonTxt}</td>`;
-                    userRow += `<td class="p-1 border text-center">${userTxt}</td>`;
-                    resultRow += `<td class="p-1 border text-center ${isCorrect ? 'text-emerald-600 font-bold' : (ans ? 'text-red-500 font-bold' : '')}">${isCorrect ? '+' : (ans ? '-' : '-')}</td>`;
+                    headRow += `<td style="width:24px;">${qNum}</td>`;
+                    etalonRow += `<td style="font-weight:600;">${etalonTxt}</td>`;
+                    userRow += `<td>${userTxt}</td>`;
+                    resultRow += `<td style="${isCorrect ? 'color:#10b981; font-weight:bold;' : (ans ? 'color:#ef4444; font-weight:bold;' : '')}">${isCorrect ? '+' : (ans ? '-' : '-')}</td>`;
                 });
 
                 headRow += `</tr>`; etalonRow += `</tr>`; userRow += `</tr>`; resultRow += `</tr>`;
 
                 container.innerHTML += `
                     <div>
-                        <div class="font-bold text-slate-800 mb-1">${sub.name}</div>
-                        <table class="w-full border-collapse border border-slate-200 text-center">
+                        <div style="font-weight:bold; text-align:left; font-size:12px; margin-bottom:4px;">${sub.name}</div>
+                        <table>
                             ${headRow}
                             ${etalonRow}
                             ${userRow}
@@ -599,44 +655,41 @@
             });
         }
 
-        async function allowStudent() {
-            const name = document.getElementById('adm-student-name').value.trim();
-            const fin = document.getElementById('adm-student-fin').value.trim().toUpperCase();
-            const cat = document.getElementById('adm-student-category').value;
-            const examId = document.getElementById('adm-student-exam').value;
+        function backToReviewQuestions() { document.getElementById("result-screen").style.display = "none"; document.getElementById("exam-screen").style.display = "block"; currentQuestionIndex = 0; renderCurrentQuestion(); }
+        function resetToHome() { location.reload(); }
 
-            if (!name || !fin) return alert("Ad və FIN məcburidir!");
-
-            const { error } = await _supabase.from('allowed_students').upsert([{ name, fin, category: cat, exam_id: examId }], { onConflict: 'fin' });
-            if (error) alert(error.message);
-            else alert(`Tələbə (${name}) sistemə əlavə edildi!`);
+        function openAdminLogin() {
+            let pass = prompt("Admin şifrəsini daxil edin:");
+            if (pass === ADMIN_PASS || pass === "yunis2026") {
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("exam-screen").style.display = "none";
+                document.getElementById("result-screen").style.display = "none";
+                document.getElementById("admin-panel").style.display = "block";
+                renderAdminQuestionInputs();
+                loadAdminPanelData();
+            } else if (pass) alert("Yanlış şifrə!");
         }
 
-        async function loadStudentCabinetData() {
-            const fin = document.getElementById('kabinet-fin-search').value.trim().toUpperCase();
-            if (!fin) return alert("FIN kod yazın!");
+        function closeAdminPanel() { document.getElementById("admin-panel").style.display = "none"; document.getElementById("login-screen").style.display = "block"; }
 
-            const { data } = await _supabase.from('exam_results').select('*').eq('fin', fin);
-            const tbody = document.getElementById('kabinet-history-table');
-            tbody.innerHTML = '';
-
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-slate-400">Nəticə tapılmadı.</td></tr>`;
-                return;
+        async function loadAdminPanelData() {
+            loadAllowedStudents();
+            const { data: results } = await _supabase.from('exam_results').select('*').order('created_at', { ascending: false });
+            if(results) {
+                let tbody = document.getElementById("results-table-body");
+                let html = "";
+                results.forEach(r => { html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score} Bal</b></td><td><button class="btn btn-danger btn-sm" onclick="deleteResult(${r.id})">Sil</button></td></tr>`; });
+                tbody.innerHTML = html;
             }
+        }
 
-            data.forEach(r => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="p-2">Sınaq ${r.exam_no}</td>
-                        <td class="p-2 text-emerald-600 font-bold">${r.correct_count}</td>
-                        <td class="p-2 text-red-600 font-bold">${r.wrong_count}</td>
-                        <td class="p-2 font-bold text-blue-900">${r.score} Bal</td>
-                        <td class="p-2 text-emerald-700 font-semibold">Tamamlandı</td>
-                    </tr>
-                `;
-            });
+        async function deleteResult(resId) {
+            if (confirm("Bu nəticəni silmək istədiyinizə əminsiniz?")) {
+                await _supabase.from('exam_results').delete().eq('id', resId);
+                loadAdminPanelData();
+            }
         }
     </script>
 </body>
 </html>
+
