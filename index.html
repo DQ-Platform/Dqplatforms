@@ -46,10 +46,10 @@
         
         /* ADMİN VƏ MODUL NAVİQASİYASI */
         #admin-panel { display: none; margin-top: 20px; border-top: 2px solid var(--accent-gold); padding-top: 20px; }
-        .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
-        .admin-nav-card { background: var(--primary-dark); color: var(--accent-gold); padding: 14px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #334155; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .admin-nav-card { background: var(--primary-dark); color: var(--accent-gold); padding: 12px 8px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 12px; border: 1px solid #334155; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .admin-nav-card:hover { background: #1e293b; border-color: var(--accent-gold); transform: translateY(-2px); }
-        .admin-nav-card span.icon { font-size: 20px; }
+        .admin-nav-card span.icon { font-size: 18px; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: 8px; text-align: center; }
@@ -66,6 +66,10 @@
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
         th, td { padding: 10px; border: 1px solid #cbd5e1; }
         th { background: var(--primary-dark); color: white; }
+
+        /* DETALLARI GİZLƏ/GÖSTƏR ÜÇÜN DÜYMƏ */
+        .toggle-details-btn { width: 100%; background: #0284c7; color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
+        .toggle-details-btn:hover { background: #0369a1; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -147,7 +151,7 @@
                 <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="closeAdminPanel()">Paneli Bağla</button>
             </div>
 
-            <!-- Bütün Səhifələrə Birbaşa Düymələr -->
+            <!-- Repozitoriyadakı BÜTÜN Fayllara Birbaşa Düymələr -->
             <div class="admin-nav-grid">
                 <a href="admin.html" class="admin-nav-card"><span class="icon">🛠️</span> Admin Panel (admin.html)</a>
                 <a href="Kabinet.html" class="admin-nav-card"><span class="icon">📊</span> Şəxsi Kabinet (Kabinet.html)</a>
@@ -157,104 +161,114 @@
                 <a href="Kontrol.html" class="admin-nav-card"><span class="icon">📡</span> Canlı Nəzarət (Kontrol.html)</a>
                 <a href="Pult.html" class="admin-nav-card"><span class="icon">⚙️</span> Sistem Pultu (Pult.html)</a>
                 <a href="Idare.html" class="admin-nav-card"><span class="icon">🔒</span> İdarə Rejimi (Idare.html)</a>
+                <a href="Statistika.html" class="admin-nav-card"><span class="icon">📈</span> Statistika (Statistika.html)</a>
+                <a href="Siyaha.html" class="admin-nav-card"><span class="icon">📋</span> İştirakçı Siyahısı (Siyaha.html)</a>
             </div>
 
-            <!-- Tələbələrin İcazə Bölməsi -->
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px;">
-                <h4>İştirakçıya İcazə Ver</h4>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 180px;">
-                    <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 120px;" maxlength="7">
-                    <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
-                </div>
-                <p id="adm-student-msg" style="margin-top: 5px; font-size: 13px;"></p>
+            <!-- Düymələrdən Aşağı Hissəni Aç/Gizlət Yapan Buton -->
+            <button class="toggle-details-btn" onclick="toggleAdminDetails()">👁️ Tənzimləmələri Və Nəticələri Göstər / Gizlə</button>
 
-                <h4 style="text-align: left; margin-top: 20px;">İcazə Verilmiş Tələbələr Siyahısı</h4>
+            <!-- GİZLƏNİB/AÇILAN ƏSAS TƏNZİMLƏMƏ VƏ IDARƏETMƏ KONTENTİ -->
+            <div id="admin-details-section" style="display: none;">
+                
+                <!-- Tələbələrin İcazə Bölməsi -->
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px;">
+                    <h4>İştirakçıya İcazə Ver</h4>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 180px;">
+                        <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 120px;" maxlength="7">
+                        <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
+                    </div>
+                    <p id="adm-student-msg" style="margin-top: 5px; font-size: 13px;"></p>
+
+                    <h4 style="text-align: left; margin-top: 20px;">İcazə Verilmiş Tələbələr Siyahısı</h4>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ad Soyad</th>
+                                    <th>FIN Kod</th>
+                                    <th>Əməliyyat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allowed-students-table-body">
+                                <tr><td colspan="3">Yüklənir...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="margin-top: 20px;">
+                    <div class="stat-card">
+                        <h5>İmtahan Verən İştirakçılar</h5>
+                        <div class="value" id="stat-total-students">0</div>
+                    </div>
+                </div>
+
+                <hr>
+                <!-- Sual Əlavə Etmə Bölməsi -->
+                <h4 style="text-align: left; margin-top: 20px;">Sınağa Sual Əlavə Et</h4>
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <div class="form-group">
+                        <label>Hansı Sınaq Üçün?</label>
+                        <select id="target-exam-id" class="form-control">
+                            <option value="1">Sınaq 1</option>
+                            <option value="2">Sınaq 2</option>
+                            <option value="3">Sınaq 3</option>
+                            <option value="4">Sınaq 4</option>
+                            <option value="5">Sınaq 5</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Sual Nömrəsi:</label>
+                        <input type="number" id="new-q-id" class="form-control" min="1" max="100" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Fənn:</label>
+                        <select id="new-q-subject" class="form-control">
+                            <option value="Azərbaycan dili">Azərbaycan dili</option>
+                            <option value="Qanunvericilik">Qanunvericilik</option>
+                            <option value="İnformatika">İnformatika</option>
+                            <option value="Məntiq">Məntiq</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Sual Mətni:</label>
+                        <textarea id="new-q-text" class="form-control" rows="3" placeholder="Sualın mətnini daxil edin..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Variantlar (A, B, C, D, E):</label>
+                        <input type="text" class="form-control opt-input" placeholder="A variantı" style="margin-bottom: 5px;">
+                        <input type="text" class="form-control opt-input" placeholder="B variantı" style="margin-bottom: 5px;">
+                        <input type="text" class="form-control opt-input" placeholder="C variantı" style="margin-bottom: 5px;">
+                        <input type="text" class="form-control opt-input" placeholder="D variantı" style="margin-bottom: 5px;">
+                        <input type="text" class="form-control opt-input" placeholder="E variantı">
+                    </div>
+                    <div class="form-group">
+                        <label>Düzgün Cavab İndeksi (0 = A, 1 = B, 2 = C, 3 = D, 4 = E):</label>
+                        <input type="number" id="new-q-correct" class="form-control" min="0" max="4" value="0">
+                    </div>
+                    <button class="btn btn-success" onclick="addNewQuestionToExam()">Sualı Mərkəzi Bazaya Əlavə Et</button>
+                </div>
+
+                <!-- İmtahan Nəticələri -->
+                <h4 style="text-align: left; margin: 25px 0 10px 0;">İştirakçılar və Nəticələr</h4>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Ad Soyad</th>
-                                <th>FIN Kod</th>
-                                <th>Əməliyyat</th>
+                                <th>FIN</th>
+                                <th>Sınaq</th>
+                                <th>Doğru</th>
+                                <th>Yanlış</th>
+                                <th>Bal</th>
                             </tr>
                         </thead>
-                        <tbody id="allowed-students-table-body">
-                            <tr><td colspan="3">Yüklənir...</td></tr>
-                        </tbody>
+                        <tbody id="results-table-body"></tbody>
                     </table>
                 </div>
-            </div>
 
-            <div class="stats-grid" style="margin-top: 20px;">
-                <div class="stat-card">
-                    <h5>İmtahan Verən İştirakçılar</h5>
-                    <div class="value" id="stat-total-students">0</div>
-                </div>
-            </div>
-
-            <hr>
-            <!-- Sual Əlavə Etmə Bölməsi -->
-            <h4 style="text-align: left; margin-top: 20px;">Sınağa Sual Əlavə Et</h4>
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-                <div class="form-group">
-                    <label>Hansı Sınaq Üçün?</label>
-                    <select id="target-exam-id" class="form-control">
-                        <option value="1">Sınaq 1</option>
-                        <option value="2">Sınaq 2</option>
-                        <option value="3">Sınaq 3</option>
-                        <option value="4">Sınaq 4</option>
-                        <option value="5">Sınaq 5</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Sual Nömrəsi:</label>
-                    <input type="number" id="new-q-id" class="form-control" min="1" max="100" value="1">
-                </div>
-                <div class="form-group">
-                    <label>Fənn:</label>
-                    <select id="new-q-subject" class="form-control">
-                        <option value="Azərbaycan dili">Azərbaycan dili</option>
-                        <option value="Qanunvericilik">Qanunvericilik</option>
-                        <option value="İnformatika">İnformatika</option>
-                        <option value="Məntiq">Məntiq</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Sual Mətni:</label>
-                    <textarea id="new-q-text" class="form-control" rows="3" placeholder="Sualın mətnini daxil edin..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Variantlar (A, B, C, D, E):</label>
-                    <input type="text" class="form-control opt-input" placeholder="A variantı" style="margin-bottom: 5px;">
-                    <input type="text" class="form-control opt-input" placeholder="B variantı" style="margin-bottom: 5px;">
-                    <input type="text" class="form-control opt-input" placeholder="C variantı" style="margin-bottom: 5px;">
-                    <input type="text" class="form-control opt-input" placeholder="D variantı" style="margin-bottom: 5px;">
-                    <input type="text" class="form-control opt-input" placeholder="E variantı">
-                </div>
-                <div class="form-group">
-                    <label>Düzgün Cavab İndeksi (0 = A, 1 = B, 2 = C, 3 = D, 4 = E):</label>
-                    <input type="number" id="new-q-correct" class="form-control" min="0" max="4" value="0">
-                </div>
-                <button class="btn btn-success" onclick="addNewQuestionToExam()">Sualı Mərkəzi Bazaya Əlavə Et</button>
-            </div>
-
-            <!-- İmtahan Nəticələri -->
-            <h4 style="text-align: left; margin: 25px 0 10px 0;">İştirakçılar və Nəticələr</h4>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Ad Soyad</th>
-                            <th>FIN</th>
-                            <th>Sınaq</th>
-                            <th>Doğru</th>
-                            <th>Yanlış</th>
-                            <th>Bal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="results-table-body"></tbody>
-                </table>
             </div>
         </div>
 
@@ -283,6 +297,15 @@
         let timerInterval;
         let timeLeft = testDuration;
         let examFinished = false;
+
+        function toggleAdminDetails() {
+            const sec = document.getElementById("admin-details-section");
+            if (sec.style.display === "none") {
+                sec.style.display = "block";
+            } else {
+                sec.style.display = "none";
+            }
+        }
 
         async function proceedToExamSelect() {
             const nameInput = document.getElementById("user-name").value.trim();
@@ -592,3 +615,4 @@
     </script>
 </body>
 </html>
+
