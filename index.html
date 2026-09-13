@@ -115,6 +115,7 @@
             <h3 class="font-bold text-lg text-slate-800 uppercase mb-1">Dövlət Qulluğu İmtahan Nəticəsi</h3>
             <div id="res-name" class="font-bold text-xl text-slate-900 mb-4"></div>
 
+            <!-- FƏNLƏR ÜZRƏ AYRI CƏDVƏLLƏR -->
             <div id="subject-tables-container" class="space-y-4 text-left overflow-x-auto"></div>
 
             <div class="my-4 text-left font-bold text-sm space-y-1">
@@ -178,10 +179,10 @@
                         <option value="BA">BA Kateqoriyası</option>
                         <option value="AC">AC Kateqoriyası</option>
                     </select>
-                    <select id="single-exam-id" class="form-control"><option value="1">Sınaq 1</option></select>
+                    <select id="single-exam-id" class="form-control"><option value="1">Sınaq 1</option><option value="2">Sınaq 2</option></select>
                     <select id="single-subject" class="form-control" onchange="handleSubjectChange()">
                         <option value="Azərbaycan dili">Azərbaycan dili</option>
-                        <option value="Qanunvericilik">Qanunvericilik (4 Variantlı)</option>
+                        <option value="Qanunvericilik">Qanunvericilik</option>
                         <option value="İnformatika">İnformatika</option>
                         <option value="Məntiq">Məntiq</option>
                     </select>
@@ -200,14 +201,22 @@
                     <input type="file" id="q-image-file" accept="image/*" class="form-control text-xs" onchange="handleImageUpload(this)">
                 </div>
 
+                <!-- DİNAMİK VARİANT DÜYMƏLƏRİ (3, 4, 5 və ya artıq variant) -->
+                <div class="flex gap-2 mb-3">
+                    <button class="btn btn-sm btn-secondary" onclick="setOptionCount(3)">3 Variantlı Et</button>
+                    <button class="btn btn-sm btn-secondary" onclick="setOptionCount(4)">4 Variantlı Et</button>
+                    <button class="btn btn-sm btn-secondary" onclick="setOptionCount(5)">5 Variantlı Et</button>
+                    <button class="btn btn-sm btn-warning" onclick="addCustomOption()">+ Dinamik Variant Əlavə Et</button>
+                </div>
+
                 <div id="admin-options-container" class="space-y-2 text-left">
-                    <!-- Dinamik Variantlar Bura Yığılır -->
+                    <!-- Variantlar Dinamik Yaradılır -->
                 </div>
 
                 <div class="mt-4 text-left">
                     <label class="font-bold block mb-1 text-xs text-blue-700">📄 Word Üslubunda Canlı Önbaxış və İnteraktiv Redaktə:</label>
                     <div id="word-preview-box" class="word-editor-preview" contenteditable="true" oninput="syncFromWordPreview()">
-                        <!-- Canlı Ön Baxış Hissəsi -->
+                        <!-- Canlı Redaktə Edilə Bilən Word Ön Baxışı -->
                     </div>
                 </div>
 
@@ -241,7 +250,7 @@
         let uploadedImageBase64 = "";
         let activeOptionCount = 5;
 
-        // KATEGORİYA VƏ FƏN SEÇİMİ
+        // KATEGORİYA VƏ FƏN İDARƏETMƏSİ
         function handleAdminCatChange() {
             const cat = document.getElementById("adm-q-category").value;
             const openOpt = document.getElementById("adm-open-opt");
@@ -264,6 +273,16 @@
             renderAdminQuestionInputs();
         }
 
+        function setOptionCount(count) {
+            activeOptionCount = count;
+            renderAdminQuestionInputs();
+        }
+
+        function addCustomOption() {
+            activeOptionCount++;
+            renderAdminQuestionInputs();
+        }
+
         function renderAdminQuestionInputs() {
             const qType = document.getElementById("adm-q-type").value;
             const container = document.getElementById("admin-options-container");
@@ -275,27 +294,19 @@
                 `;
             } else {
                 let html = `<label class="font-bold block text-xs">Variantlar (${activeOptionCount} Variantlı):</label>`;
-                const letters = ['A', 'B', 'C', 'D', 'E'];
+                const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
                 for (let i = 0; i < activeOptionCount; i++) {
-                    html += `<input type="text" id="opt-${letters[i].toLowerCase()}" class="form-control mb-1" placeholder="${letters[i]} Variantı Mətni" oninput="updateWordPreview()">`;
-                }
-                
-                if (activeOptionCount === 4) {
-                    html += `<button class="text-xs text-blue-600 underline border-none bg-transparent cursor-pointer" onclick="addFifthOption()">+ 5-ci (E) Variantı Əlavə Et</button><br>`;
+                    let letter = letters[i] || (i + 1);
+                    html += `<input type="text" id="opt-${i}" class="form-control mb-1" placeholder="${letter} Variantı Mətni" oninput="updateWordPreview()">`;
                 }
 
                 html += `
-                    <label class="font-bold block mt-2 text-xs">Düzgün Cavab Seçin (0=A, 1=B, 2=C, 3=D, 4=E):</label>
+                    <label class="font-bold block mt-2 text-xs">Düzgün Cavab İndeksini Seçin (0=A, 1=B, 2=C...):</label>
                     <input type="number" id="single-correct" class="form-control" value="0" min="0" max="${activeOptionCount - 1}" oninput="updateWordPreview()">
                 `;
                 container.innerHTML = html;
             }
             updateWordPreview();
-        }
-
-        function addFifthOption() {
-            activeOptionCount = 5;
-            renderAdminQuestionInputs();
         }
 
         function handleImageUpload(element) {
@@ -310,7 +321,7 @@
             }
         }
 
-        // WORD ÜSLUBUNDA CANLI PREVIEW VƏ REDAKTƏ
+        // WORD ÜSLUBUNDA CANLI ÖNBAXIŞ VƏ İNTERAKTİV REDAKTƏ
         function updateWordPreview() {
             const preview = document.getElementById("word-preview-box");
             const qText = document.getElementById("single-q-text").value;
@@ -324,24 +335,24 @@
 
             if (qType === "open") {
                 const openAns = document.getElementById("adm-open-correct")?.value || "";
-                html += `<b>[Açıq Sual Cavabı]:</b> ${openAns}`;
+                html += `<b>[Açıq Cavab Etalonu]:</b> ${openAns}`;
             } else {
-                const letters = ['A', 'B', 'C', 'D', 'E'];
+                const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
                 for (let i = 0; i < activeOptionCount; i++) {
-                    const val = document.getElementById(`opt-${letters[i].toLowerCase()}`)?.value || "";
-                    html += `<div><b>${letters[i]})</b> ${val}</div>`;
+                    const val = document.getElementById(`opt-${i}`)?.value || "";
+                    let letter = letters[i] || (i + 1);
+                    html += `<div><b>${letter})</b> ${val}</div>`;
                 }
             }
             preview.innerHTML = html;
         }
 
         function syncFromWordPreview() {
-            // Canlı redaktə zamanı preview hissəsindən mətnləri avtomatik sync edir
             const preview = document.getElementById("word-preview-box");
             document.getElementById("single-q-text").value = preview.innerText;
         }
 
-        // BAZAYA SUAL YAZILMASI
+        // SUALI BAZAYA QEYD ETMƏK
         async function saveSingleQuestion() {
             let examId = document.getElementById("single-exam-id").value;
             let qNo = parseInt(document.getElementById("single-q-no").value);
@@ -356,9 +367,8 @@
             if (qType === "open") {
                 correctVal = document.getElementById("adm-open-correct").value.trim();
             } else {
-                const letters = ['a', 'b', 'c', 'd', 'e'];
                 for (let i = 0; i < activeOptionCount; i++) {
-                    optionsArr.push(document.getElementById(`opt-${letters[i]}`)?.value || "");
+                    optionsArr.push(document.getElementById(`opt-${i}`)?.value || "");
                 }
                 correctVal = document.getElementById("single-correct").value;
             }
@@ -378,7 +388,7 @@
 
             if (error) { alert("Xəta: " + error.message); } 
             else {
-                alert(`Sual ${qNo} mərkəzi bazaya uğurla yazıldı!`);
+                alert(`Sual ${qNo} uğurla mərkəzi bazaya yazıldı!`);
                 document.getElementById("single-q-no").value = qNo + 1;
                 document.getElementById("single-q-text").value = "";
                 uploadedImageBase64 = "";
@@ -386,7 +396,16 @@
             }
         }
 
-        // TƏLƏBƏ İCAZƏSİ VƏ ŞƏXSİ KABİNET
+        async function deleteSingleQuestion() {
+            let examId = document.getElementById("single-exam-id").value;
+            let qNo = parseInt(document.getElementById("single-q-no").value);
+            if (confirm(`Sual ${qNo} silinsin?`)) {
+                await _supabase.from('exam_questions').delete().eq('exam_id', examId).eq('q_number', qNo);
+                alert("Sual silindi.");
+            }
+        }
+
+        // İŞTİRAKÇI VƏ ŞƏXSİ KABİNET
         async function allowStudent() {
             let name = document.getElementById("adm-student-name").value.trim();
             let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
@@ -421,7 +440,7 @@
             if (!finInput) { alert("Zəhmət olmasa FIN Kodunuzu daxil edin!"); return; }
 
             const { data: results } = await _supabase.from('exam_results').select('*').eq('fin', finInput);
-            if (!results || results.length === 0) { alert("Bu FIN kod üzrə heç bir keçmiş nəticə tapılmadı!"); return; }
+            if (!results || results.length === 0) { alert("Bu FIN kod üzrə keçmiş nəticə tapılmadı!"); return; }
 
             document.getElementById("login-screen").classList.add("hidden");
             document.getElementById("cabinet-screen").classList.remove("hidden");
@@ -442,6 +461,27 @@
                 `;
             });
             tbody.innerHTML = html;
+        }
+
+        async function reviewPastResult(resultId) {
+            const { data } = await _supabase.from('exam_results').select('*').eq('id', resultId).single();
+            if (!data) return;
+
+            userAnswers = data.user_answers || {};
+            currentStudentName = data.name;
+            selectedExamId = data.exam_no;
+
+            const { data: qData } = await _supabase.from('exam_questions').select('*').eq('exam_id', selectedExamId).order('q_number', { ascending: true });
+            allQuestions = qData || [];
+
+            document.getElementById("cabinet-screen").classList.add("hidden");
+            document.getElementById("result-screen").classList.remove("hidden");
+            document.getElementById("res-name").innerText = currentStudentName;
+            document.getElementById("res-total-correct").innerText = data.correct_count;
+            document.getElementById("res-total-wrong").innerText = data.wrong_count;
+            document.getElementById("res-total-score").innerText = data.score;
+
+            renderExactDimTables();
         }
 
         function closeCabinet() {
@@ -487,7 +527,7 @@
         function renderCurrentQuestion() {
             const q = allQuestions[currentQuestionIndex];
             const container = document.getElementById("single-question-container");
-            const letters = ["A", "B", "C", "D", "E"];
+            const letters = ["A", "B", "C", "D", "E", "F", "G"];
 
             document.getElementById('q-number-title').innerText = `Sual ${currentQuestionIndex + 1} (${q.subject || ''})`;
             document.getElementById('hesitant-check').checked = !!hesitantQuestions[q.id];
@@ -509,10 +549,11 @@
                 html += `<div class="space-y-2 mt-3">`;
                 q.options.forEach((opt, idx) => {
                     let checked = (userAnswers[q.id] == idx) ? "checked" : "";
+                    let letter = letters[idx] || (idx + 1);
                     html += `
                         <label class="block p-3 bg-slate-100 rounded cursor-pointer hover:bg-slate-200 text-sm">
                             <input type="radio" name="current_opt" value="${idx}" ${checked} onclick="selectOption('${q.id}', '${idx}')">
-                            <b>${letters[idx]})</b> ${opt}
+                            <b>${letter})</b> ${opt}
                         </label>
                     `;
                 });
@@ -617,30 +658,45 @@
             renderExactDimTables();
         }
 
+        // FƏNLƏR ÜZRƏ AYRI CƏDVƏL DÜZƏLİŞİ
         function renderExactDimTables() {
             const container = document.getElementById("subject-tables-container");
             container.innerHTML = "";
-            const letters = ['A', 'B', 'C', 'D', 'E'];
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
-            let headRow = `<tr><th style="width:80px;">Sual №</th>`;
-            let etalonRow = `<tr><td class="font-bold bg-slate-100">Etalon</td>`;
-            let userRow = `<tr><td class="font-bold bg-slate-100">İştirakçı</td>`;
-            let resultRow = `<tr><td class="font-bold bg-slate-100">Nəticə</td>`;
-
-            allQuestions.forEach((q, idx) => {
-                let ans = userAnswers[q.id];
-                let etalonTxt = q.q_type === 'open' ? q.correct : (letters[q.correct] || q.correct);
-                let userTxt = ans !== undefined && ans !== "" ? (q.q_type === 'open' ? ans : (letters[ans] || ans)) : "-";
-                let isCorrect = ans !== undefined && String(ans).trim().toLowerCase() === String(q.correct).trim().toLowerCase();
-
-                headRow += `<th>${idx + 1}</th>`;
-                etalonRow += `<td>${etalonTxt}</td>`;
-                userRow += `<td>${userTxt}</td>`;
-                resultRow += `<td class="${isCorrect ? 'text-green-600 font-bold' : (ans ? 'text-red-600 font-bold' : '')}">${isCorrect ? '+' : (ans ? '-' : '-')}</td>`;
+            // Sualları fənlərə bölək
+            const subjectsMap = {};
+            allQuestions.forEach((q, index) => {
+                let subj = q.subject || "Ümumi Suallar";
+                if (!subjectsMap[subj]) subjectsMap[subj] = [];
+                subjectsMap[subj].push({ question: q, index: index + 1 });
             });
 
-            headRow += `</tr>`; etalonRow += `</tr>`; userRow += `</tr>`; resultRow += `</tr>`;
-            container.innerHTML = `<table>${headRow}${etalonRow}${userRow}${resultRow}</table>`;
+            // Hər fən üçün ayrı cədvəl yaradaq
+            for (let subj in subjectsMap) {
+                let subjQuestions = subjectsMap[subj];
+                let headRow = `<tr><th style="width:100px;">${subj}</th>`;
+                let etalonRow = `<tr><td class="font-bold bg-slate-100">Etalon</td>`;
+                let userRow = `<tr><td class="font-bold bg-slate-100">İştirakçı</td>`;
+                let resultRow = `<tr><td class="font-bold bg-slate-100">Nəticə</td>`;
+
+                subjQuestions.forEach(item => {
+                    let q = item.question;
+                    let idx = item.index;
+                    let ans = userAnswers[q.id];
+                    let etalonTxt = q.q_type === 'open' ? q.correct : (letters[q.correct] || q.correct);
+                    let userTxt = ans !== undefined && ans !== "" ? (q.q_type === 'open' ? ans : (letters[ans] || ans)) : "-";
+                    let isCorrect = ans !== undefined && String(ans).trim().toLowerCase() === String(q.correct).trim().toLowerCase();
+
+                    headRow += `<th>Sual ${idx}</th>`;
+                    etalonRow += `<td>${etalonTxt}</td>`;
+                    userRow += `<td>${userTxt}</td>`;
+                    resultRow += `<td class="${isCorrect ? 'text-green-600 font-bold' : (ans ? 'text-red-600 font-bold' : '')}">${isCorrect ? '+' : (ans ? '-' : '-')}</td>`;
+                });
+
+                headRow += `</tr>`; etalonRow += `</tr>`; userRow += `</tr>`; resultRow += `</tr>`;
+                container.innerHTML += `<div class="mb-4"><h5 class="font-bold text-slate-800 mb-1">${subj}</h5><table>${headRow}${etalonRow}${userRow}${resultRow}</table></div>`;
+            }
         }
 
         function backToReviewQuestions() {
