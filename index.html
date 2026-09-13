@@ -51,6 +51,9 @@
         .admin-nav-card:hover { background: #1e293b; border-color: var(--accent-gold); transform: translateY(-2px); }
         .admin-nav-card span.icon { font-size: 18px; }
         
+        .nav-header-bar { display: flex; gap: 10px; margin-bottom: 15px; justify-content: center; flex-wrap: wrap; }
+        .nav-header-bar .btn { padding: 8px 15px; font-size: 13px; }
+
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: 8px; text-align: center; }
         .stat-card h5 { margin: 0; color: #64748b; font-size: 13px; }
@@ -67,9 +70,9 @@
         th, td { padding: 10px; border: 1px solid #cbd5e1; }
         th { background: var(--primary-dark); color: white; }
 
-        /* DETALLARI GİZLƏ/GÖSTƏR ÜÇÜN DÜYMƏ */
         .toggle-details-btn { width: 100%; background: #0284c7; color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
         .toggle-details-btn:hover { background: #0369a1; }
+        .review-mode-banner { background: #fef3c7; color: #92400e; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin-bottom: 15px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -97,10 +100,15 @@
                 <option value="5">Sınaq 5</option>
             </select><br>
             <button class="btn" onclick="startExamSession()">İmtahana Başla</button>
+            <br><br>
+            <button class="btn btn-secondary btn-sm" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
         </div>
 
         <!-- SINAQ HİSSƏSİ -->
         <div id="exam-screen">
+            <div id="review-banner" class="review-mode-banner" style="display: none;">
+                🔍 Cavablara Baxış Rejimi (Düzəliş etmək mümkün deyil)
+            </div>
             <div class="exam-header">
                 <span id="active-exam-title">Dövlət Qulluğu Vəzifələri Üzrə Sınaq</span>
                 <span class="timer" id="timer">03:00:00</span>
@@ -111,8 +119,11 @@
                     <div id="single-question-container"></div>
                     <div class="exam-navigation-buttons" id="exam-nav-btns">
                         <button class="btn btn-secondary" onclick="prevQuestion()">Əvvəlki</button>
-                        <button class="btn btn-danger" onclick="confirmFinish()">Testi Bitir</button>
+                        <button class="btn btn-danger" id="finish-btn" onclick="confirmFinish()">Testi Bitir</button>
                         <button class="btn" onclick="nextQuestion()">Növbəti</button>
+                    </div>
+                    <div id="review-home-btn" style="display: none; margin-top: 15px; text-align: center;">
+                        <button class="btn btn-success" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
                     </div>
                 </div>
 
@@ -139,19 +150,25 @@
                 <span id="res-bb-group" style="font-size: 15px; color: #0f172a; margin-top: 5px; display: inline-block;"></span>
             </div>
 
-            <div style="margin-top: 20px;">
-                <a href="#top" class="btn" style="width: 100%; box-sizing: border-box; text-align: center;" onclick="backToReviewQuestions()">⤴ Suallara qayıt (Baxış)</a>
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn" style="flex: 1;" onclick="backToReviewQuestions()">🔍 Suallara Baxış</button>
+                <button class="btn btn-success" style="flex: 1;" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
             </div>
         </div>
 
-        <!-- ADMİN PANELİ VƏ BÜTÜN FAYLLARIN MODUL NAVİQASİYASI -->
+        <!-- ADMİN PANELİ VƏ MODULLAR -->
         <div id="admin-panel">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3>🔑 Mərkəzi Admin Və Modullar Paneli</h3>
-                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="closeAdminPanel()">Paneli Bağla</button>
+            <div class="nav-header-bar">
+                <button class="btn" onclick="goHome()">🏠 Əsas Səhifə</button>
+                <button class="btn btn-secondary" onclick="window.history.back()">⬅️ Əvvəlki Səhifə</button>
+                <button class="btn btn-secondary" onclick="window.location.reload()">🔄 Yenilə</button>
+                <button class="btn btn-danger" onclick="closeAdminPanel()">❌ Paneli Bağla</button>
             </div>
 
-            <!-- Repozitoriyadakı BÜTÜN Fayllara Birbaşa Düymələr -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>🔑 Mərkəzi Admin Və Modullar Paneli</h3>
+            </div>
+
             <div class="admin-nav-grid">
                 <a href="admin.html" class="admin-nav-card"><span class="icon">🛠️</span> Admin Panel (admin.html)</a>
                 <a href="Kabinet.html" class="admin-nav-card"><span class="icon">📊</span> Şəxsi Kabinet (Kabinet.html)</a>
@@ -165,13 +182,9 @@
                 <a href="Siyaha.html" class="admin-nav-card"><span class="icon">📋</span> İştirakçı Siyahısı (Siyaha.html)</a>
             </div>
 
-            <!-- Düymələrdən Aşağı Hissəni Aç/Gizlət Yapan Buton -->
             <button class="toggle-details-btn" onclick="toggleAdminDetails()">👁️ Tənzimləmələri Və Nəticələri Göstər / Gizlə</button>
 
-            <!-- GİZLƏNİB/AÇILAN ƏSAS TƏNZİMLƏMƏ VƏ IDARƏETMƏ KONTENTİ -->
             <div id="admin-details-section" style="display: none;">
-                
-                <!-- Tələbələrin İcazə Bölməsi -->
                 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px;">
                     <h4>İştirakçıya İcazə Ver</h4>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -206,7 +219,6 @@
                 </div>
 
                 <hr>
-                <!-- Sual Əlavə Etmə Bölməsi -->
                 <h4 style="text-align: left; margin-top: 20px;">Sınağa Sual Əlavə Et</h4>
                 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
                     <div class="form-group">
@@ -251,7 +263,6 @@
                     <button class="btn btn-success" onclick="addNewQuestionToExam()">Sualı Mərkəzi Bazaya Əlavə Et</button>
                 </div>
 
-                <!-- İmtahan Nəticələri -->
                 <h4 style="text-align: left; margin: 25px 0 10px 0;">İştirakçılar və Nəticələr</h4>
                 <div style="overflow-x: auto;">
                     <table>
@@ -298,13 +309,65 @@
         let timeLeft = testDuration;
         let examFinished = false;
 
+        document.addEventListener("DOMContentLoaded", restoreSession);
+
+        function goHome() {
+            clearSessionStorage();
+            window.location.reload();
+        }
+
+        function clearSessionStorage() {
+            localStorage.removeItem("dq_exam_state");
+        }
+
+        function saveSessionState() {
+            if (!currentActiveFin || examFinished) return;
+            const state = {
+                studentName: currentStudentName,
+                fin: currentActiveFin,
+                examId: selectedExamId,
+                answers: userAnswers,
+                flags: flaggedQuestions,
+                currentIndex: currentQuestionIndex,
+                timeLeft: timeLeft,
+                questions: allQuestions
+            };
+            localStorage.setItem("dq_exam_state", JSON.stringify(state));
+        }
+
+        function restoreSession() {
+            const savedState = localStorage.getItem("dq_exam_state");
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    currentStudentName = state.studentName;
+                    currentActiveFin = state.fin;
+                    selectedExamId = state.examId;
+                    userAnswers = state.answers || {};
+                    flaggedQuestions = state.flags || {};
+                    currentQuestionIndex = state.currentIndex || 0;
+                    timeLeft = state.timeLeft || testDuration;
+                    allQuestions = state.questions || [];
+
+                    if (allQuestions.length > 0) {
+                        document.getElementById("login-screen").style.display = "none";
+                        document.getElementById("exam-select-screen").style.display = "none";
+                        document.getElementById("exam-screen").style.display = "block";
+                        document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
+
+                        loadNavGrid();
+                        renderCurrentQuestion();
+                        startTimer(timeLeft);
+                    }
+                } catch(e) {
+                    clearSessionStorage();
+                }
+            }
+        }
+
         function toggleAdminDetails() {
             const sec = document.getElementById("admin-details-section");
-            if (sec.style.display === "none") {
-                sec.style.display = "block";
-            } else {
-                sec.style.display = "none";
-            }
+            sec.style.display = sec.style.display === "none" ? "block" : "none";
         }
 
         async function proceedToExamSelect() {
@@ -318,16 +381,17 @@
             }
 
             errorMsg.style.color = "blue";
-            errorMsg.innerText = "İcazə yoxlanılır...";
+            errorMsg.innerText = "Məlumatlar yoxlanılır...";
 
-            const { data, error } = await _supabase
+            // 1. İcazə yoxlanışı
+            const { data: allowedData } = await _supabase
                 .from('allowed_students')
                 .select('*')
                 .eq('fin', finInput);
 
-            if (error || !data || data.length === 0) {
+            if (!allowedData || allowedData.length === 0) {
                 errorMsg.style.color = "#ef4444";
-                errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilmiyib!";
+                errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
                 return;
             }
 
@@ -340,6 +404,18 @@
 
         async function startExamSession() {
             selectedExamId = document.getElementById("exam-selector").value;
+
+            // 1 DƏFƏ İŞTİRAK YOXLANILMASI
+            const { data: existingResults } = await _supabase
+                .from('exam_results')
+                .select('*')
+                .eq('fin', currentActiveFin)
+                .eq('exam_no', selectedExamId);
+
+            if (existingResults && existingResults.length > 0) {
+                alert(`Siz artıq Sınaq ${selectedExamId} üzrə imtahanda iştirak etmisiniz! Hər bir sınaqda yalnız 1 dəfə iştirak etmək mümkündür.`);
+                return;
+            }
 
             const { data, error } = await _supabase
                 .from('exam_questions')
@@ -370,6 +446,7 @@
             document.getElementById("exam-screen").style.display = "block";
             document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
 
+            saveSessionState();
             loadNavGrid();
             renderCurrentQuestion();
             startTimer(timeLeft);
@@ -387,7 +464,7 @@
                     <div class="question-top">
                         <div class="question-title">Sual ${q.id}: ${q.question}</div>
                         <label class="flag-label">
-                            <input type="checkbox" id="flag_chk" ${isFlagged} onchange="toggleFlag(${q.id})"> Tərəddüdlü
+                            <input type="checkbox" id="flag_chk" ${isFlagged} ${examFinished ? 'disabled' : ''} onchange="toggleFlag(${q.id})"> Tərəddüdlü
                         </label>
                     </div>
                     <div class="options">
@@ -399,8 +476,8 @@
                 let correctHighlight = "";
                 
                 if (examFinished) {
-                    if (idx === q.correct) correctHighlight = "background-color: #d1fae5; border: 1px solid #10b981; font-weight: bold;";
-                    else if (userAns === idx && userAns !== q.correct) correctHighlight = "background-color: #fef2f2; border: 1px solid #ef4444;";
+                    if (idx === q.correct) correctHighlight = "background-color: #d1fae5; border: 2px solid #10b981; font-weight: bold;";
+                    else if (userAns === idx && userAns !== q.correct) correctHighlight = "background-color: #fef2f2; border: 2px solid #ef4444;";
                 }
 
                 html += `
@@ -420,22 +497,33 @@
             const gridContainer = document.getElementById("grid-nav-container");
             let html = "";
             allQuestions.forEach((q, index) => {
-                html += `<div class="nav-box" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${q.id}</div>`;
+                let answeredClass = userAnswers[q.id] !== undefined ? "answered" : "";
+                let flaggedClass = flaggedQuestions[q.id] ? "flagged" : "";
+                html += `<div class="nav-box ${answeredClass} ${flaggedClass}" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${q.id}</div>`;
             });
             gridContainer.innerHTML = html;
         }
 
-        function jumpToQuestion(index) { currentQuestionIndex = index; renderCurrentQuestion(); }
-        function nextQuestion() { if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderCurrentQuestion(); } }
-        function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderCurrentQuestion(); } }
-        function selectOption(qId, optIdx) { if(examFinished) return; userAnswers[qId] = optIdx; document.getElementById(`nav_${qId}`).classList.add("answered"); }
+        function jumpToQuestion(index) { currentQuestionIndex = index; renderCurrentQuestion(); saveSessionState(); }
+        function nextQuestion() { if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderCurrentQuestion(); saveSessionState(); } }
+        function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderCurrentQuestion(); saveSessionState(); } }
+        
+        function selectOption(qId, optIdx) { 
+            if(examFinished) return; 
+            userAnswers[qId] = optIdx; 
+            document.getElementById(`nav_${qId}`).classList.add("answered"); 
+            saveSessionState();
+        }
+        
         function toggleFlag(qId) {
             if(examFinished) return;
             let chk = document.getElementById("flag_chk").checked;
             let nav = document.getElementById(`nav_${qId}`);
             if (chk) { flaggedQuestions[qId] = true; nav.classList.add("flagged"); } 
             else { delete flaggedQuestions[qId]; nav.classList.remove("flagged"); }
+            saveSessionState();
         }
+
         function updateNavActiveState() {
             allQuestions.forEach((q, idx) => {
                 let box = document.getElementById(`nav_${q.id}`);
@@ -447,22 +535,29 @@
         }
 
         function startTimer(duration) {
-            let timer = duration;
+            timeLeft = duration;
             const display = document.getElementById("timer");
             if (timerInterval) clearInterval(timerInterval);
+            
             timerInterval = setInterval(() => {
                 if (examFinished) return;
-                let hours = String(Math.floor(timer / 3600)).padStart(2, '0');
-                let minutes = String(Math.floor((timer % 3600) / 60)).padStart(2, '0');
-                let seconds = String(timer % 60).padStart(2, '0');
+                let hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let seconds = String(timeLeft % 60).padStart(2, '0');
                 display.textContent = `${hours}:${minutes}:${seconds}`;
-                if (--timer < 0) { clearInterval(timerInterval); finishExam(); }
+                
+                timeLeft--;
+                if (timeLeft % 5 === 0) saveSessionState(); // Hər 5 saniyədən bir avto-yaddaş
+
+                if (timeLeft < 0) { 
+                    clearInterval(timerInterval); 
+                    finishExam(); 
+                }
             }, 1000);
         }
 
         function confirmFinish() {
             if (confirm("Testi bitirmək istədiyinizə əminsinizmi?")) {
-                clearInterval(timerInterval);
                 finishExam();
             }
         }
@@ -478,6 +573,8 @@
         async function finishExam() {
             clearInterval(timerInterval);
             examFinished = true;
+            clearSessionStorage();
+
             let totalCorrect = 0, totalWrong = 0, totalBlank = 0;
 
             allQuestions.forEach(q => {
@@ -512,6 +609,10 @@
         function backToReviewQuestions() {
             document.getElementById("result-screen").style.display = "none";
             document.getElementById("exam-screen").style.display = "block";
+            document.getElementById("review-banner").style.display = "block";
+            document.getElementById("finish-btn").style.display = "none";
+            document.getElementById("review-home-btn").style.display = "block";
+            
             currentQuestionIndex = 0;
             renderCurrentQuestion();
         }
@@ -615,4 +716,3 @@
     </script>
 </body>
 </html>
-
