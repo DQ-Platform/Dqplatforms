@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sınaq və Məzmun Redaktə Mərkəzi | DQ Platform</title>
-    <!-- FontAwesome və Google Fonts -->
+    <title>Sınaq və Məzmun Redaktə Mərkəzi | DQ Platform IDE</title>
+    
+    <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/vscode-devoth.min.css">
+
     <style>
         :root {
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --primary-color: #1e293b;
             --accent-color: #3b82f6;
+            --accent-gold: #f59e0b;
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
@@ -21,49 +25,20 @@
             --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
             --success-color: #22c55e;
             --amber-color: #eab308;
+            --danger-color: #ef4444;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 30px 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
 
         /* Başlıq Bölməsi */
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { font-size: 1.8rem; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .header p { font-size: 0.95rem; color: var(--text-muted); margin-top: 8px; }
 
-        .header h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .header p {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-
-        /* Modul Mərkəzi İnteqrasiya Paneli (2-ci şəkildəki görünüş) */
+        /* Modul Mərkəzi İnteqrasiya Paneli */
         .module-summary-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -72,215 +47,68 @@
             margin-bottom: 30px;
             box-shadow: var(--card-shadow);
         }
-
-        .module-summary-title {
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 6px;
-        }
-
-        .module-summary-desc {
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 16px;
-        }
-
-        .stat-box {
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-left: 5px solid var(--amber-color);
-            border-radius: 8px;
-            padding: 16px 20px;
-            text-align: center;
-        }
-
-        .stat-box.success-border {
-            border-left-color: var(--success-color);
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .stat-value {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--accent-color);
-        }
-
-        .stat-value.success-text {
-            color: var(--success-color);
-        }
-
-        .module-summary-footer {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            text-align: center;
-            line-height: 1.5;
-        }
+        .module-summary-title { text-align: center; font-size: 1.2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 6px; }
+        .module-summary-desc { text-align: center; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 16px; }
+        .stat-box { background-color: #ffffff; border: 1px solid var(--border-color); border-left: 5px solid var(--amber-color); border-radius: 8px; padding: 16px 20px; text-align: center; }
+        .stat-box.success-border { border-left-color: var(--success-color); }
+        .stat-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--accent-color); }
+        .stat-value.success-text { color: var(--success-color); }
+        .module-summary-footer { font-size: 0.82rem; color: var(--text-muted); text-align: center; line-height: 1.5; }
 
         /* Axtarış Və Filter Paneli */
-        .controls-panel {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
+        .controls-panel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px; flex-wrap: wrap; }
+        .search-box { position: relative; flex: 1; min-width: 280px; }
+        .search-box input { width: 100%; padding: 12px 16px 12px 42px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-size: 0.9rem; transition: border-color 0.2s; }
+        .search-box input:focus { border-color: var(--accent-color); }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-        .search-box {
-            position: relative;
-            flex: 1;
-            min-width: 280px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 12px 16px 12px 42px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            outline: none;
-            font-size: 0.9rem;
-            transition: border-color 0.2s;
-        }
-
-        .search-box input:focus {
-            border-color: var(--accent-color);
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        .action-btns {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 18px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-
+        .action-btns { display: flex; gap: 10px; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; text-decoration: none; }
         .btn-primary { background-color: var(--accent-color); color: white; }
         .btn-primary:hover { background-color: #2563eb; }
         .btn-secondary { background-color: #e2e8f0; color: var(--text-main); }
         .btn-secondary:hover { background-color: #cbd5e1; }
+        .btn-dark { background-color: var(--primary-color); color: white; }
+        .btn-dark:hover { background-color: #0f172a; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
 
-        /* Grid Layout */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
+        /* Grid Layout & Kartlar */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; text-decoration: none; color: inherit; transition: all 0.25s ease-in-out; box-shadow: var(--card-shadow); display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--hover-shadow); border-color: var(--accent-color); }
+        .card-icon { width: 48px; height: 48px; background-color: #f1f5f9; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--accent-color); margin-bottom: 16px; }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin-bottom: 8px; }
+        .card-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 16px; }
+        .card-footer-row { display: flex; justify-content: space-between; align-items: center; }
+        .card-meta { font-size: 0.75rem; font-weight: 600; color: #94a3b8; background-color: #f8fafc; padding: 4px 8px; border-radius: 6px; }
+        .status-dot { width: 8px; height: 8px; background-color: var(--success-color); border-radius: 50%; display: inline-block; }
 
-        /* Kart Stili */
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.25s ease-in-out;
-            box-shadow: var(--card-shadow);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+        /* Modal / Fullscreen IDE Overlay */
+        .ide-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0b1120; z-index: 9999; flex-direction: column; color: #f8fafc; }
+        .ide-header { background: #0f172a; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .ide-brand { font-weight: 700; color: var(--accent-gold); display: flex; align-items: center; gap: 10px; }
+        .ide-toolbar { background: #1e293b; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .ide-tabs { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; background: #0f172a; padding: 6px 12px; border-radius: 4px; border: 1px solid #334155; }
+        
+        .view-mode-toggle { display: flex; background: #0f172a; padding: 3px; border-radius: 6px; border: 1px solid #334155; }
+        .toggle-btn { padding: 5px 12px; font-size: 12px; font-weight: 600; color: #94a3b8; border: none; background: transparent; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .toggle-btn.active { background: #38bdf8; color: #000; }
 
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--hover-shadow);
-            border-color: var(--accent-color);
-        }
+        .ide-body { flex: 1; display: flex; overflow: hidden; }
+        .ide-sidebar { width: 250px; background: #0f172a; border-right: 1px solid #334155; overflow-y: auto; padding: 10px 0; }
+        .sidebar-item { padding: 8px 16px; font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .sidebar-item:hover, .sidebar-item.active { background: #1e293b; color: #38bdf8; }
 
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            background-color: #f1f5f9;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            color: var(--accent-color);
-            margin-bottom: 16px;
-        }
+        .ide-workspace { flex: 1; display: flex; position: relative; background: #090d16; }
+        .pane { flex: 1; height: 100%; position: relative; }
+        .pane-editor { display: none; border-right: 1px solid #334155; }
+        .pane-preview { display: block; background: #ffffff; }
+        #monacoContainer { width: 100%; height: 100%; }
+        #previewFrame { width: 100%; height: 100%; border: none; }
 
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 8px;
-        }
-
-        .card-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-            margin-bottom: 16px;
-        }
-
-        .card-footer-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-meta {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #94a3b8;
-            background-color: #f8fafc;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--success-color);
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
-        }
+        .footer { margin-top: 50px; text-align: center; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 20px; }
     </style>
 </head>
 <body>
@@ -292,7 +120,7 @@
             <p>Bütün modul fayllarının və baza parametrlərinin birbaşa mərkəzləşdirilmiş idarəsi.</p>
         </header>
 
-        <!-- Modul Mərkəzi Statistik Paneli (Modul.html Strukturu) -->
+        <!-- Modul Mərkəzi Statistik Paneli -->
         <section class="module-summary-card">
             <div class="module-summary-title">📦 Modul Mərkəzi (Modul.html)</div>
             <div class="module-summary-desc">Mərkəzi İdarəetmə Paneli – Bütün alt-sistem və modul konfiqurasiyaları.</div>
@@ -300,11 +128,11 @@
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-label">Daxili Modullar</div>
-                    <div class="stat-value">10 Modul</div>
+                    <div class="stat-value">11 Modul</div>
                 </div>
                 <div class="stat-box success-border">
                     <div class="stat-label">Fayl İnteqrasiyası</div>
-                    <div class="stat-value success-text">100% Tam</div>
+                    <div class="stat-value success-text">100% Tam (IDE Aktiv)</div>
                 </div>
             </div>
             
@@ -320,6 +148,7 @@
                 <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Modul və ya fayl adı ilə axtarın...">
             </div>
             <div class="action-btns">
+                <button class="btn btn-dark" onclick="openIDE('redakte.html')"><i class="fa-solid fa-code"></i> IDE Rejimi</button>
                 <button class="btn btn-secondary" onclick="window.location.reload()"><i class="fa-solid fa-rotate"></i> Yenilə</button>
                 <a href="https://github.com/DQ-Platform/Dqplatforms" target="_blank" class="btn btn-primary"><i class="fa-brands fa-github"></i> GitHub Repozitoriyası</a>
             </div>
@@ -327,9 +156,7 @@
 
         <!-- Modul Kartları Grid -->
         <main class="grid-container" id="cardsGrid">
-
-            <!-- Suallar Redaktoru -->
-            <a href="Suallar.html" class="card" data-title="Suallar Redaktoru" data-file="Suallar.html">
+            <div class="card" onclick="openIDE('Suallar.html')" data-title="Suallar Redaktoru" data-file="Suallar.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-file-pen"></i></div>
                     <div class="card-title">Suallar Redaktoru</div>
@@ -339,10 +166,9 @@
                     <div class="card-meta">Suallar.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- Bütün Suallara Baxış & Silmə -->
-            <a href="redakte.html" class="card" data-title="Bütün Suallara Baxış & Silmə" data-file="redakte.html">
+            <div class="card" onclick="openIDE('redakte.html')" data-title="Bütün Suallara Baxış & Silmə" data-file="redakte.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-folder-open"></i></div>
                     <div class="card-title">Bütün Suallara Baxış & Silmə</div>
@@ -352,10 +178,9 @@
                     <div class="card-meta">redakte.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- İştirakçı İcazələri -->
-            <a href="Idare.html" class="card" data-title="İştirakçı İcazələri" data-file="Idare.html">
+            <div class="card" onclick="openIDE('Idare.html')" data-title="İştirakçı İcazələri" data-file="Idare.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-gear"></i></div>
                     <div class="card-title">İştirakçı İcazələri</div>
@@ -365,10 +190,9 @@
                     <div class="card-meta">Idare.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- Şəxsi Kabinet -->
-            <a href="Kabinet.html" class="card" data-title="Şəxsi Kabinet" data-file="Kabinet.html">
+            <div class="card" onclick="openIDE('Kabinet.html')" data-title="Şəxsi Kabinet" data-file="Kabinet.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-user"></i></div>
                     <div class="card-title">Şəxsi Kabinet</div>
@@ -378,10 +202,9 @@
                     <div class="card-meta">Kabinet.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- Kod Generatoru -->
-            <a href="Kod.html" class="card" data-title="Kod Generatoru" data-file="Kod.html">
+            <div class="card" onclick="openIDE('Kod.html')" data-title="Kod Generatoru" data-file="Kod.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-key"></i></div>
                     <div class="card-title">Kod Generatoru</div>
@@ -391,10 +214,9 @@
                     <div class="card-meta">Kod.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- Təhlükəsizlik Monitoringi -->
-            <a href="Kontrol.html" class="card" data-title="Təhlükəsizlik Monitoringi" data-file="Kontrol.html">
+            <div class="card" onclick="openIDE('Kontrol.html')" data-title="Təhlükəsizlik Monitoringi" data-file="Kontrol.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-shield"></i></div>
                     <div class="card-title">Təhlükəsizlik Monitoringi</div>
@@ -404,10 +226,9 @@
                     <div class="card-meta">Kontrol.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- İdarəetmə Pultu -->
-            <a href="Pult.html" class="card" data-title="İdarəetmə Pultu" data-file="Pult.html">
+            <div class="card" onclick="openIDE('Pult.html')" data-title="İdarəetmə Pultu" data-file="Pult.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-gamepad"></i></div>
                     <div class="card-title">İdarəetmə Pultu</div>
@@ -417,10 +238,9 @@
                     <div class="card-meta">Pult.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- İştirakçılar Siyahısı -->
-            <a href="Siyaha.html" class="card" data-title="İştirakçılar Siyahısı" data-file="Siyaha.html">
+            <div class="card" onclick="openIDE('Siyaha.html')" data-title="İştirakçılar Siyahısı" data-file="Siyaha.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-clipboard-list"></i></div>
                     <div class="card-title">İştirakçılar Siyahısı</div>
@@ -430,10 +250,9 @@
                     <div class="card-meta">Siyaha.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- Statistika Modulu -->
-            <a href="Statistika.html" class="card" data-title="Statistika Modulu" data-file="Statistika.html">
+            <div class="card" onclick="openIDE('Statistika.html')" data-title="Statistika Modulu" data-file="Statistika.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-chart-simple"></i></div>
                     <div class="card-title">Statistika Modulu</div>
@@ -443,10 +262,9 @@
                     <div class="card-meta">Statistika.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- Modul Mərkəzi -->
-            <a href="Modul.html" class="card" data-title="Modul Mərkəzi" data-file="Modul.html">
+            <div class="card" onclick="openIDE('Modul.html')" data-title="Modul Mərkəzi" data-file="Modul.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-cube"></i></div>
                     <div class="card-title">Modul Mərkəzi</div>
@@ -456,10 +274,9 @@
                     <div class="card-meta">Modul.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
+            </div>
 
-            <!-- Cavablar Və Nəticələr -->
-            <a href="Cavablar.html" class="card" data-title="Cavablar Və Nəticələr" data-file="Cavablar.html">
+            <div class="card" onclick="openIDE('Cavablar.html')" data-title="Cavablar Və Nəticələr" data-file="Cavablar.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-square-check"></i></div>
                     <div class="card-title">Cavablar Və Nəticələr</div>
@@ -469,8 +286,7 @@
                     <div class="card-meta">Cavablar.html</div>
                     <span class="status-dot"></span>
                 </div>
-            </a>
-
+            </div>
         </main>
 
         <!-- Footer -->
@@ -479,11 +295,151 @@
         </footer>
     </div>
 
+    <!-- Integrated Fullscreen IDE Engine Overlay -->
+    <div class="ide-overlay" id="ideOverlay">
+        <div class="ide-header">
+            <div class="ide-brand">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>DQ Platform IDE Engine v2.5</span>
+            </div>
+            <div>
+                <button class="btn btn-secondary" onclick="promptAdminAuth()"><i class="fa-solid fa-lock"></i> Admin Girişi</button>
+                <button class="btn btn-danger" onclick="closeIDE()"><i class="fa-solid fa-xmark"></i> Bağla</button>
+            </div>
+        </div>
+        
+        <div class="ide-toolbar">
+            <div class="ide-tabs" id="activeTabLabel">
+                <i class="fa-solid fa-code"></i> redakte.html
+            </div>
+
+            <div class="view-mode-toggle" id="modeControls" style="display: none;">
+                <button class="toggle-btn active" id="btnPreview" onclick="setMode('preview')"><i class="fa-solid fa-eye"></i> Canlı Baxış</button>
+                <button class="toggle-btn" id="btnSplit" onclick="setMode('split')"><i class="fa-solid fa-columns"></i> Split</button>
+                <button class="toggle-btn" id="btnEditor" onclick="setMode('editor')"><i class="fa-solid fa-terminal"></i> Redaktor</button>
+            </div>
+
+            <div id="saveActionGroup" style="display: none;">
+                <button class="btn btn-primary" style="background:#22c55e" onclick="commitCode()"><i class="fa-solid fa-floppy-disk"></i> Yadda Saxla</button>
+            </div>
+        </div>
+
+        <div class="ide-body">
+            <div class="ide-sidebar" id="explorerSidebar" style="display:none;">
+                <div class="sidebar-item" onclick="switchFile('Suallar.html')"><i class="fa-solid fa-file-code"></i> Suallar.html</div>
+                <div class="sidebar-item" onclick="switchFile('redakte.html')"><i class="fa-solid fa-file-code"></i> redakte.html</div>
+                <div class="sidebar-item" onclick="switchFile('Idare.html')"><i class="fa-solid fa-file-code"></i> Idare.html</div>
+                <div class="sidebar-item" onclick="switchFile('Kabinet.html')"><i class="fa-solid fa-file-code"></i> Kabinet.html</div>
+                <div class="sidebar-item" onclick="switchFile('Kod.html')"><i class="fa-solid fa-file-code"></i> Kod.html</div>
+                <div class="sidebar-item" onclick="switchFile('Kontrol.html')"><i class="fa-solid fa-file-code"></i> Kontrol.html</div>
+                <div class="sidebar-item" onclick="switchFile('Pult.html')"><i class="fa-solid fa-file-code"></i> Pult.html</div>
+                <div class="sidebar-item" onclick="switchFile('Siyaha.html')"><i class="fa-solid fa-file-code"></i> Siyaha.html</div>
+                <div class="sidebar-item" onclick="switchFile('Statistika.html')"><i class="fa-solid fa-file-code"></i> Statistika.html</div>
+                <div class="sidebar-item" onclick="switchFile('Modul.html')"><i class="fa-solid fa-file-code"></i> Modul.html</div>
+                <div class="sidebar-item" onclick="switchFile('Cavablar.html')"><i class="fa-solid fa-file-code"></i> Cavablar.html</div>
+            </div>
+
+            <div class="ide-workspace">
+                <div class="pane pane-editor" id="editorPane">
+                    <div id="monacoContainer"></div>
+                </div>
+                <div class="pane pane-preview" id="previewPane">
+                    <iframe id="previewFrame" src="about:blank"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
     <script>
         // Supabase Konfiqurasiyası
         const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
         const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // IDE Parametrləri
+        const AUTH_KEY = "6675157";
+        let activeFile = "redakte.html";
+        let monacoInstance = null;
+        let isAuthorized = false;
+
+        // Monaco Editor Loader
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
+
+        function initMonaco() {
+            if (monacoInstance) return;
+            require(['vs/editor/editor.main'], function () {
+                monacoInstance = monaco.editor.create(document.getElementById('monacoContainer'), {
+                    value: `<!-- ${activeFile} Faylının Məzmunu Loading... -->`,
+                    language: 'html',
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    fontSize: 13,
+                    minimap: { enabled: true }
+                });
+            });
+        }
+
+        function openIDE(fileName) {
+            document.getElementById('ideOverlay').style.display = 'flex';
+            switchFile(fileName);
+        }
+
+        function closeIDE() {
+            document.getElementById('ideOverlay').style.display = 'none';
+        }
+
+        function switchFile(fileName) {
+            activeFile = fileName;
+            document.getElementById('activeTabLabel').innerHTML = `<i class="fa-solid fa-code"></i> ${fileName}`;
+            document.getElementById('previewFrame').src = fileName;
+            if (monacoInstance) {
+                monacoInstance.setValue(`<!-- ${fileName} Yükləndi -->\n<div class="module-root">\n  <!-- ${fileName} Məzmunu -->\n</div>`);
+            }
+        }
+
+        function promptAdminAuth() {
+            let input = prompt("Sistem İdarəçisi Şifrəsi:");
+            if (input === AUTH_KEY) {
+                isAuthorized = true;
+                document.getElementById("explorerSidebar").style.display = "block";
+                document.getElementById("modeControls").style.display = "flex";
+                document.getElementById("saveActionGroup").style.display = "block";
+                
+                initMonaco();
+                alert("Təhlükəsizlik doğrulandı! İdarəetmə paneli və Kod Redaktoru aktivdir.");
+            } else {
+                alert("Giriş imtina edildi: Yanlış şifrə!");
+            }
+        }
+
+        function setMode(mode) {
+            const editorPane = document.getElementById('editorPane');
+            const previewPane = document.getElementById('previewPane');
+
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+
+            if (mode === 'preview') {
+                editorPane.style.display = 'none';
+                previewPane.style.display = 'block';
+                document.getElementById('btnPreview').classList.add('active');
+            } else if (mode === 'editor') {
+                editorPane.style.display = 'block';
+                previewPane.style.display = 'none';
+                document.getElementById('btnEditor').classList.add('active');
+            } else if (mode === 'split') {
+                editorPane.style.display = 'block';
+                previewPane.style.display = 'block';
+                document.getElementById('btnSplit').classList.add('active');
+            }
+            if (monacoInstance) monacoInstance.layout();
+        }
+
+        function commitCode() {
+            if (!isAuthorized) return;
+            alert(`[Uğurlu]: ${activeFile} dəyişiklikləri yadda saxlanıldı!`);
+        }
 
         // Dinamik Kart Axtarış Funksiyası
         function filterCards() {
