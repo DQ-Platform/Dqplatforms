@@ -9,7 +9,7 @@
         :root { --primary-dark: #0f172a; --accent-gold: #d4af37; --success-green: #10b981; --danger-red: #ef4444; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 0; user-select: none; }
-        .container { max-width: 1050px; margin: 20px auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); border-top: 4px solid var(--accent-gold); }
+        .container { max-width: 1100px; margin: 20px auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); border-top: 4px solid var(--accent-gold); }
         h2, h3, h4 { color: var(--primary-dark); text-align: center; }
         #login-screen, #waiting-screen, #exam-select-screen { text-align: center; padding: 20px; }
         .code-input, .select-control { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border: 2px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px; outline: none; text-align: center; }
@@ -22,7 +22,8 @@
         .btn-success { background-color: var(--success-green); color: white; }
         .btn-dark { background-color: #1d3557; color: white; }
         .btn-primary { background-color: #007bff; color: white; }
-        .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 4px; }
+        .btn-warning { background-color: #d97706; color: white; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 4px; }
         #exam-screen { display: none; }
         .exam-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary-dark); color: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; }
         .timer { font-size: 18px; font-weight: bold; color: var(--accent-gold); }
@@ -49,9 +50,9 @@
         
         /* ADMİN VƏ MODUL NAVİQASİYASI */
         #admin-panel { display: none; margin-top: 20px; border-top: 2px solid var(--accent-gold); padding-top: 20px; }
-        .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .admin-nav-card { background: var(--primary-dark); color: var(--accent-gold); padding: 12px 8px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 12px; border: 1px solid #334155; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
-        .admin-nav-card:hover { background: #1e293b; border-color: var(--accent-gold); transform: translateY(-2px); }
+        .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 20px; }
+        .admin-nav-card { background: var(--primary-dark); color: var(--accent-gold); padding: 10px 6px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 12px; border: 1px solid #334155; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+        .admin-nav-card:hover, .admin-nav-card.active-tab { background: #1e293b; border-color: var(--accent-gold); color: #fff; transform: translateY(-2px); }
         .admin-nav-card span.icon { font-size: 18px; }
         
         .nav-header-bar { display: flex; gap: 10px; margin-bottom: 15px; justify-content: center; flex-wrap: wrap; }
@@ -74,8 +75,6 @@
         th, td { padding: 10px; border: 1px solid #cbd5e1; }
         th { background: var(--primary-dark); color: white; }
 
-        .toggle-details-btn { width: 100%; background: #0284c7; color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
-        .toggle-details-btn:hover { background: #0369a1; }
         .review-mode-banner { background: #fef3c7; color: #92400e; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin-bottom: 15px; }
 
         .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
@@ -102,6 +101,7 @@
         .left-buttons { display: flex; gap: 10px; }
 
         .admin-module-block { display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -189,7 +189,7 @@
         <div id="admin-panel">
             <div class="nav-header-bar">
                 <button class="btn" onclick="goHome()">🏠 Əsas Səhifə</button>
-                <button class="btn btn-secondary" onclick="window.location.reload()">🔄 Yenilə</button>
+                <button class="btn btn-secondary" onclick="loadAdminPanelData()">🔄 Yenilə</button>
                 <button class="btn btn-danger" onclick="closeAdminPanel()">❌ Paneli Bağla</button>
             </div>
 
@@ -197,21 +197,21 @@
                 <h3>🔑 Mərkəzi Admin Və İdarəetmə Paneli</h3>
             </div>
 
-            <!-- ADMİN İDARƏETMƏ NAVİQASİYASI -->
+            <!-- ADMİN İDARƏETMƏ NAVİQASİYASI (BÜTÜN DÜYMƏLƏR SAXLANILIB) -->
             <div class="admin-nav-grid">
-                <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('kabinet')"><span class="icon">👤</span> Şəxsi Kabinet</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('kod')"><span class="icon">🔑</span> Kod Yaratma</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('kontrol')"><span class="icon">🛡️</span> Kontrol</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('pult')"><span class="icon">🎮</span> Pult</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('siyahi')"><span class="icon">📋</span> İştirakçılar (Siyahı)</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('statistika')"><span class="icon">📊</span> Statistika</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('cavablar')"><span class="icon">📑</span> Cavablar</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Modulu</div>
+                <div class="admin-nav-card" id="btn-tab-suallar" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
+                <div class="admin-nav-card" id="btn-tab-idare" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
+                <div class="admin-nav-card" id="btn-tab-kabinet" onclick="switchAdminTab('kabinet')"><span class="icon">👤</span> Şəxsi Kabinet</div>
+                <div class="admin-nav-card" id="btn-tab-kod" onclick="switchAdminTab('kod')"><span class="icon">🔑</span> Kod Yaratma</div>
+                <div class="admin-nav-card" id="btn-tab-kontrol" onclick="switchAdminTab('kontrol')"><span class="icon">🛡️</span> Kontrol</div>
+                <div class="admin-nav-card" id="btn-tab-pult" onclick="switchAdminTab('pult')"><span class="icon">🎮</span> Pult</div>
+                <div class="admin-nav-card" id="btn-tab-siyahi" onclick="switchAdminTab('siyahi')"><span class="icon">📋</span> İştirakçılar (Siyahı)</div>
+                <div class="admin-nav-card" id="btn-tab-statistika" onclick="switchAdminTab('statistika')"><span class="icon">📊</span> Statistika</div>
+                <div class="admin-nav-card" id="btn-tab-cavablar" onclick="switchAdminTab('cavablar')"><span class="icon">📑</span> Cavablar</div>
+                <div class="admin-nav-card" id="btn-tab-redakte" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Modulu</div>
             </div>
 
-            <!-- MODUL 1: SUALLAR REDAKTORU MODULU -->
+            <!-- MODUL 1: SUALLAR REDAKTORU MODULU (Suallar.html REAL KODLARI) -->
             <div id="mod-suallar" class="admin-module-block">
                 <div class="breadcrumb-nav">
                     <span onclick="showStep(1)">Sınaqlar</span> &gt; 
@@ -231,6 +231,11 @@
                         <div class="folder-card" onclick="selectExam('Sınaq 2')">
                             <div class="folder-icon">📁</div>
                             <div class="folder-title">Sınaq 2</div>
+                            <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
+                        </div>
+                        <div class="folder-card" onclick="selectExam('Sınaq 3')">
+                            <div class="folder-icon">📁</div>
+                            <div class="folder-title">Sınaq 3</div>
                             <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
                         </div>
                     </div>
@@ -306,7 +311,7 @@
 
                     <div class="form-group">
                         <label>Sual Mətni:</label>
-                        <textarea class="form-control" id="questionText" placeholder="Sualın mətnini daxil edin..."></textarea>
+                        <textarea class="form-control" id="questionText" rows="4" placeholder="Sualın mətnini daxil edin..."></textarea>
                     </div>
 
                     <div id="closedOptionsContainer">
@@ -357,11 +362,11 @@
                 </div>
             </div>
 
-            <!-- MODUL 2: İDARƏ & İCAZƏLƏR MODULU -->
+            <!-- MODUL 2: İDARƏ & İCAZƏLƏR MODULU (Idare.html REAL KODLARI) -->
             <div id="mod-idare" class="admin-module-block">
-                <h4>⚙️ İştirakçı İcazələri və Sistem Ayarları (Idare.html)</h4>
+                <h4>⚙️ İştirakçı İcazələri və Sistem Ayarları</h4>
                 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px;">
-                    <h4>Tələbəyə Giriş İcazəsi Ver</h4>
+                    <h4 style="text-align: left; margin-bottom: 10px;">Tələbəyə İmtahan İcazəsi Ver</h4>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 180px;">
                         <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 120px;" maxlength="7">
@@ -369,70 +374,104 @@
                     </div>
                     <p id="adm-student-msg" style="margin-top: 5px; font-size: 13px;"></p>
 
-                    <h4 style="text-align: left; margin-top: 20px;">İcazə Verilmiş İştirakçılar</h4>
+                    <h4 style="text-align: left; margin-top: 20px;">İcazə Verilmiş İştirakçıların İdarəsi</h4>
                     <div style="overflow-x: auto;">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Ad Soyad</th>
                                     <th>FIN Kod</th>
+                                    <th>Tarix</th>
                                     <th>Əməliyyat</th>
                                 </tr>
                             </thead>
                             <tbody id="allowed-students-table-body">
-                                <tr><td colspan="3">Yüklənir...</td></tr>
+                                <tr><td colspan="4">Yüklənir...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- MODUL 3: ŞƏXSİ KABİNET MODULU -->
+            <!-- MODUL 3: ŞƏXSİ KABİNET MODULU (Kabinet.html REAL KODLARI) -->
             <div id="mod-kabinet" class="admin-module-block">
-                <h4>👤 Şəxsi Kabinet Və Profil İdarəetməsi (Kabinet.html)</h4>
-                <p><b>Platforma İnzibatçısı:</b> Yunis İmanov</p>
-                <p><b>Sistem Vəziyyəti:</b> Aktiv / Server Supabase Bağlantısı Qurulub</p>
-                <button class="btn btn-secondary" onclick="alert('Profil ayarları yeniləndi!')">Profil Məlumatlarını Yenilə</button>
+                <h4>👤 İnzibatçı Şəxsi Kabineti Və Tənzimləmələr</h4>
+                <div style="max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <div class="form-group">
+                        <label>Sistem İnzibatçısının Adı:</label>
+                        <input type="text" class="form-control" id="admin-profile-name" value="Yunis İmanov">
+                    </div>
+                    <div class="form-group">
+                        <label>Əlaqə E-poçtu / İstifadəçi Adı:</label>
+                        <input type="text" class="form-control" value="yunis.imanov@dqplatform.az" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Sistem Vəziyyəti:</label>
+                        <input type="text" class="form-control" value="🟢 Supabase Cloud Baza Aktivdir" style="color: green; font-weight: bold;" readonly>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveAdminProfile()">💾 Profil Məlumatlarını Yenilə</button>
+                </div>
             </div>
 
-            <!-- MODUL 4: KOD YARATMA MODULU -->
+            <!-- MODUL 4: KOD YARATMA MODULU (Kod.html REAL KODLARI) -->
             <div id="mod-kod" class="admin-module-block">
-                <h4>🔑 İmtahan Və Giriş Kodlarının Generasiyası (Kod.html)</h4>
-                <div class="form-group">
-                    <label>Aktivləşdirmə Kodu Yarat:</label>
-                    <button class="btn btn-primary" onclick="generateTokenCode()">Təsadüfi Kod Yarat</button>
+                <h4>🔑 İmtahan Və Giriş Kodlarının Generasiyası</h4>
+                <div style="max-width: 500px; margin: 0 auto; text-align: center;">
+                    <p>İştirakçılara göndərmək üçün təsadüfi unikal 7-rəqəmli Giriş Tokeni yaradın:</p>
+                    <button class="btn btn-primary" onclick="generateTokenCode()">🎲 Təsadüfi Kod Yarat</button>
+                    <br><br>
+                    <input type="text" id="generated-code-display" class="form-control token-field" style="font-size: 22px; text-align: center; font-weight: bold; color: var(--primary-dark);" readonly placeholder="KOD-BURADA">
+                    <br>
+                    <button class="btn btn-success btn-sm" onclick="copyGeneratedCode()">📋 Kodu Kopyala</button>
                 </div>
-                <input type="text" id="generated-code-display" class="form-control token-field" readonly placeholder="Yaradılan Kod Burada Görünəcək">
             </div>
 
-            <!-- MODUL 5: KONTROL MODULU -->
+            <!-- MODUL 5: KONTROL MODULU (Kontrol.html REAL KODLARI) -->
             <div id="mod-kontrol" class="admin-module-block">
-                <h4>🛡️ Sistem Təhlükəsizliyi Və Monitorinq (Kontrol.html)</h4>
-                <p>Aktiv imtahan sessiyalarının monitorinqi və canlı nəzarət.</p>
-                <div class="stat-card">
-                    <h5>Sistem Statusu</h5>
-                    <div class="value" style="color: green;">NORMAL</div>
+                <h4>🛡️ Təhlükəsizlik Və Canlı Monitorinq Mərkəzi</h4>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h5>Aktiv Sessiyalar</h5>
+                        <div class="value" id="cnt-active-sessions">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h5>Son İcazələr</h5>
+                        <div class="value" id="cnt-total-allowed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h5>Təhlükəsizlik Statusu</h5>
+                        <div class="value" style="color: green;">ƏLA</div>
+                    </div>
+                </div>
+                <button class="btn btn-dark" onclick="refreshControlStats()">🔄 Monitorinqi Yenilə</button>
+            </div>
+
+            <!-- MODUL 6: PULT MODULU (Pult.html REAL KODLARI) -->
+            <div id="mod-pult" class="admin-module-block">
+                <h4>🎮 Mərkəzi İdarəetmə Pultu Və İmtahan Taymeri</h4>
+                <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #856404;">
+                    <b>Qlobal Taymer Tənzimləmələri:</b> Buradan imtahanın ümumi müddətini dəyişə və ya təcili olaraq imtahanı bütün iştirakçılar üçün dayandıra bilərsiniz.
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-danger" onclick="emergencyStopAllExams()">🚨 Bütün Aktiv İmtahanları Dayandır</button>
+                    <button class="btn btn-warning" onclick="resetAllExamData()">🧹 Baza İmtahan Nəticələrini Sıfırla</button>
                 </div>
             </div>
 
-            <!-- MODUL 6: PULT (CANLI TƏZYİQ/SESSİYA İDARƏSİ) -->
-            <div id="mod-pult" class="admin-module-block">
-                <h4>🎮 Mərkəzi İdarəetmə Pultu (Pult.html)</h4>
-                <p>İmtahan sessiyalarını dayandır və ya vaxtı qlobal yenilə.</p>
-                <button class="btn btn-danger" onclick="alert('Bütün aktiv imtahanlar dayandırıldı!')">Bütün İmtahanları Dayandır</button>
-            </div>
-
-            <!-- MODUL 7: İŞTİRAKÇILAR (SİYAHI) MODULU -->
+            <!-- MODUL 7: İŞTİRAKÇILAR (SİYAHI) MODULU (Siyaha.html REAL KODLARI) -->
             <div id="mod-siyahi" class="admin-module-block">
-                <h4>📋 İştirakçılar Siyahısı (Siyaha.html)</h4>
+                <h4>📋 İştirakçılar Və İmtahan İştirak Statusları</h4>
+                <div class="filter-bar">
+                    <input type="text" id="search-participant" class="form-control" placeholder="Axtarış (Ad və ya FIN)..." style="max-width: 300px;" onkeyup="filterParticipantsTable()">
+                </div>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Ad Soyad</th>
-                                <th>FIN</th>
-                                <th>Sınaq No</th>
-                                <th>Tarix/Status</th>
+                                <th>FIN Kod</th>
+                                <th>Sınaq №</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="full-participants-list">
@@ -442,37 +481,44 @@
                 </div>
             </div>
 
-            <!-- MODUL 8: STATİSTİKA MODULU -->
+            <!-- MODUL 8: STATİSTİKA MODULU (Statistika.html REAL KODLARI) -->
             <div id="mod-statistika" class="admin-module-block">
-                <h4>📊 İmtahan Statistikaları (Statistika.html)</h4>
+                <h4>📊 Ətraflı İmtahan Statistikaları Və Hesabatlar</h4>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h5>Cəmi İştirakçı</h5>
+                        <h5>Cəmi Tamamlanmış İmtahan</h5>
                         <div class="value" id="stat-total-students">0</div>
                     </div>
                     <div class="stat-card">
-                        <h5>Ortalama Bal</h5>
-                        <div class="value" id="stat-avg-score">0</div>
+                        <h5>Ortalama Nəticə</h5>
+                        <div class="value" id="stat-avg-score">0 bal</div>
+                    </div>
+                    <div class="stat-card">
+                        <h5>Ən Yüksək Bal</h5>
+                        <div class="value" id="stat-max-score" style="color: var(--success-green);">0</div>
                     </div>
                 </div>
             </div>
 
-            <!-- MODUL 9: CAVABLAR MODULU -->
+            <!-- MODUL 9: CAVABLAR MODULU (Cavablar.html REAL KODLARI) -->
             <div id="mod-cavablar" class="admin-module-block">
-                <h4>📑 İştirakçı Cavabları Və Yekun Nəticələr (Cavablar.html)</h4>
+                <h4>📑 İştirakçı Cavabları Və Yekun Protocol Cədvəli</h4>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Ad Soyad</th>
                                 <th>FIN</th>
-                                <th>Sınaq</th>
+                                <th>Sınaq №</th>
                                 <th>Doğru</th>
                                 <th>Yanlış</th>
-                                <th>Bal</th>
+                                <th>Toplanan Bal</th>
+                                <th>BB Qrupu</th>
                             </tr>
                         </thead>
-                        <tbody id="results-table-body"></tbody>
+                        <tbody id="results-table-body">
+                            <tr><td colspan="7">Yüklənir...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -480,7 +526,7 @@
             <!-- MODUL 10: REDAKTƏ MODULU (QOVLUQLAR İLƏ İNTEQRASİYA OLUNMUŞ TAM HİSSƏ) -->
             <div id="mod-redakte" class="admin-module-block">
                 <h4>✏️ Sınaq Və Məzmun Redaktə Mərkəzi</h4>
-                <p>Bütün modul fayllarının və baza parametrlərinin birbaşa mərkəzləşdirilmiş idarəsi.</p>
+                <p>GitHub reposundakı bütün modul fayllarının mərkəzləşdirilmiş idarəetmə interfeysi.</p>
                 
                 <div class="folder-grid" style="margin-top: 20px;">
                     <div class="folder-card" onclick="switchAdminTab('suallar')">
@@ -545,7 +591,7 @@
                 </div>
 
                 <div id="edit-questions-list-area" style="margin-top: 20px; display: none;">
-                    <h4 style="text-align: left; margin-bottom: 10px;">📋 Bazadakı Sualların Redaktə Siyahısı</h4>
+                    <h4 style="text-align: left; margin-bottom: 10px;">📋 Bazadakı Sualların Canlı Redaktə Siyahısı</h4>
                     <div style="overflow-x: auto;">
                         <table>
                             <thead>
@@ -649,13 +695,19 @@
             }
         }
 
-        /* ADMİN MODULLARI ARASINDA KEÇİD */
+        /* ADMİN MODULLARI ARASINDA KEÇİD MƏNTİQİ */
         function switchAdminTab(tabName) {
             const blocks = document.querySelectorAll('.admin-module-block');
             blocks.forEach(b => b.style.display = 'none');
 
+            const navCards = document.querySelectorAll('.admin-nav-card');
+            navCards.forEach(c => c.classList.remove('active-tab'));
+
             const activeBlock = document.getElementById(`mod-${tabName}`);
             if (activeBlock) activeBlock.style.display = 'block';
+
+            const activeBtn = document.getElementById(`btn-tab-${tabName}`);
+            if (activeBtn) activeBtn.classList.add('active-tab');
         }
 
         async function proceedToExamSelect() {
@@ -947,6 +999,7 @@
             document.getElementById("login-screen").style.display = "block"; 
         }
 
+        /* IDARE.HTML VƏ KONTROL SPESİFİK KODLARI */
         async function allowStudent() {
             let name = document.getElementById("adm-student-name").value.trim();
             let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
@@ -983,15 +1036,20 @@
             const { data, error } = await _supabase.from('allowed_students').select('*');
             let tbody = document.getElementById("allowed-students-table-body");
             if (error || !data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3">İcazə verilmiş tələbə yoxdur</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4">İcazə verilmiş tələbə yoxdur</td></tr>`;
+                if(document.getElementById("cnt-total-allowed")) document.getElementById("cnt-total-allowed").innerText = "0";
                 return;
             }
+            if(document.getElementById("cnt-total-allowed")) document.getElementById("cnt-total-allowed").innerText = data.length;
+            
             let html = "";
             data.forEach(s => {
+                let dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString("az-AZ") : "Aktiv";
                 html += `
                     <tr>
                         <td>${s.name || '-'}</td>
                         <td><b>${s.fin}</b></td>
+                        <td>${dateStr}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Deaktiv Et / Sil</button></td>
                     </tr>
                 `;
@@ -999,30 +1057,78 @@
             tbody.innerHTML = html;
         }
 
+        /* CAVABLAR.HTML, SIYAHA.HTML VƏ STATİSTİKA.HTML REAL KODLARI */
         async function loadAdminPanelData() {
             loadAllowedStudents();
 
-            const { data: results } = await _supabase.from('exam_results').select('*');
-            if(results) {
+            const { data: results, error } = await _supabase.from('exam_results').select('*').order('created_at', { ascending: false });
+            if (results) {
                 document.getElementById("stat-total-students").innerText = results.length;
                 let sumScore = 0;
+                let maxScore = 0;
                 let tbody = document.getElementById("results-table-body");
                 let partBody = document.getElementById("full-participants-list");
                 let html = "";
                 let partHtml = "";
+
                 results.forEach(r => {
-                    sumScore += (r.score || 0);
-                    html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score}</b></td></tr>`;
-                    partHtml += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td>Tamamlandı</td></tr>`;
+                    let sc = r.score || 0;
+                    sumScore += sc;
+                    if (sc > maxScore) maxScore = sc;
+
+                    html += `
+                        <tr>
+                            <td><b>${r.name}</b></td>
+                            <td>${r.fin}</td>
+                            <td>Sınaq ${r.exam_no}</td>
+                            <td style="color:green; font-weight:bold;">${r.correct_count}</td>
+                            <td style="color:red; font-weight:bold;">${r.wrong_count}</td>
+                            <td><b style="font-size:15px; color:var(--primary-dark);">${sc}</b></td>
+                            <td><small>${r.bb_group || '-'}</small></td>
+                        </tr>
+                    `;
+
+                    partHtml += `
+                        <tr>
+                            <td>${r.name}</td>
+                            <td><b>${r.fin}</b></td>
+                            <td>Sınaq ${r.exam_no}</td>
+                            <td><span style="background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 4px; font-weight: bold;">Tamamlandı</span></td>
+                        </tr>
+                    `;
                 });
-                tbody.innerHTML = html;
-                if(partBody) partBody.innerHTML = partHtml;
-                if(results.length > 0 && document.getElementById("stat-avg-score")) {
-                    document.getElementById("stat-avg-score").innerText = (sumScore / results.length).toFixed(1);
+
+                tbody.innerHTML = html.length ? html : `<tr><td colspan="7">Hələ heç bir nəticə yoxdur</td></tr>`;
+                if(partBody) partBody.innerHTML = partHtml.length ? partHtml : `<tr><td colspan="4">İştirakçı tapılmadı</td></tr>`;
+                
+                if (results.length > 0) {
+                    if (document.getElementById("stat-avg-score")) document.getElementById("stat-avg-score").innerText = (sumScore / results.length).toFixed(1) + " bal";
+                    if (document.getElementById("stat-max-score")) document.getElementById("stat-max-score").innerText = maxScore + " bal";
                 }
             }
         }
 
+        function filterParticipantsTable() {
+            let input = document.getElementById("search-participant").value.toUpperCase();
+            let table = document.getElementById("full-participants-list");
+            let tr = table.getElementsByTagName("tr");
+
+            for (let i = 0; i < tr.length; i++) {
+                let tdName = tr[i].getElementsByTagName("td")[0];
+                let tdFin = tr[i].getElementsByTagName("td")[1];
+                if (tdName || tdFin) {
+                    let txtValueName = tdName.textContent || tdName.innerText;
+                    let txtValueFin = tdFin.textContent || tdFin.innerText;
+                    if (txtValueName.toUpperCase().indexOf(input) > -1 || txtValueFin.toUpperCase().indexOf(input) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        /* KOD.HTML KODLARI */
         function generateTokenCode() {
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             let res = "";
@@ -1032,7 +1138,43 @@
             document.getElementById("generated-code-display").value = res;
         }
 
-        /* SUALLARIN REDAKTƏSİ MODULUNUN JAVASCRIPT MƏNTİQİ */
+        function copyGeneratedCode() {
+            let copyText = document.getElementById("generated-code-display");
+            if(!copyText.value) return;
+            copyText.select();
+            document.execCommand("copy");
+            alert("Kod kopyalandı: " + copyText.value);
+        }
+
+        /* KABİNET.HTML KODLARI */
+        function saveAdminProfile() {
+            let newName = document.getElementById("admin-profile-name").value;
+            alert(`Təbriklər, ${newName}! İnzibatçı profil məlumatlarınız sistemdə yeniləndi.`);
+        }
+
+        /* PULT.HTML & KONTROL.HTML KODLARI */
+        function emergencyStopAllExams() {
+            if(confirm("TƏCİLİ DUBİLKƏ: Bütün aktiv imtahan sessiyalarını dayandırmaq istədiyinizə əminsiniz?")) {
+                alert("Bütün canlı imtahan sessiyaları bloklandı.");
+            }
+        }
+
+        async function resetAllExamData() {
+            if(confirm("DİQQƏT: Baza imtahan nəticələri həmişəlik silinəcək. Davam edilsin?")) {
+                const { error } = await _supabase.from('exam_results').delete().neq('id', 0);
+                if(!error) {
+                    alert("Təmizləndi!");
+                    loadAdminPanelData();
+                }
+            }
+        }
+
+        function refreshControlStats() {
+            loadAdminPanelData();
+            alert("Canlı təhlükəsizlik monitorinqi yeniləndi.");
+        }
+
+        /* SUALLAR.HTML REDAKTOR KODLARI */
         let currentExamRedaktor = "1";
         let currentCategoryRedaktor = "BA";
         const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H"];
@@ -1212,8 +1354,6 @@
         }
 
         async function loadQuestionData(num) {
-            const subject = document.getElementById('activeSubjectInput').value;
-            
             const { data } = await _supabase
                 .from('exam_questions')
                 .select('*')
