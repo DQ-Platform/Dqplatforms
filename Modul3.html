@@ -74,12 +74,9 @@
     .nav-box { padding: 6px 0; text-align: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
     .nav-box.answered { background-color: #d1fae5; border-color: var(--success-green); color: #065f46; }
     .nav-box.current { border: 2px solid #0f172a; background-color: #e2e8f0; }
-    .nav-box.flagged::before { content: ''; position: absolute; top: 2px; left: 3px; width: 5px; height: 5px; background-color: var(--danger-red); border-radius: 50%; }
-    .question-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .options label { display: block; padding: 10px 14px; margin: 8px 0; background: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 14px; text-align: left; }
     
     .footer-text { text-align: center; font-size: 12px; color: #64748b; margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; }
-    .secret-trigger { cursor: pointer; }
+    .secret-trigger { cursor: pointer; font-weight: bold; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -89,12 +86,12 @@
     <h2>🛡️ DQ Platform - Mərkəzi İdarəetmə Paneli</h2>
     <div>
       <button class="btn btn-warning" onclick="window.location.reload()">🔄 Yenilə</button>
-      <button class="btn btn-danger" onclick="toggleAdminMode(false)">❌ Admin Çıxışı</button>
+      <button class="btn btn-danger" id="adminLogoutBtn" style="display:none;" onclick="toggleAdminMode(false)">❌ Admin Çıxışı</button>
     </div>
   </div>
 
-  <!-- NƏZARƏT MODULLARI NAVİQASİYASI -->
-  <div class="admin-nav-grid" id="adminNavGrid">
+  <!-- NƏZARƏT MODULLARI NAVİQASİYASI (Əvvəlcədən gizlidir, footer vasitəsilə açılır) -->
+  <div class="admin-nav-grid" id="adminNavGrid" style="display: none;">
     <div class="admin-nav-card active" onclick="switchTab('tab-control', this)"><span class="icon">📡</span> Canlı Nəzarət</div>
     <div class="admin-nav-card" onclick="switchTab('tab-questions', this)"><span class="icon">📝</span> Sual Redaktoru</div>
     <div class="admin-nav-card" onclick="switchTab('tab-codes', this)"><span class="icon">🔑</span> Giriş Kodları</div>
@@ -105,11 +102,11 @@
   </div>
 
   <!-- 1. CANLI NƏZARƏT PANELİ -->
-  <div id="tab-control" class="tab-content active">
+  <div id="tab-control" class="tab-content">
     <h3>📡 Canlı Nəzarət Və Aktiv Sessiyalar</h3>
     <br>
     <div class="stats-grid">
-      <div class="stat-card"><h4>Aktiv İştirakçılar</h4><div class="num" id="activeUsersCount">1</div></div>
+      <div class="stat-card"><h4>Aktiv İştirakçılar</h4><div class="num" id="activeUsersCount">0</div></div>
       <div class="stat-card"><h4>Tamamlanan İmtahanlar</h4><div class="num" id="finishedCount">0</div></div>
       <div class="stat-card"><h4>Ümumi İcazəli Tələbələr</h4><div class="num" id="totalAllowedCount">0</div></div>
     </div>
@@ -126,13 +123,7 @@
           </tr>
         </thead>
         <tbody id="liveControlBody">
-          <tr>
-            <td>Yunis İmanov</td>
-            <td><code>77C2UF7</code></td>
-            <td>Sınaq 1</td>
-            <td><span class="badge badge-success">İmtahandadır</span></td>
-            <td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;" onclick="terminateSession(this)">Dayandır</button></td>
-          </tr>
+          <tr><td colspan="5" style="text-align:center;">Aktiv sessiya yoxdur.</td></tr>
         </tbody>
       </table>
     </div>
@@ -263,8 +254,8 @@
     <button class="btn btn-primary" onclick="alert('Tənzimləmələr yadda saxlanıldı!')">💾 Ayarları Saxla</button>
   </div>
 
-  <!-- 7. İŞTİRAKÇI KABİNETİ VƏ SİNAQ SİSTEMİ -->
-  <div id="tab-kabinet" class="tab-content">
+  <!-- 7. İŞTİRAKÇI KABİNETİ VƏ SİNAQ SİSTEMİ (Varsayılan olaraq aktivdir) -->
+  <div id="tab-kabinet" class="tab-content active">
     <div class="user-section">
       <!-- GİRİŞ HİSSƏSİ -->
       <div id="kab-login-screen" style="text-align: center;">
@@ -382,15 +373,22 @@
 
   function toggleAdminMode(show) {
     document.getElementById("adminNavGrid").style.display = show ? "grid" : "none";
-    if (!show) switchTab('tab-kabinet', null);
+    document.getElementById("adminLogoutBtn").style.display = show ? "inline-block" : "none";
+    if (show) {
+      switchTab('tab-control', document.querySelector('.admin-nav-card'));
+    } else {
+      switchTab('tab-kabinet', null);
+    }
   }
 
   function terminateSession(btn) {
     if (confirm("Bu iştirakçının imtahanını dayandırmaq istədiyinizdən əminsiniz?")) {
       const row = btn.closest('tr');
       const badge = row.querySelector('.badge');
-      badge.className = 'badge badge-danger';
-      badge.innerText = 'Dayandırıldı';
+      if(badge) {
+        badge.className = 'badge badge-danger';
+        badge.innerText = 'Dayandırıldı';
+      }
       btn.disabled = true;
     }
   }
@@ -478,9 +476,9 @@
   }
 
   async function loadAllowedStudentsData() {
-    const { data } = await _supabase.from('allowed_students').select('*');
+    const { data, error } = await _supabase.from('allowed_students').select('*');
     const tbody = document.getElementById("allowedStudentsTable");
-    if (!data || data.length === 0) {
+    if (error || !data || data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="3">Qeydiyyatlı tələbə tapılmadı.</td></tr>`;
       document.getElementById("totalAllowedCount").innerText = 0;
       return;
@@ -501,9 +499,9 @@
   }
 
   async function loadResultsData() {
-    const { data } = await _supabase.from('exam_results').select('*');
+    const { data, error } = await _supabase.from('exam_results').select('*');
     const tbody = document.getElementById("resultsTableBody");
-    if (!data || data.length === 0) {
+    if (error || !data || data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="6">Hələ heç bir nəticə yoxdur.</td></tr>`;
       return;
     }
@@ -529,8 +527,8 @@
     msg.style.color = "#38bdf8";
     msg.innerText = "Yoxlanılır...";
 
-    const { data } = await _supabase.from('allowed_students').select('*').eq('fin', fin);
-    if (!data || data.length === 0) {
+    const { data, error } = await _supabase.from('allowed_students').select('*').eq('fin', fin);
+    if (error || !data || data.length === 0) {
       msg.style.color = "#ef4444";
       msg.innerText = "Bu FIN kod üçün icazə verilməyib!";
       return;
@@ -546,8 +544,8 @@
   async function startKabinetExam() {
     kabExamId = document.getElementById("kab-exam-selector").value;
 
-    const { data } = await _supabase.from('exam_questions').select('*').eq('exam_id', kabExamId).order('q_number', { ascending: true });
-    if (!data || data.length === 0) {
+    const { data, error } = await _supabase.from('exam_questions').select('*').eq('exam_id', kabExamId).order('q_number', { ascending: true });
+    if (error || !data || data.length === 0) {
       alert("Bu sınaq üçün sual tapılmadı!");
       return;
     }
@@ -559,6 +557,19 @@
     document.getElementById("kab-exam-select-screen").style.display = "none";
     document.getElementById("kab-exam-screen").style.display = "block";
     document.getElementById("kab-active-exam-title").innerText = `Sınaq ${kabExamId}`;
+
+    // Canlı nəzarət panelinə iştirakçını əlavə etmək
+    const liveBody = document.getElementById("liveControlBody");
+    liveBody.innerHTML = `
+      <tr>
+        <td>${kabStudentName}</td>
+        <td><code>${kabStudentFin}</code></td>
+        <td>Sınaq ${kabExamId}</td>
+        <td><span class="badge badge-success">İmtahandadır</span></td>
+        <td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;" onclick="terminateSession(this)">Dayandır</button></td>
+      </tr>
+    `;
+    document.getElementById("activeUsersCount").innerText = 1;
 
     renderKabQuestion();
     renderKabNavGrid();
@@ -611,6 +622,7 @@
 
   function startKabTimer() {
     clearInterval(kabTimerInterval);
+    kabTimeLeft = 3 * 3600;
     kabTimerInterval = setInterval(() => {
       let h = String(Math.floor(kabTimeLeft / 3600)).padStart(2, '0');
       let m = String(Math.floor((kabTimeLeft % 3600) / 60)).padStart(2, '0');
@@ -655,6 +667,8 @@
 
     document.getElementById("kab-exam-screen").style.display = "none";
     document.getElementById("kab-result-screen").style.display = "block";
+    document.getElementById("activeUsersCount").innerText = 0;
+    
     loadResultsData();
   }
 
@@ -665,4 +679,3 @@
 </script>
 </body>
 </html>
-
