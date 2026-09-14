@@ -996,17 +996,48 @@
                 }
             }
 
-            const { error } = await _supabase.from('exam_questions').upsert([{
-                exam_id: currentExamRedaktor,
-                q_number: qNum,
-                subject: subject,
-                question: text,
-                options: options,
-                correct: correctIndex
-            }], { onConflict: 'exam_id,q_number' });
+            // Sualın mövcudluğunu yoxlayırıq
+            const { data: existingQ } = await _supabase
+                .from('exam_questions')
+                .select('id')
+                .eq('exam_id', currentExamRedaktor)
+                .eq('q_number', qNum)
+                .maybeSingle();
 
-            if (error) alert("Xəta baş verdi: " + error.message);
-            else alert(`Sınaq ${currentExamRedaktor} - Sual ${qNum} Uğurla Yadda Saxlanıldı!`);
+            let resultError = null;
+
+            if (existingQ) {
+                // Sual varsa yeniləyirik (UPDATE)
+                const { error } = await _supabase
+                    .from('exam_questions')
+                    .update({
+                        subject: subject,
+                        question: text,
+                        options: options,
+                        correct: correctIndex
+                    })
+                    .eq('id', existingQ.id);
+                resultError = error;
+            } else {
+                // Sual yoxdursa yeni daxil edirik (INSERT)
+                const { error } = await _supabase
+                    .from('exam_questions')
+                    .insert([{
+                        exam_id: currentExamRedaktor,
+                        q_number: qNum,
+                        subject: subject,
+                        question: text,
+                        options: options,
+                        correct: correctIndex
+                    }]);
+                resultError = error;
+            }
+
+            if (resultError) {
+                alert("Xəta baş verdi: " + resultError.message);
+            } else {
+                alert(`Sınaq ${currentExamRedaktor} - Sual ${qNum} Uğurla Yadda Saxlanıldı!`);
+            }
         }
 
         async function loadQuestionData(num) {
@@ -1060,3 +1091,4 @@
     </script>
 </body>
 </html>
+
