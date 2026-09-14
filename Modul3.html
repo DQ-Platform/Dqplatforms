@@ -1,460 +1,213 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mərkəzi Nəzarət və İdarəetmə Paneli - DQ Platform</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; padding: 20px; min-height: 100vh; user-select: none; }
-    :root { --primary-dark: #0f172a; --accent-gold: #f59e0b; --success-green: #22c55e; --danger-red: #ef4444; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modul Mərkəzi — DQ Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --gold: #d97706;
+            --green: #238636;
+            --blue: #58a6ff;
+        }
 
-    .container { max-width: 1250px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; border-top: 4px solid var(--accent-gold); }
-    
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    .header h2 { font-size: 20px; color: var(--accent-gold); }
-    
-    /* NAVİQASİYA DÜYMƏLƏRİ - BÜTÜN FAYLLAR ÜÇÜN */
-    .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 20px; }
-    .admin-nav-card { background: #0f172a; color: var(--accent-gold); padding: 10px 5px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 11px; border: 1px solid #334155; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .admin-nav-card:hover, .admin-nav-card.active { background: var(--accent-gold); color: #0f172a; border-color: var(--accent-gold); }
-    .admin-nav-card span.icon { font-size: 16px; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
 
-    /* TAB BÖLMƏLƏRİ */
-    .tab-content { display: none; background: #1b263b; padding: 20px; border-radius: 8px; border: 1px solid #334155; }
-    .tab-content.active { display: block; }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
 
-    /* FORMLAR VƏ NƏZARƏT ELEMENTLƏRİ */
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 12px; text-align: left; }
-    .form-group label { font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 5px; }
-    .form-control { padding: 9px 12px; border: 1px solid #334155; background: #0f172a; color: #fff; border-radius: 4px; font-size: 14px; outline: none; }
-    .form-control:focus { border-color: var(--accent-gold); }
+        .catalog-header {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
 
-    .btn { padding: 9px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; display: inline-block; text-align: center; }
-    .btn-success { background-color: var(--success-green); color: white; }
-    .btn-success:hover { background-color: #15803d; }
-    .btn-danger { background-color: var(--danger-red); color: white; }
-    .btn-danger:hover { background-color: #b91c1c; }
-    .btn-primary { background-color: #3b82f6; color: white; }
-    .btn-warning { background-color: var(--accent-gold); color: #0f172a; }
-    .btn-secondary { background-color: #64748b; color: white; }
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+        }
 
-    /* STATİSTİKA KARTLARI */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .stat-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; text-align: center; }
-    .stat-card h4 { font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
-    .stat-card .num { font-size: 22px; font-weight: bold; color: #38bdf8; }
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 35px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            box-sizing: border-box;
+        }
 
-    /* CƏDVƏL DİZAYNI */
-    .table-wrapper { overflow-x: auto; margin-top: 15px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #f8fafc; }
-    th, td { padding: 10px; border: 1px solid #334155; }
-    th { background: #0f172a; color: var(--accent-gold); }
-    tr:nth-child(even) { background-color: #172133; }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8b949e;
+        }
 
-    .badge { padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-    .badge-success { background: rgba(34, 197, 94, 0.2); color: var(--success-green); border: 1px solid var(--success-green); }
-    .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger-red); border: 1px solid var(--danger-red); }
+        .file-tree {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-    .option-row { display: flex; align-items: center; gap: 10px; background: #0f172a; padding: 8px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 8px; }
-    .option-label { font-weight: bold; width: 25px; color: var(--accent-gold); }
-    
-    /* SİSTEM KABİNET VƏ İMTAHAN STİLLƏRİ */
-    .user-section { background: #ffffff; color: #333; border-radius: 8px; padding: 20px; }
-    .code-input, .select-control { padding: 12px; font-size: 16px; width: 100%; max-width: 400px; border: 2px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px; outline: none; text-align: center; }
-    .token-field { letter-spacing: 2px; text-transform: uppercase; }
-    .exam-header { display: flex; justify-content: space-between; align-items: center; background: #0f172a; color: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; }
-    .timer { font-size: 18px; font-weight: bold; color: var(--accent-gold); }
-    .exam-layout { display: flex; gap: 20px; position: relative; }
-    .questions-area { flex: 3; background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 350px; display: flex; flex-direction: column; justify-content: space-between; color: #0f172a; }
-    .answer-card-sidebar { flex: 1; background: #f1f5f9; padding: 15px; border-radius: 8px; height: fit-content; border: 1px solid #cbd5e1; color: #0f172a; }
-    .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-height: 400px; overflow-y: auto; }
-    .nav-box { padding: 6px 0; text-align: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
-    .nav-box.answered { background-color: #d1fae5; border-color: var(--success-green); color: #065f46; }
-    .nav-box.current { border: 2px solid #0f172a; background-color: #e2e8f0; }
-    
-    /* IFRAME BÖLMƏSİ STİLİ */
-    .module-frame { width: 100%; height: 700px; border: none; border-radius: 8px; background: #fff; }
+        .folder-bar {
+            background: #21262d;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-    .footer-text { text-align: center; font-size: 12px; color: #64748b; margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; }
-    .secret-trigger { cursor: pointer; font-weight: bold; text-decoration: underline; }
-  </style>
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .file-item:last-child { border-bottom: none; }
+        .file-item:hover { background: #1f242c; }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-info i { color: var(--blue); }
+
+        .file-link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .file-link:hover { color: var(--blue); text-decoration: underline; }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .status-active { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid #238636; }
+
+        .btn-launch {
+            background: var(--green);
+            color: white;
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn-launch:hover { background: #2ea043; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="header">
-    <h2>🛡️ DQ Platform - Mərkəzi İdarəetmə Paneli</h2>
-    <div>
-      <button class="btn btn-warning" onclick="window.location.reload()">🔄 Yenilə</button>
-      <button class="btn btn-danger" id="adminLogoutBtn" style="display:none;" onclick="toggleAdminMode(false)">❌ Admin Çıxışı</button>
-    </div>
-  </div>
-
-  <!-- REPOZİTORİYADAKI BÜTÜN 14 HTML FAYLININ YER ALDIĞI DÜYMƏLƏR SİYAHISI -->
-  <div class="admin-nav-grid" id="adminNavGrid" style="display: none;">
-    <div class="admin-nav-card active" onclick="switchTab('tab-control', this)"><span class="icon">📡</span> Canlı Nəzarət</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Idare.html', this)"><span class="icon">🏛️</span> İdarə</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('admin.html', this)"><span class="icon">👑</span> Admin Panel</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('redakte.html', this)"><span class="icon">🛠️</span> Redaktə</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Suallar.html', this)"><span class="icon">📝</span> Suallar</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Cavablar.html', this)"><span class="icon">✅</span> Cavablar</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Kod.html', this)"><span class="icon">🔑</span> Kod İdarəsi</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Siyaha.html', this)"><span class="icon">📋</span> Siyahı</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Statistika.html', this)"><span class="icon">📈</span> Statistika</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Kontrol.html', this)"><span class="icon">🎛️</span> Kontrol</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Pult.html', this)"><span class="icon">⚙️</span> Pult</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('Modul3.html', this)"><span class="icon">📦</span> Modul 3</div>
-    <div class="admin-nav-card" onclick="openModuleFrame('index.html', this)"><span class="icon">🌐</span> Ana Səhifə</div>
-    <div class="admin-nav-card" onclick="switchTab('tab-kabinet', this)"><span class="icon">👤</span> Kabinet</div>
-  </div>
-
-  <!-- 1. CANLI NƏZARƏT PANELİ -->
-  <div id="tab-control" class="tab-content">
-    <h3>📡 Canlı Nəzarət Və Aktiv Sessiyalar</h3>
-    <br>
-    <div class="stats-grid">
-      <div class="stat-card"><h4>Aktiv İştirakçılar</h4><div class="num" id="activeUsersCount">0</div></div>
-      <div class="stat-card"><h4>Tamamlanan İmtahanlar</h4><div class="num" id="finishedCount">0</div></div>
-      <div class="stat-card"><h4>Ümumi İcazəli Tələbələr</h4><div class="num" id="totalAllowedCount">0</div></div>
+    <div class="catalog-header">
+        <div>
+            <h2 style="margin: 0; color: var(--gold);">📁 Modul Kataloqu</h2>
+            <small style="color: #8b949e;">Mərkəzləşdirilmiş sistem alt-faylları v1.0</small>
+        </div>
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search" placeholder="Modul axtar..." onkeyup="filterFiles()">
+        </div>
     </div>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>İştirakçı Adı</th>
-            <th>FIN Kod</th>
-            <th>Sınaq №</th>
-            <th>Status</th>
-            <th>Əməliyyat</th>
-          </tr>
-        </thead>
-        <tbody id="liveControlBody">
-          <tr><td colspan="5" style="text-align:center;">Aktiv sessiya yoxdur.</td></tr>
-        </tbody>
-      </table>
+    <div class="file-tree">
+        <div class="folder-bar">
+            <i class="fa-solid fa-folder-open" style="color: var(--gold);"></i>
+            <span>root / modules /</span>
+        </div>
+        <div id="file-list">
+            <!-- Modullar JavaScript ilə təşkil olunur -->
+        </div>
     </div>
-  </div>
-
-  <!-- DİNAMİK XARİCİ HTML FAYLI İMTAHAN/İDARƏETMƏ PƏNCƏRƏSİ -->
-  <div id="tab-external-frame" class="tab-content">
-    <h3 id="frame-title" style="color: var(--accent-gold);">📄 Modul Pəncərəsi</h3>
-    <br>
-    <iframe id="moduleIframe" src="" class="module-frame"></iframe>
-  </div>
-
-  <!-- 2. İŞTİRAKÇI KABİNETİ VƏ SİNAQ SİSTEMİ -->
-  <div id="tab-kabinet" class="tab-content active">
-    <div class="user-section">
-      <!-- GİRİŞ HİSSƏSİ -->
-      <div id="kab-login-screen" style="text-align: center;">
-        <h2 style="color: #0f172a; margin-bottom: 10px;">DQ Platform - İştirakçı Girişi</h2>
-        <p style="margin-bottom: 15px; font-size: 14px;">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
-        <input type="text" id="kab-user-name" class="code-input" placeholder="Ad və Soyadınız"><br>
-        <input type="text" id="kab-user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 77C2UF7)" maxlength="7"><br>
-        <button class="btn btn-primary" onclick="proceedKabinetExamSelect()">Davam Et</button>
-        <p id="kab-error-msg" style="color: red; margin-top: 10px; font-size: 13px; font-weight: bold;"></p>
-      </div>
-
-      <!-- SINAQ SEÇİM EKRANI -->
-      <div id="kab-exam-select-screen" style="display: none; text-align: center;">
-        <h2 style="color: #0f172a; margin-bottom: 10px;">📝 Sınaq Seçimi</h2>
-        <div style="margin-bottom: 15px;">
-          <label style="font-weight: bold;">Sınaq:</label><br>
-          <select id="kab-exam-selector" class="select-control">
-            <option value="1">Sınaq 1</option>
-            <option value="2">Sınaq 2</option>
-            <option value="3">Sınaq 3</option>
-            <option value="4">Sınaq 4</option>
-            <option value="5">Sınaq 5</option>
-          </select>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <label style="font-weight: bold;">Vəzifə Qrupu:</label><br>
-          <select id="kab-group-selector" class="select-control">
-            <option value="BB">BB Qrupu (İnzibati)</option>
-            <option value="BA">BA Qrupu (Rəhbər)</option>
-            <option value="AC">AC Qrupu (Xüsusi)</option>
-          </select>
-        </div>
-        <button class="btn btn-success" onclick="startKabinetExam()">İmtahana Başla</button>
-      </div>
-
-      <!-- SINAQ İCRA EKRANI -->
-      <div id="kab-exam-screen" style="display: none;">
-        <div class="exam-header">
-          <span id="kab-active-exam-title">Dövlət Qulluğu Vəzifələri Üzrə Sınaq</span>
-          <span class="timer" id="kab-timer">03:00:00</span>
-        </div>
-        <div class="exam-layout">
-          <div class="questions-area">
-            <div id="kab-single-question-container"></div>
-            <div style="display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-              <button class="btn btn-secondary" onclick="prevKabQuestion()">Əvvəlki</button>
-              <button class="btn btn-danger" onclick="confirmFinishKabExam()">Testi Bitir</button>
-              <button class="btn btn-primary" onclick="nextKabQuestion()">Növbəti</button>
-            </div>
-          </div>
-          <div class="answer-card-sidebar">
-            <h4 style="margin-bottom: 10px; font-size: 14px; text-align: center;">Cavab Kartı</h4>
-            <div class="grid-nav" id="kab-grid-nav"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- NƏTİCƏ EKRANI -->
-      <div id="kab-result-screen" style="display: none; text-align: left;">
-        <h2 style="color: #0f172a; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 15px; text-align: center;">İmtahan Nəticələri</h2>
-        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-          <p><strong>İştirakçı:</strong> <span id="resName">-</span></p>
-          <p><strong>Düzgün Cavablar:</strong> <span id="resCorrect" style="color: green; font-weight: bold;">0</span></p>
-          <p><strong>Səhv Cavablar:</strong> <span id="resWrong" style="color: red; font-weight: bold;">0</span></p>
-          <p><strong>Yekun Bal:</strong> <span id="resScore" style="font-weight: bold; font-size: 16px;">0</span></p>
-        </div>
-        <button class="btn btn-primary" onclick="resetKabinetView()">Əsas Ekrana Qayıt</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer-text">
-    © 2026 DQ Platform – Developed <span class="secret-trigger" onclick="promptAdminLogin()">by</span> Yunis İmanov
-  </div>
 </div>
 
 <script>
-  const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
-  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // GitHub repozitoriyasındakı bütün işlək modul faylları
+    const moduleFiles = [
+        { name: "Idare.html", label: "İdarə Paneli Mərkəzi", status: "İşlək" },
+        { name: "Kabinet.html", label: "Şəxsi Kabinet Paneli", status: "İşlək" },
+        { name: "Kod.html", label: "Access / Giriş Kodları", status: "İşlək" },
+        { name: "Kontrol.html", label: "İmtahan Monitorinq Mərkəzi", status: "İşlək" },
+        { name: "Modul3.html", label: "Əlavə Sistem Modulu", status: "İşlək" },
+        { name: "Pult.html", label: "Operativ İdarəetmə Pultu", status: "İşlək" },
+        { name: "Siyaha.html", label: "İştirakçı Bazası və Siyahı", status: "İşlək" },
+        { name: "Statistika.html", label: "Analitika və Hesabatlar", status: "İşlək" },
+        { name: "Suallar.html", label: "Test və Suallar Bazası", status: "İşlək" },
+        { name: "admin.html", label: "Mərkəzi Admin Arayüzü", status: "İşlək" },
+        { name: "index.html", label: "Əsas Başlanğıc Səhifəsi", status: "İşlək" },
+        { name: "redakte.html", label: "Məzmun Redaktə Modulu", status: "İşlək" },
+        { name: "Cavablar.html", label: "Neticə və Cavablar Paneli", status: "İşlək" }
+    ];
 
-  const ADMIN_PASS = "6675157";
-  const letters = ["A", "B", "C", "D", "E", "F"];
+    function renderCatalog(files) {
+        const container = document.getElementById("file-list");
+        container.innerHTML = "";
 
-  let kabStudentName = "";
-  let kabStudentFin = "";
-  let kabExamId = "1";
-  let kabQuestions = [];
-  let kabUserAnswers = {};
-  let kabCurrentIndex = 0;
-  let kabTimerInterval;
-  let kabTimeLeft = 3 * 3600;
-
-  function switchTab(tabId, btn) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.admin-nav-card').forEach(el => el.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    if (btn) btn.classList.add('active');
-  }
-
-  function openModuleFrame(pageUrl, btn) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.admin-nav-card').forEach(el => el.classList.remove('active'));
-    
-    const frameTab = document.getElementById('tab-external-frame');
-    const iframe = document.getElementById('moduleIframe');
-    const title = document.getElementById('frame-title');
-    
-    iframe.src = pageUrl;
-    title.innerText = `📄 ${pageUrl} Səhifəsi`;
-    
-    frameTab.classList.add('active');
-    if (btn) btn.classList.add('active');
-  }
-
-  function promptAdminLogin() {
-    let pass = prompt("Admin şifrəsini daxil edin:");
-    if (pass === ADMIN_PASS) {
-      alert("Admin rejimi aktivləşdirildi.");
-      toggleAdminMode(true);
-    } else {
-      alert("Şifrə yanlışdır!");
-    }
-  }
-
-  function toggleAdminMode(show) {
-    document.getElementById("adminNavGrid").style.display = show ? "grid" : "none";
-    document.getElementById("adminLogoutBtn").style.display = show ? "inline-block" : "none";
-    if (show) {
-      switchTab('tab-control', document.querySelector('.admin-nav-card'));
-    } else {
-      switchTab('tab-kabinet', null);
-    }
-  }
-
-  function terminateSession(btn) {
-    if (confirm("Bu iştirakçının imtahanını dayandırmaq istədiyinizdən əminsiniz?")) {
-      const row = btn.closest('tr');
-      const badge = row.querySelector('.badge');
-      if(badge) {
-        badge.className = 'badge badge-danger';
-        badge.innerText = 'Dayandırıldı';
-      }
-      btn.disabled = true;
-    }
-  }
-
-  /* --- KABİNET VƏ SİNAQ İCRA SİSTEMİ --- */
-  async function proceedKabinetExamSelect() {
-    const name = document.getElementById("kab-user-name").value.trim();
-    const fin = document.getElementById("kab-user-fin").value.trim().toUpperCase();
-    const msg = document.getElementById("kab-error-msg");
-
-    if (!name || fin.length < 5) {
-      msg.innerText = "Ad və düzgün FIN daxil edin!";
-      return;
+        files.forEach(f => {
+            const item = document.createElement("div");
+            item.className = "file-item";
+            item.innerHTML = `
+                <div class="file-info">
+                    <i class="fa-regular fa-file-code fa-lg"></i>
+                    <div>
+                        <a href="${f.name}" class="file-link">${f.name}</a>
+                        <div style="font-size: 0.8rem; color: #8b949e;">${f.label}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span class="status-badge status-active">${f.status}</span>
+                    <a href="${f.name}" class="btn-launch">Aç <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.75rem;"></i></a>
+                </div>
+            `;
+            container.appendChild(item);
+        });
     }
 
-    msg.style.color = "#38bdf8";
-    msg.innerText = "Yoxlanılır...";
-
-    const { data, error } = await _supabase.from('allowed_students').select('*').eq('fin', fin);
-    if (error || !data || data.length === 0) {
-      msg.style.color = "#ef4444";
-      msg.innerText = "Bu FIN kod üçün icazə verilməyib!";
-      return;
+    function filterFiles() {
+        const query = document.getElementById("search").value.toLowerCase();
+        const filtered = moduleFiles.filter(f => f.name.toLowerCase().includes(query) || f.label.toLowerCase().includes(query));
+        renderCatalog(filtered);
     }
 
-    kabStudentName = name;
-    kabStudentFin = fin;
-
-    document.getElementById("kab-login-screen").style.display = "none";
-    document.getElementById("kab-exam-select-screen").style.display = "block";
-  }
-
-  async function startKabinetExam() {
-    kabExamId = document.getElementById("kab-exam-selector").value;
-
-    const { data, error } = await _supabase.from('exam_questions').select('*').eq('exam_id', kabExamId).order('q_number', { ascending: true });
-    if (error || !data || data.length === 0) {
-      alert("Bu sınaq üçün sual tapılmadı!");
-      return;
-    }
-
-    kabQuestions = data;
-    kabUserAnswers = {};
-    kabCurrentIndex = 0;
-
-    document.getElementById("kab-exam-select-screen").style.display = "none";
-    document.getElementById("kab-exam-screen").style.display = "block";
-    document.getElementById("kab-active-exam-title").innerText = `Sınaq ${kabExamId}`;
-
-    const liveBody = document.getElementById("liveControlBody");
-    liveBody.innerHTML = `
-      <tr>
-        <td>${kabStudentName}</td>
-        <td><code>${kabStudentFin}</code></td>
-        <td>Sınaq ${kabExamId}</td>
-        <td><span class="badge badge-success">İmtahandadır</span></td>
-        <td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;" onclick="terminateSession(this)">Dayandır</button></td>
-      </tr>
-    `;
-    document.getElementById("activeUsersCount").innerText = 1;
-
-    renderKabQuestion();
-    renderKabNavGrid();
-    startKabTimer();
-  }
-
-  function renderKabQuestion() {
-    const q = kabQuestions[kabCurrentIndex];
-    const container = document.getElementById("kab-single-question-container");
-    const uAns = kabUserAnswers[q.q_number];
-
-    let html = `<div style="text-align:left;">
-      <div class="question-top">
-        <h4 style="color:#0f172a">Sual ${q.q_number} (${q.subject || 'Ümumi'}): ${q.question}</h4>
-      </div>
-      <div class="options">`;
-
-    q.options.forEach((opt, idx) => {
-      let checked = (uAns === idx) ? "checked" : "";
-      html += `
-        <label style="display:block; margin: 8px 0; cursor:pointer;">
-          <input type="radio" name="kab_opt" value="${idx}" ${checked} onclick="selectKabAnswer(${q.q_number}, ${idx})">
-          ${letters[idx]}) ${opt}
-        </label>`;
-    });
-
-    html += `</div></div>`;
-    container.innerHTML = html;
-  }
-
-  function renderKabNavGrid() {
-    const grid = document.getElementById("kab-grid-nav");
-    let html = "";
-    kabQuestions.forEach((q, idx) => {
-      let answered = kabUserAnswers[q.q_number] !== undefined ? "answered" : "";
-      let current = idx === kabCurrentIndex ? "current" : "";
-      html += `<div class="nav-box ${answered} ${current}" onclick="jumpKabQuestion(${idx})">${q.q_number}</div>`;
-    });
-    grid.innerHTML = html;
-  }
-
-  function selectKabAnswer(qNo, optIdx) {
-    kabUserAnswers[qNo] = optIdx;
-    renderKabNavGrid();
-  }
-
-  function jumpKabQuestion(idx) { kabCurrentIndex = idx; renderKabQuestion(); renderKabNavGrid(); }
-  function nextKabQuestion() { if (kabCurrentIndex < kabQuestions.length - 1) { kabCurrentIndex++; renderKabQuestion(); renderKabNavGrid(); } }
-  function prevKabQuestion() { if (kabCurrentIndex > 0) { kabCurrentIndex--; renderKabQuestion(); renderKabNavGrid(); } }
-
-  function startKabTimer() {
-    clearInterval(kabTimerInterval);
-    kabTimeLeft = 3 * 3600;
-    kabTimerInterval = setInterval(() => {
-      let h = String(Math.floor(kabTimeLeft / 3600)).padStart(2, '0');
-      let m = String(Math.floor((kabTimeLeft % 3600) / 60)).padStart(2, '0');
-      let s = String(kabTimeLeft % 60).padStart(2, '0');
-      document.getElementById("kab-timer").innerText = `${h}:${m}:${s}`;
-      kabTimeLeft--;
-      if (kabTimeLeft < 0) { clearInterval(kabTimerInterval); finishKabExam(); }
-    }, 1000);
-  }
-
-  function confirmFinishKabExam() {
-    if (confirm("Testi yekunlaşdırmaq istədiyinizdən əminsiniz?")) {
-      finishKabExam();
-    }
-  }
-
-  async function finishKabExam() {
-    clearInterval(kabTimerInterval);
-    let correct = 0, wrong = 0;
-
-    kabQuestions.forEach(q => {
-      let uAns = kabUserAnswers[q.q_number];
-      if (uAns !== undefined) {
-        if (uAns === q.correct) correct++;
-        else wrong++;
-      }
-    });
-
-    document.getElementById("resName").innerText = kabStudentName;
-    document.getElementById("resCorrect").innerText = correct;
-    document.getElementById("resWrong").innerText = wrong;
-    document.getElementById("resScore").innerText = correct;
-
-    await _supabase.from('exam_results').insert([{
-      name: kabStudentName,
-      fin: kabStudentFin,
-      exam_no: kabExamId,
-      correct_count: correct,
-      wrong_count: wrong,
-      score: correct
-    }]);
-
-    document.getElementById("kab-exam-screen").style.display = "none";
-    document.getElementById("kab-result-screen").style.display = "block";
-    document.getElementById("activeUsersCount").innerText = 0;
-  }
-
-  function resetKabinetView() {
-    document.getElementById("kab-result-screen").style.display = "none";
-    document.getElementById("kab-login-screen").style.display = "block";
-  }
+    document.addEventListener("DOMContentLoaded", () => renderCatalog(moduleFiles));
 </script>
+
 </body>
 </html>
