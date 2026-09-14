@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DQ Platform — Mərkəzi İdarəetmə Paneli</title>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome İkonlar -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0a1128;
+            --card-bg: #1c2541;
+            --sidebar-bg: #001f3f;
+            --accent-gold: #d4af37;
+            --accent-hover: #b89628;
+            --text-light: #f4f4f6;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 270px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid rgba(212, 175, 55, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            letter-spacing: 1px;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 15px 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-links li button {
+            width: 100%;
+            padding: 14px 24px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            text-align: left;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-links li button:hover, 
+        .nav-links li button.active {
+            background-color: rgba(212, 175, 55, 0.15);
+            color: var(--accent-gold);
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(212, 175, 55, 0.15);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            padding: 35px;
+            overflow-y: auto;
+        }
+
+        .header-title {
+            margin-bottom: 25px;
+            font-size: 1.6rem;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-section {
+            display: none;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .panel-section.active {
+            display: block;
+        }
+
+        /* Form Controls */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent-gold);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .btn-save {
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            padding: 12px 28px;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-save:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Data Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        .data-table th {
+            background-color: #0f172a;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-success { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    </style>
+</head>
+<body>
+
+    <!-- Sol Menyu (Navigation) -->
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <i class="fa-solid fa-sliders"></i> DQ PLATFORM
+            </div>
+            <ul class="nav-links">
+                <li><button class="active" onclick="showSection('design', this)"><i class="fa-solid fa-palette"></i> Dizayn & Şablon</button></li>
+                <li><button onclick="showSection('questions', this)"><i class="fa-solid fa-pen-to-square"></i> Suallar & Modullar</button></li>
+                <li><button onclick="showSection('codes', this)"><i class="fa-solid fa-key"></i> Kod İdarəetməsi</button></li>
+                <li><button onclick="showSection('pult', this)"><i class="fa-solid fa-tower-broadcast"></i> Canlı Pult / İdarə</button></li>
+                <li><button onclick="showSection('stats', this)"><i class="fa-solid fa-chart-line"></i> Nəticələr & Analitika</button></li>
+                <li><button onclick="showSection('users', this)"><i class="fa-solid fa-users"></i> İştirakçılar</button></li>
+                <li><button onclick="showSection('settings', this)"><i class="fa-solid fa-gear"></i> Supabase Tənzimləmələri</button></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            Versiya 2.0 Pro • Yunis İmanov
+        </div>
+    </div>
+
+    <!-- Əsas Məzmun Sahəsi -->
+    <div class="main-content">
+        
+        <!-- SECTION 1: Dizayn və CMS -->
+        <div id="design" class="panel-section active">
+            <div class="header-title">
+                <h2>🎨 Dizayn və İnterfeys İdarəsi</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Platforma Başlığı (Title)</label>
+                    <input type="text" id="siteTitle" value="Dövlət Qulluğu Hazırlıq Portalı">
+                </div>
+                <div class="form-group">
+                    <label>Tema Vurğu Rəngi (Accent Gold)</label>
+                    <input type="color" id="themeColor" value="#d4af37">
+                </div>
+                <div class="form-group">
+                    <label>Arxa Fon Rəngi (Background)</label>
+                    <input type="color" id="bgColor" value="#0a1128">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Əsas Elan və ya Xəbərdarlıq Mətni</label>
+                <textarea id="announcementText" rows="3" placeholder="Tələbələr üçün canlı bildiriş mətni daxil edin..."></textarea>
+            </div>
+            <button class="btn-save" onclick="saveDesign()"><i class="fa-solid fa-floppy-disk"></i> Dizaynı Yadda Saxla</button>
+        </div>
+
+        <!-- SECTION 2: Suallar və Redaktə (Suallar.html, Modul3.html, redakte.html) -->
+        <div id="questions" class="panel-section">
+            <div class="header-title">
+                <h2>📝 Sual Bazası və Modul Redaktəsi</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>İmtahan Modulu Seçin</label>
+                    <select id="moduleSelect">
+                        <option value="modul1">Modul 1: Qanunvericilik</option>
+                        <option value="modul2">Modul 2: Məntiq</option>
+                        <option value="modul3">Modul 3: Azərbaycan Dili</option>
+                        <option value="modul4">Modul 4: İnformatika</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sual Nömrəsi</label>
+                    <input type="number" id="questionNo" placeholder="Məs: 1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Sualın Mətni</label>
+                <textarea id="questionText" rows="3" placeholder="Sualı buraya yazın..."></textarea>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>A Variantı</label><input type="text" id="optA"></div>
+                <div class="form-group"><label>B Variantı</label><input type="text" id="optB"></div>
+                <div class="form-group"><label>C Variantı</label><input type="text" id="optC"></div>
+                <div class="form-group"><label>D Variantı</label><input type="text" id="optD"></div>
+            </div>
+            <div class="form-group">
+                <label>Düzgün Cavab</label>
+                <select id="correctAnswer">
+                    <option value="A">A Variantı</option>
+                    <option value="B">B Variantı</option>
+                    <option value="C">C Variantı</option>
+                    <option value="D">D Variantı</option>
+                </select>
+            </div>
+            <button class="btn-save" onclick="saveQuestion()"><i class="fa-solid fa-plus"></i> Sualı Bazaya Əlavə Et / Yenilə</button>
+        </div>
+
+        <!-- SECTION 3: Kod İdarəetməsi (Kod.html, Kontrol.html) -->
+        <div id="codes" class="panel-section">
+            <div class="header-title">
+                <h2>🔑 Giriş Kodları Generatoru</h2>
+                <button class="btn-save" onclick="generateCode()"><i class="fa-solid fa-wand-magic-sparkles"></i> Avtomatik Kod Yarat</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Xüsusi İmtahan Kodu</label>
+                    <input type="text" id="accessCode" placeholder="Məs: DQ-2026-X8">
+                </div>
+                <div class="form-group">
+                    <label>Tələbə Adı / Qrup</label>
+                    <input type="text" id="studentName" placeholder="Məs: Əli Məmmədov">
+                </div>
+            </div>
+            <button class="btn-save" onclick="saveAccessCode()"><i class="fa-solid fa-lock"></i> Kodu Aktivləşdir</button>
+
+            <h3 style="margin-top: 30px; color: var(--accent-gold);">Mövcud Giriş Kodları</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Kod</th>
+                        <th>İstifadəçi</th>
+                        <th>Status</th>
+                        <th>Əməliyyat</th>
+                    </tr>
+                </thead>
+                <tbody id="codeTableBody">
+                    <tr>
+                        <td>DQ-8891</td>
+                        <td>Yunis İmanov</td>
+                        <td><span class="badge badge-success">Aktiv</span></td>
+                        <td><button style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="deactivateCode('DQ-8891')">Deaktiv et</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION 4: Canlı Pult (Pult.html) -->
+        <div id="pult" class="panel-section">
+            <div class="header-title">
+                <h2>📡 Canlı İmtahan Nəzarət Pultu</h2>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Davam edən imtahanlara canlı müdaxilə edin və rejimi idarə edin.</p>
+            <div class="form-grid">
+                <button class="btn-save" style="background: var(--danger); color: white;" onclick="toggleExamStatus(false)">
+                    <i class="fa-solid fa-circle-stop"></i> Bütün İmtahanları Dayandır
+                </button>
+                <button class="btn-save" style="background: var(--success); color: white;" onclick="toggleExamStatus(true)">
+                    <i class="fa-solid fa-play"></i> İmtahan İcazəsini Aç
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 5: Nəticələr & Analitika (Statistika.html, Cavablar.html) -->
+        <div id="stats" class="panel-section">
+            <div class="header-title">
+                <h2>📊 İmtahan Nəticələri və Cavablar</h2>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tələbə</th>
+                        <th>İmtahan Modulu</th>
+                        <th>Topladığı Bal</th>
+                        <th>Tarix</th>
+                        <th>Ətraflı</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <tr>
+                        <td>Yunis İmanov</td>
+                        <td>Modul 3: Azərbaycan Dili</td>
+                        <td>95 / 100</td>
+                        <td>2026-09-14</td>
+                        <td><button class="btn-save" style="padding: 4px 8px; font-size: 12px;">Bax</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION 6: İştirakçılar & Kabinet (Siyaha.html, Kabinet.html) -->
+        <div id="users" class="panel-section">
+            <div class="header-title">
+                <h2>👥 İştirakçı Siyahısı</h2>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ad Soyad</th>
+                        <th>Status</th>
+                        <th>Şəxsi Kabinet</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td>#001</td>
+                        <td>Yunis İmanov</td>
+                        <td><span class="badge badge-success">Aktiv</span></td>
+                        <td><button class="btn-save" style="padding: 4px 8px; font-size: 12px;">Profil</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION 7: Supabase Tənzimləmələri -->
+        <div id="settings" class="panel-section">
+            <div class="header-title">
+                <h2>⚙️ Supabase Verilənlər Bazası Qoşulması</h2>
+            </div>
+            <div class="form-group">
+                <label>Supabase Project URL</label>
+                <input type="text" id="supabaseUrl" placeholder="https://xyz.supabase.co">
+            </div>
+            <div class="form-group">
+                <label>Supabase Anon Key</label>
+                <input type="password" id="supabaseKey" placeholder="eyJhYmdj..." >
+            </div>
+            <button class="btn-save" onclick="initSupabase()"><i class="fa-solid fa-plug"></i> Bazaya Qoşul</button>
+        </div>
+
+    </div>
+
+    <!-- JS Məntiqi -->
+    <script>
+        let dbClient = null;
+
+        // Bölmələr arası keçid
+        function showSection(sectionId, btnElement) {
+            document.querySelectorAll('.panel-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-links button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(sectionId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        // Supabase Qoşulması
+        function initSupabase() {
+            const url = document.getElementById('supabaseUrl').value;
+            const key = document.getElementById('supabaseKey').value;
+
+            if(!url || !key) {
+                alert("Zəhmət olmasa URL və Key məlumatlarını tam daxil edin.");
+                return;
+            }
+
+            dbClient = supabase.createClient(url, key);
+            alert("Supabase bazası uğurla qoşuldu!");
+        }
+
+        // Dizayn yeniləmə funksiyası
+        async function saveDesign() {
+            const title = document.getElementById('siteTitle').value;
+            const themeColor = document.getElementById('themeColor').value;
+            const bgColor = document.getElementById('bgColor').value;
+            const announcement = document.getElementById('announcementText').value;
+
+            if (dbClient) {
+                const { data, error } = await dbClient.from('settings').upsert({
+                    id: 1, site_title: title, theme_color: themeColor, bg_color: bgColor, announcement: announcement
+                });
+                if (error) alert("Xəta baş verdi: " + error.message);
+                else alert("Dizayn və parametr parametrləri Supabase-də yeniləndi!");
+            } else {
+                alert("Lokal test: Dizayn parametrləri yadda saxlanıldı.");
+            }
+        }
+
+        // Sual əlavə etmə funksiyası
+        async function saveQuestion() {
+            const module = document.getElementById('moduleSelect').value;
+            const questionNo = document.getElementById('questionNo').value;
+            const text = document.getElementById('questionText').value;
+            const optA = document.getElementById('optA').value;
+            const optB = document.getElementById('optB').value;
+            const optC = document.getElementById('optC').value;
+            const optD = document.getElementById('optD').value;
+            const correct = document.getElementById('correctAnswer').value;
+
+            if (dbClient) {
+                const { error } = await dbClient.from('questions').insert({
+                    module: module, question_no: questionNo, question_text: text,
+                    option_a: optA, option_b: optB, option_c: optC, option_d: optD, correct_option: correct
+                });
+                if (error) alert("Xəta: " + error.message);
+                else alert("Sual bazaya əlavə olundu!");
+            } else {
+                alert(`Sual uğurla yaradıldı: ${module} - Sual №${questionNo}`);
+            }
+        }
+
+        // Kod Generasiyası
+        function generateCode() {
+            const randomCode = 'DQ-' + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('accessCode').value = randomCode;
+        }
+
+        async function saveAccessCode() {
+            const code = document.getElementById('accessCode').value;
+            const student = document.getElementById('studentName').value;
+
+            if(!code) return alert("Kod daxil edin və ya generasiya edin!");
+
+            if (dbClient) {
+                const { error } = await dbClient.from('access_codes').insert({ code: code, student_name: student, is_active: true });
+                if (error) alert("Xəta: " + error.message);
+                else alert("Kod bazada aktiv edildi!");
+            } else {
+                alert(`Kod yaradıldı: ${code} (${student})`);
+            }
+        }
+
+        function toggleExamStatus(status) {
+            const msg = status ? "İmtahanlar aktiv edildi." : "Bütün canlı imtahanlar dayandırıldı.";
+            alert(msg);
+        }
+    </script>
+</body>
+</html>
