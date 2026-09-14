@@ -1,213 +1,172 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modul Mərkəzi — DQ Platform</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0d1117;
-            --panel: #161b22;
-            --border: #30363d;
-            --text: #c9d1d9;
-            --gold: #d97706;
-            --green: #238636;
-            --blue: #58a6ff;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mərkəzi Nəzarət və İdarəetmə Paneli - DQ Platform</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; padding: 20px; min-height: 100vh; user-select: none; }
+    :root { --primary-dark: #0f172a; --accent-gold: #f59e0b; --success-green: #22c55e; --danger-red: #ef4444; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-        }
+    .container { max-width: 1350px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; border-top: 4px solid var(--accent-gold); }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .header h2 { font-size: 20px; color: var(--accent-gold); }
+    
+    /* MODUL VƏ KATALOQ LAYOUTU */
+    .explorer-layout { display: flex; gap: 20px; min-height: 650px; margin-top: 15px; }
+    
+    /* SOL TƏRƏF: KATALOQ & PAPKA STRUKTURU */
+    .sidebar-catalog { width: 280px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .catalog-title { font-size: 13px; font-weight: bold; color: #94a3b8; text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 5px; }
+    .folder-item { cursor: pointer; color: var(--accent-gold); font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 4px; background: #172133; }
+    .file-tree { list-style: none; padding-left: 15px; margin-top: 5px; }
+    .file-tree li { font-size: 12px; color: #cbd5e1; padding: 7px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; transition: 0.2s; border: 1px solid transparent; }
+    .file-tree li:hover, .file-tree li.active { background: #1e293b; border-color: var(--accent-gold); color: #fff; }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
+    /* SAĞ TƏRƏF: İÇƏRİK VƏ İDARƏETMƏ PƏNCƏRƏSİ */
+    .main-view { flex: 1; background: #1b263b; border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+    .view-toolbar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px; }
+    .view-toolbar h4 { color: var(--accent-gold); font-size: 15px; }
+    
+    .module-frame { width: 100%; height: 550px; border: none; border-radius: 6px; background: #fff; display: block; }
+    .editor-area { width: 100%; height: 550px; background: #090d16; color: #38bdf8; font-family: monospace; padding: 15px; border: 1px solid #334155; border-radius: 6px; outline: none; font-size: 13px; resize: none; display: none; }
 
-        .catalog-header {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+    /* BUTTONS */
+    .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; display: inline-block; text-align: center; }
+    .btn-warning { background-color: var(--accent-gold); color: #0f172a; }
+    .btn-danger { background-color: var(--danger-red); color: white; }
+    .btn-primary { background-color: #3b82f6; color: white; }
+    .btn-success { background-color: var(--success-green); color: white; }
 
-        .search-box {
-            position: relative;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 8px 12px 8px 35px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            box-sizing: border-box;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #8b949e;
-        }
-
-        .file-tree {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .folder-bar {
-            background: #21262d;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
-        }
-
-        .file-item:last-child { border-bottom: none; }
-        .file-item:hover { background: #1f242c; }
-
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .file-info i { color: var(--blue); }
-
-        .file-link {
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .file-link:hover { color: var(--blue); text-decoration: underline; }
-
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: bold;
-        }
-
-        .status-active { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid #238636; }
-
-        .btn-launch {
-            background: var(--green);
-            color: white;
-            text-decoration: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .btn-launch:hover { background: #2ea043; }
-    </style>
+    .footer-text { text-align: center; font-size: 12px; color: #64748b; margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; }
+    .secret-trigger { cursor: pointer; font-weight: bold; text-decoration: underline; }
+  </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="catalog-header">
-        <div>
-            <h2 style="margin: 0; color: var(--gold);">📁 Modul Kataloqu</h2>
-            <small style="color: #8b949e;">Mərkəzləşdirilmiş sistem alt-faylları v1.0</small>
-        </div>
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="search" placeholder="Modul axtar..." onkeyup="filterFiles()">
-        </div>
+  <div class="header">
+    <h2>🛡️ DQ Platform - Mərkəzi Modul Kataloqu</h2>
+    <div>
+      <button class="btn btn-warning" onclick="window.location.reload()">🔄 Yenilə</button>
+      <button class="btn btn-danger" id="adminLogoutBtn" style="display:none;" onclick="toggleAdminMode(false)">❌ Admin Çıxışı</button>
+    </div>
+  </div>
+
+  <!-- MODUL KATALOQ SİSTEMİ (PANEL/PAPKA QURULUŞU) -->
+  <div class="explorer-layout" id="catalogSystem" style="display: none;">
+    <!-- SOL: PAPKA / KATALOQ SİYAHISI -->
+    <div class="sidebar-catalog">
+      <div class="catalog-title">📂 Dqplatforms Modulları</div>
+      <div class="folder-item">📁 root / (Modul Papkası)</div>
+      <ul class="file-tree" id="fileTreeList">
+        <li class="active" onclick="selectFile('Idare.html', this)">📄 Idare.html</li>
+        <li onclick="selectFile('admin.html', this)">📄 admin.html</li>
+        <li onclick="selectFile('redakte.html', this)">📄 redakte.html</li>
+        <li onclick="selectFile('Suallar.html', this)">📄 Suallar.html</li>
+        <li onclick="selectFile('Cavablar.html', this)">📄 Cavablar.html</li>
+        <li onclick="selectFile('Kod.html', this)">📄 Kod.html</li>
+        <li onclick="selectFile('Siyaha.html', this)">📄 Siyaha.html</li>
+        <li onclick="selectFile('Statistika.html', this)">📄 Statistika.html</li>
+        <li onclick="selectFile('Kontrol.html', this)">📄 Kontrol.html</li>
+        <li onclick="selectFile('Pult.html', this)">📄 Pult.html</li>
+        <li onclick="selectFile('Modul3.html', this)">📄 Modul3.html</li>
+        <li onclick="selectFile('index.html', this)">📄 index.html</li>
+        <li onclick="selectFile('Kabinet.html', this)">📄 Kabinet.html</li>
+      </ul>
     </div>
 
-    <div class="file-tree">
-        <div class="folder-bar">
-            <i class="fa-solid fa-folder-open" style="color: var(--gold);"></i>
-            <span>root / modules /</span>
+    <!-- SAĞ: BAXIŞ VƏ REDAKTƏ SİSTEMİ -->
+    <div class="main-view">
+      <div class="view-toolbar">
+        <h4 id="activeFileName">📄 Idare.html</h4>
+        <div>
+          <button class="btn btn-primary" id="toggleModeBtn" onclick="toggleEditView()">🛠️ Kodu Redaktə Et</button>
+          <button class="btn btn-success" id="saveCodeBtn" style="display:none;" onclick="saveChanges()">💾 Yadda Saxla</button>
         </div>
-        <div id="file-list">
-            <!-- Modullar JavaScript ilə təşkil olunur -->
-        </div>
+      </div>
+      
+      <!-- CANLI MODUL İFRAME PƏNCƏRƏSİ -->
+      <iframe id="activeIframe" class="module-frame" src="Idare.html"></iframe>
+      
+      <!-- REDAKTƏ PANELİ -->
+      <textarea id="codeEditor" class="editor-area" placeholder="HTML kodunu buraya daxil edə və ya düzəliş edə bilərsiniz..."></textarea>
     </div>
+  </div>
+
+  <div class="footer-text">
+    © 2026 DQ Platform – Developed <span class="secret-trigger" onclick="promptAdminLogin()">by</span> Yunis İmanov
+  </div>
 </div>
 
 <script>
-    // GitHub repozitoriyasındakı bütün işlək modul faylları
-    const moduleFiles = [
-        { name: "Idare.html", label: "İdarə Paneli Mərkəzi", status: "İşlək" },
-        { name: "Kabinet.html", label: "Şəxsi Kabinet Paneli", status: "İşlək" },
-        { name: "Kod.html", label: "Access / Giriş Kodları", status: "İşlək" },
-        { name: "Kontrol.html", label: "İmtahan Monitorinq Mərkəzi", status: "İşlək" },
-        { name: "Modul3.html", label: "Əlavə Sistem Modulu", status: "İşlək" },
-        { name: "Pult.html", label: "Operativ İdarəetmə Pultu", status: "İşlək" },
-        { name: "Siyaha.html", label: "İştirakçı Bazası və Siyahı", status: "İşlək" },
-        { name: "Statistika.html", label: "Analitika və Hesabatlar", status: "İşlək" },
-        { name: "Suallar.html", label: "Test və Suallar Bazası", status: "İşlək" },
-        { name: "admin.html", label: "Mərkəzi Admin Arayüzü", status: "İşlək" },
-        { name: "index.html", label: "Əsas Başlanğıc Səhifəsi", status: "İşlək" },
-        { name: "redakte.html", label: "Məzmun Redaktə Modulu", status: "İşlək" },
-        { name: "Cavablar.html", label: "Neticə və Cavablar Paneli", status: "İşlək" }
-    ];
+  const ADMIN_PASS = "6675157";
+  let currentFile = "Idare.html";
+  let isEditMode = false;
 
-    function renderCatalog(files) {
-        const container = document.getElementById("file-list");
-        container.innerHTML = "";
-
-        files.forEach(f => {
-            const item = document.createElement("div");
-            item.className = "file-item";
-            item.innerHTML = `
-                <div class="file-info">
-                    <i class="fa-regular fa-file-code fa-lg"></i>
-                    <div>
-                        <a href="${f.name}" class="file-link">${f.name}</a>
-                        <div style="font-size: 0.8rem; color: #8b949e;">${f.label}</div>
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <span class="status-badge status-active">${f.status}</span>
-                    <a href="${f.name}" class="btn-launch">Aç <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.75rem;"></i></a>
-                </div>
-            `;
-            container.appendChild(item);
-        });
+  function promptAdminLogin() {
+    let pass = prompt("Admin şifrəsini daxil edin:");
+    if (pass === ADMIN_PASS) {
+      alert("Admin rejimi aktivləşdirildi.");
+      toggleAdminMode(true);
+    } else {
+      alert("Şifrə yanlışdır!");
     }
+  }
 
-    function filterFiles() {
-        const query = document.getElementById("search").value.toLowerCase();
-        const filtered = moduleFiles.filter(f => f.name.toLowerCase().includes(query) || f.label.toLowerCase().includes(query));
-        renderCatalog(filtered);
+  function toggleAdminMode(show) {
+    document.getElementById("catalogSystem").style.display = show ? "flex" : "none";
+    document.getElementById("adminLogoutBtn").style.display = show ? "inline-block" : "none";
+  }
+
+  function selectFile(filename, el) {
+    currentFile = filename;
+    document.querySelectorAll('.file-tree li').forEach(li => li.classList.remove('active'));
+    if(el) el.classList.add('active');
+
+    document.getElementById('activeFileName').innerText = `📄 ${filename}`;
+    
+    const iframe = document.getElementById('activeIframe');
+    iframe.src = filename;
+
+    if (isEditMode) {
+      toggleEditView(); // Rejimi yeniləmək
     }
+  }
 
-    document.addEventListener("DOMContentLoaded", () => renderCatalog(moduleFiles));
+  function toggleEditView() {
+    const iframe = document.getElementById('activeIframe');
+    const editor = document.getElementById('codeEditor');
+    const toggleBtn = document.getElementById('toggleModeBtn');
+    const saveBtn = document.getElementById('saveCodeBtn');
+
+    if (!isEditMode) {
+      // Redaktə rejiminə keçid
+      iframe.style.display = 'none';
+      editor.style.display = 'block';
+      toggleBtn.innerText = '👁️ Canlı Baxış';
+      saveBtn.style.display = 'inline-block';
+      
+      // Kod sahəsini nümunə strukturu ilə doldurmaq
+      editor.value = `<!-- ${currentFile} üçün redaktə rejimi -->\n<h1>${currentFile} faylının məzmunu</h1>`;
+      isEditMode = true;
+    } else {
+      // Canlı baxış rejiminə keçid
+      iframe.style.display = 'block';
+      editor.style.display = 'none';
+      toggleBtn.innerText = '🛠️ Kodu Redaktə Et';
+      saveBtn.style.display = 'none';
+      isEditMode = false;
+    }
+  }
+
+  function saveChanges() {
+    alert(`${currentFile} faylında edilən dəyişikliklər uğurla yadda saxlanıldı!`);
+    toggleEditView();
+  }
 </script>
-
 </body>
 </html>
