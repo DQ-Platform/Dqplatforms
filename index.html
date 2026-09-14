@@ -4,49 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DQ Platform - Mərkəzi İdarəetmə və Sınaq Sistemi</title>
+    <!-- Supabase SDK & FontAwesome -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary-dark: #0f172a; --accent-gold: #d4af37; --success-green: #10b981; --danger-red: #ef4444; }
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 0; user-select: none; }
-        .container { max-width: 1050px; margin: 20px auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); border-top: 4px solid var(--accent-gold); }
+        :root { 
+            --primary-dark: #0f172a; 
+            --accent-gold: #d4af37; 
+            --accent-blue: #3b82f6;
+            --success-green: #10b981; 
+            --danger-red: #ef4444; 
+            --bg-color: #f8fafc;
+            --border-color: #cbd5e1;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: #334155; padding: 20px 10px; user-select: none; }
+        .container { max-width: 1150px; margin: 0 auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); border-top: 4px solid var(--accent-gold); }
         h2, h3, h4 { color: var(--primary-dark); text-align: center; }
+        
+        /* Ekran Giriş Və Seçim Area */
         #login-screen, #waiting-screen, #exam-select-screen { text-align: center; padding: 20px; }
-        .code-input, .select-control { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border: 2px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px; outline: none; text-align: center; }
+        .code-input, .select-control { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border: 2px solid var(--border-color); border-radius: 6px; margin-bottom: 15px; outline: none; text-align: center; }
         .code-input:focus, .select-control:focus { border-color: var(--accent-gold); }
         .token-field { letter-spacing: 2px; text-transform: uppercase; }
-        .btn { background-color: var(--primary-dark); color: var(--accent-gold); border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.3s; display: inline-block; text-decoration: none; text-align: center; }
-        .btn:hover { background-color: #1e293b; }
-        .btn-danger { background-color: #dc2626; color: white; }
+        
+        /* Düymə Stilləri */
+        .btn { background-color: var(--primary-dark); color: var(--accent-gold); border: none; padding: 12px 22px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; display: inline-block; text-decoration: none; text-align: center; }
+        .btn:hover { background-color: #1e293b; opacity: 0.95; }
+        .btn-danger { background-color: var(--danger-red); color: white; }
         .btn-secondary { background-color: #64748b; color: white; }
         .btn-success { background-color: var(--success-green); color: white; }
         .btn-dark { background-color: #1d3557; color: white; }
-        .btn-primary { background-color: #007bff; color: white; }
-        .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 4px; }
+        .btn-primary { background-color: var(--accent-blue); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 4px; }
+        
+        /* İmtahan Ekranı */
         #exam-screen { display: none; }
         .exam-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary-dark); color: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; }
         .timer { font-size: 18px; font-weight: bold; color: var(--accent-gold); }
         .exam-layout { display: flex; gap: 20px; position: relative; }
         .questions-area { flex: 3; background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 350px; display: flex; flex-direction: column; justify-content: space-between; }
-        .answer-card-sidebar { flex: 1; background: #f1f5f9; padding: 15px; border-radius: 8px; height: fit-content; border: 1px solid #cbd5e1; }
+        .answer-card-sidebar { flex: 1; background: #f1f5f9; padding: 15px; border-radius: 8px; height: fit-content; border: 1px solid var(--border-color); }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .sidebar-header h4 { margin: 0; font-size: 15px; }
         .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-height: 400px; overflow-y: auto; }
-        .nav-box { padding: 6px 0; text-align: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
+        .nav-box { padding: 6px 0; text-align: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
         .nav-box.answered { background-color: #d1fae5; border-color: var(--success-green); color: #065f46; }
         .nav-box.current { border: 2px solid var(--primary-dark); background-color: #e2e8f0; }
-        .nav-box.flagged::before { content: ''; position: absolute; top: 2px; left: 3px; width: 5px; height: 5px; background-color: var(--danger-red); border-radius: 50%; }
+        .nav-box.flagged::before { content: ''; position: absolute; top: 2px; left: 3px; width: 6px; height: 6px; background-color: var(--danger-red); border-radius: 50%; }
         .question-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .question-title { font-weight: 600; color: var(--primary-dark); font-size: 15px; line-height: 1.5; white-space: pre-line; }
         .flag-label { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; color: #d97706; font-weight: 600; }
         .options label { display: block; padding: 10px 14px; margin: 8px 0; background: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 14px; }
         .options label:hover { background: #e2e8f0; }
         .exam-navigation-buttons { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        
+        /* Nəticə Ekranı */
         #result-screen { display: none; font-size: 13px; }
         .dim-report-title { text-align: center; font-weight: bold; font-size: 15px; color: #000; margin-bottom: 5px; }
         .dim-student-name { text-align: center; font-weight: bold; font-size: 16px; color: #000; margin-bottom: 20px; text-transform: uppercase; }
         .final-score-box { text-align: center; border: 2px solid #b91c1c; padding: 15px; margin-top: 25px; font-size: 18px; font-weight: bold; color: #b91c1c; background: #fef2f2; border-radius: 6px; }
         
+        /* Admin Panel */
         #admin-panel { display: none; margin-top: 20px; border-top: 2px solid var(--accent-gold); padding-top: 20px; }
         .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
         .admin-nav-card { background: var(--primary-dark); color: var(--accent-gold); padding: 12px 8px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 12px; border: 1px solid #334155; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
@@ -57,35 +76,36 @@
         .nav-header-bar .btn { padding: 8px 15px; font-size: 13px; }
 
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-card { background: #f8fafc; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: 8px; text-align: center; }
         .stat-card h5 { margin: 0; color: #64748b; font-size: 13px; }
         .stat-card .value { font-size: 22px; font-weight: bold; color: var(--primary-dark); margin-top: 5px; }
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        
         .footer { text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         .footer-text { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
         
         .secret-admin-trigger { cursor: pointer; text-decoration: none; color: inherit; }
-        .error-msg { color: #ef4444; font-weight: bold; }
+        .error-msg { color: var(--danger-red); font-weight: bold; }
         
-        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
-        th, td { padding: 10px; border: 1px solid #cbd5e1; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; margin-top: 10px; }
+        th, td { padding: 10px; border: 1px solid var(--border-color); }
         th { background: var(--primary-dark); color: white; }
 
         .review-mode-banner { background: #fef3c7; color: #92400e; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin-bottom: 15px; }
 
         .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .breadcrumb-nav span { color: #007bff; cursor: pointer; font-weight: 600; }
+        .breadcrumb-nav span { color: var(--accent-blue); cursor: pointer; font-weight: 600; }
         .breadcrumb-nav span:hover { text-decoration: underline; }
         .breadcrumb-nav .active { color: #6c757d; cursor: default; }
         .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .folder-card { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #cbd5e1; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 8px; }
+        .folder-card { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 8px; }
         .folder-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); border-color: var(--accent-gold); }
         .folder-icon { width: 42px; height: 42px; background: #eef2ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .folder-title { font-size: 14px; font-weight: 700; color: #1e293b; }
         .folder-desc { font-size: 11px; color: #64748b; }
-        .editor-section { display: none; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px; }
+        .editor-section { display: none; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 15px; }
         .option-row { display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px; }
         .option-label { font-weight: bold; width: 25px; }
         .option-input { flex: 1; }
@@ -93,12 +113,16 @@
         .open-answer-box { background: #f0f4f8; border: 1px solid #d0d7de; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: none; }
         .num-selector { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
         .num-checkbox { display: none; }
-        .num-label { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 2px solid #007bff; background: #fff; color: #007bff; font-weight: 700; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .num-checkbox:checked + .num-label { background: #007bff; color: #fff; }
+        .num-label { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 2px solid var(--accent-blue); background: #fff; color: var(--accent-blue); font-weight: 700; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .num-checkbox:checked + .num-label { background: var(--accent-blue); color: #fff; }
         .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
         .left-buttons { display: flex; gap: 10px; }
 
-        .admin-module-block { display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px; }
+        .admin-module-block { display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        
+        /* Dinamik İframe Paneli */
+        .iframe-container { display: none; margin-top: 15px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; height: 600px; }
+        iframe { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -107,7 +131,7 @@
         <!-- GİRİŞ HİSSƏSİ -->
         <div id="login-screen">
             <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
-            <p>Zəhmət olmasa məlumatlarınızı daxil edin:</p>
+            <p style="margin: 10px 0 20px 0;">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
             <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız"><br>
             <input type="text" id="user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7"><br>
             <button class="btn" onclick="proceedToExamSelect()">Davam Et</button>
@@ -117,7 +141,7 @@
         <!-- SINAQ SEÇİM EKRANI -->
         <div id="exam-select-screen" style="display: none;">
             <h2>📝 Sınaq Seçimi</h2>
-            <p>Zəhmət olmasa işləmək istədiyiniz sınağı seçin:</p>
+            <p style="margin: 10px 0 15px 0;">Zəhmət olmasa işləmək istədiyiniz sınağı seçin:</p>
             <select id="exam-selector" class="select-control">
                 <option value="1">Sınaq 1</option>
                 <option value="2">Sınaq 2</option>
@@ -167,8 +191,8 @@
             <div class="dim-report-title">Dövlət qulluğu vəzifələri üzrə test imtahanının nəticələri</div>
             <div class="dim-student-name" id="res-name"></div>
 
-            <div style="margin-top: 20px; font-weight: bold; font-size: 14px; line-height: 1.6;">
-                Doğru: <span id="res-total-correct">0</span> | Yanlış: <span id="res-total-wrong">0</span> | Cavabsız: <span id="res-total-blank">0</span>
+            <div style="margin-top: 20px; font-weight: bold; font-size: 14px; line-height: 1.6; text-align: center;">
+                Doğru: <span id="res-total-correct" style="color: green;">0</span> | Yanlış: <span id="res-total-wrong" style="color: red;">0</span> | Cavabsız: <span id="res-total-blank">0</span>
             </div>
 
             <div class="final-score-box">
@@ -303,7 +327,7 @@
 
                     <div class="form-group">
                         <label>Sual Mətni:</label>
-                        <textarea class="form-control" id="questionText" placeholder="Sualın mətnini daxil edin..."></textarea>
+                        <textarea class="form-control" id="questionText" rows="3" placeholder="Sualın mətnini daxil edin..."></textarea>
                     </div>
 
                     <div id="closedOptionsContainer">
@@ -357,8 +381,8 @@
             <!-- MODUL 2: İDARƏ & İCAZƏLƏR MODULU -->
             <div id="mod-idare" class="admin-module-block">
                 <h4>⚙️ İştirakçı İcazələri və Sistem Ayarları (Idare.html)</h4>
-                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px;">
-                    <h4>Tələbəyə Giriş İcazəsi Ver</h4>
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 15px;">
+                    <h4 style="text-align: left; margin-bottom: 10px;">Tələbəyə Giriş İcazəsi Ver</h4>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 180px;">
                         <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 120px;" maxlength="7">
@@ -387,15 +411,18 @@
             <!-- MODUL 3: ŞƏXSİ KABİNET MODULU -->
             <div id="mod-kabinet" class="admin-module-block">
                 <h4>👤 Şəxsi Kabinet Və Profil İdarəetməsi (Kabinet.html)</h4>
-                <p><b>Platforma İnzibatçısı:</b> Yunis İmanov</p>
-                <p><b>Sistem Vəziyyəti:</b> Aktiv / Server Supabase Bağlantısı Qurulub</p>
-                <button class="btn btn-secondary" onclick="alert('Profil ayarları yeniləndi!')">Profil Məlumatlarını Yenilə</button>
+                <div style="margin-top: 15px; line-height: 2;">
+                    <p><b>Platforma İnzibatçısı:</b> Yunis İmanov</p>
+                    <p><b>Sistem Vəziyyəti:</b> Aktiv / Server Supabase Bağlantısı Qurulub</p>
+                    <p><b>Son Sinxronizasiya:</b> Canlı Bağlantı Passiv Təhlükəsizlik Filtrləri ilə Qorunur</p>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="alert('Profil məlumatları və server statusu yeniləndi!')">Profil Məlumatlarını Yenilə</button>
+                </div>
             </div>
 
             <!-- MODUL 4: KOD YARATMA MODULU -->
             <div id="mod-kod" class="admin-module-block">
                 <h4>🔑 İmtahan Və Giriş Kodlarının Generasiyası (Kod.html)</h4>
-                <div class="form-group">
+                <div class="form-group" style="margin-top: 15px;">
                     <label>Aktivləşdirmə Kodu Yarat:</label>
                     <button class="btn btn-primary" onclick="generateTokenCode()">Təsadüfi Kod Yarat</button>
                 </div>
@@ -405,24 +432,33 @@
             <!-- MODUL 5: KONTROL MODULU -->
             <div id="mod-kontrol" class="admin-module-block">
                 <h4>🛡️ Sistem Təhlükəsizliyi Və Monitorinq (Kontrol.html)</h4>
-                <p>Aktiv imtahan sessiyalarının monitorinqi və canlı nəzarət.</p>
-                <div class="stat-card">
-                    <h5>Sistem Statusu</h5>
-                    <div class="value" style="color: green;">NORMAL</div>
+                <p style="margin: 10px 0;">Aktiv imtahan sessiyalarının monitorinqi və canlı nəzarət.</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h5>Sistem Statusu</h5>
+                        <div class="value" style="color: green;">NORMAL</div>
+                    </div>
+                    <div class="stat-card">
+                        <h5>Anti-Cheat Rejimi</h5>
+                        <div class="value" style="color: #007bff;">AKTİV</div>
+                    </div>
                 </div>
             </div>
 
             <!-- MODUL 6: PULT (CANLI TƏZYİQ/SESSİYA İDARƏSİ) -->
             <div id="mod-pult" class="admin-module-block">
                 <h4>🎮 Mərkəzi İdarəetmə Pultu (Pult.html)</h4>
-                <p>İmtahan sessiyalarını dayandır və ya vaxtı qlobal yenilə.</p>
-                <button class="btn btn-danger" onclick="alert('Bütün aktiv imtahanlar dayandırıldı!')">Bütün İmtahanları Dayandır</button>
+                <p style="margin: 10px 0;">İmtahan sessiyalarını dayandır və ya vaxtı qlobal yenilə.</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-danger" onclick="alert('Bütün aktiv imtahan sessiyaları qlobal olaraq saxlanıldı!')">Bütün İmtahanları Dayandır</button>
+                    <button class="btn btn-primary" onclick="alert('Bütün istifadəçi sessiya taymerləri sıfırlandı!')">Sessiya Vaxtlarını Yenilə</button>
+                </div>
             </div>
 
             <!-- MODUL 7: İŞTİRAKÇILAR (SİYAHI) MODULU -->
             <div id="mod-siyahi" class="admin-module-block">
                 <h4>📋 İştirakçılar Siyahısı (Siyaha.html)</h4>
-                <div style="overflow-x: auto;">
+                <div style="overflow-x: auto; margin-top: 15px;">
                     <table>
                         <thead>
                             <tr>
@@ -442,7 +478,7 @@
             <!-- MODUL 8: STATİSTİKA MODULU -->
             <div id="mod-statistika" class="admin-module-block">
                 <h4>📊 İmtahan Statistikaları (Statistika.html)</h4>
-                <div class="stats-grid">
+                <div class="stats-grid" style="margin-top: 15px;">
                     <div class="stat-card">
                         <h5>Cəmi İştirakçı</h5>
                         <div class="value" id="stat-total-students">0</div>
@@ -457,7 +493,7 @@
             <!-- MODUL 9: CAVABLAR MODULU -->
             <div id="mod-cavablar" class="admin-module-block">
                 <h4>📑 İştirakçı Cavabları Və Yekun Nəticələr (Cavablar.html)</h4>
-                <div style="overflow-x: auto;">
+                <div style="overflow-x: auto; margin-top: 15px;">
                     <table>
                         <thead>
                             <tr>
@@ -469,15 +505,17 @@
                                 <th>Bal</th>
                             </tr>
                         </thead>
-                        <tbody id="results-table-body"></tbody>
+                        <tbody id="results-table-body">
+                            <tr><td colspan="6">Yüklənir...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- MODUL 10: REDAKTƏ MODULU -->
             <div id="mod-redakte" class="admin-module-block">
-                <h4>✏️ Sınaq Və Məzmun Redaktə Mərkəzi</h4>
-                <p>Bütün modul fayllarının və baza parametrlərinin birbaşa mərkəzləşdirilmiş idarəsi.</p>
+                <h4>✏️ Sınaq Və Məzmun Redaktə Mərkəzi (Redakte.html)</h4>
+                <p style="margin-top: 5px; color: #64748b;">Bütün modul fayllarının və baza parametrlərinin birbaşa mərkəzləşdirilmiş idarəsi.</p>
                 
                 <div class="folder-grid" style="margin-top: 20px;">
                     <div class="folder-card" onclick="switchAdminTab('suallar')">
@@ -541,8 +579,11 @@
                     </div>
                 </div>
 
-                <div id="edit-questions-list-area" style="margin-top: 20px; display: none;">
-                    <h4 style="text-align: left; margin-bottom: 10px;">📋 Bazadakı Sualların Redaktə Siyahısı</h4>
+                <div id="edit-questions-list-area" style="margin-top: 20px; display: none; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="text-align: left;">📋 Bazadakı Sualların Redaktə Siyahısı</h4>
+                        <button class="btn btn-danger btn-sm" onclick="document.getElementById('edit-questions-list-area').style.display='none'">Bağla</button>
+                    </div>
                     <div style="overflow-x: auto;">
                         <table>
                             <thead>
@@ -564,6 +605,7 @@
 
         </div>
 
+        <!-- Footer -->
         <div class="footer">
             <div class="footer-text">
                 © 2026 DQ Platform – Developed <span class="secret-admin-trigger" onclick="openAdminLogin()">by</span> Yunis İmanov
@@ -571,6 +613,7 @@
         </div>
     </div>
 
+    <!-- JS, SUPABASE VƏ MƏRKƏZİ MƏNTİQ -->
     <script>
         const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
         const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
@@ -651,7 +694,10 @@
             blocks.forEach(b => b.style.display = 'none');
 
             const activeBlock = document.getElementById(`mod-${tabName}`);
-            if (activeBlock) activeBlock.style.display = 'block';
+            if (activeBlock) {
+                activeBlock.style.display = 'block';
+                activeBlock.scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         async function proceedToExamSelect() {
@@ -660,7 +706,7 @@
             const errorMsg = document.getElementById("error-msg");
 
             if (!nameInput || finInput.length < 5) {
-                errorMsg.style.color = "#ef4444";
+                errorMsg.style.color = "var(--danger-red)";
                 errorMsg.innerText = "Ad və etibarlı FIN kod daxil edin!";
                 return;
             }
@@ -675,7 +721,7 @@
                     .eq('fin', finInput);
 
                 if (error || !allowedData || allowedData.length === 0) {
-                    errorMsg.style.color = "#ef4444";
+                    errorMsg.style.color = "var(--danger-red)";
                     errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
                     return;
                 }
@@ -686,7 +732,7 @@
                 document.getElementById("login-screen").style.display = "none";
                 document.getElementById("exam-select-screen").style.display = "block";
             } catch (err) {
-                errorMsg.style.color = "#ef4444";
+                errorMsg.style.color = "var(--danger-red)";
                 errorMsg.innerText = "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.";
             }
         }
@@ -750,7 +796,7 @@
             const container = document.getElementById("single-question-container");
             const isFlagged = flaggedQuestions[q.id] ? "checked" : "";
             const userAns = userAnswers[q.id];
-            const letters = ["A", "B", "C", "D", "E"];
+            const letters = ["A", "B", "C", "D", "E", "F", "G"];
 
             let html = `
                 <div>
@@ -1259,6 +1305,7 @@
             const listArea = document.getElementById('edit-questions-list-area');
             const tbody = document.getElementById('edit-questions-tbody');
             listArea.style.display = 'block';
+            listArea.scrollIntoView({ behavior: 'smooth' });
             tbody.innerHTML = '<tr><td colspan="5">Yüklənir...</td></tr>';
 
             const { data, error } = await _supabase
@@ -1294,7 +1341,7 @@
         function quickEditQuestion(examId, subject, qNum) {
             switchAdminTab('suallar');
             selectExam('Sınaq ' + examId);
-            openEditor(subject);
+            openEditor(subject || 'Qanunvericilik');
             document.getElementById('questionNumber').value = qNum;
             loadQuestionData(qNum);
         }
