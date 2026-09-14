@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mərkəzi Nəzarət və İdarəetmə Paneli - DQ Platform</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
+    
+    .container { max-width: 1250px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; border-top: 4px solid #f59e0b; }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .header h2 { font-size: 20px; color: #f59e0b; }
+    
+    /* NAVİQASİYA DÜYMƏLƏRİ */
+    .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .admin-nav-card { background: #0f172a; color: #f59e0b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 12px; border: 1px solid #334155; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .admin-nav-card:hover, .admin-nav-card.active { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
+    .admin-nav-card span.icon { font-size: 18px; }
+
+    /* TAB BÖLMƏLƏRİ */
+    .tab-content { display: none; background: #1b263b; padding: 20px; border-radius: 8px; border: 1px solid #334155; }
+    .tab-content.active { display: block; }
+
+    /* FORMLAR VƏ NƏZARƏT ELEMENTLƏRİ */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+    .form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 5px; }
+    .form-control { padding: 9px 12px; border: 1px solid #334155; background: #0f172a; color: #fff; border-radius: 4px; font-size: 14px; outline: none; }
+    .form-control:focus { border-color: #f59e0b; }
+
+    .btn { padding: 9px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; display: inline-block; text-align: center; }
+    .btn-success { background-color: #22c55e; color: white; }
+    .btn-success:hover { background-color: #15803d; }
+    .btn-danger { background-color: #ef4444; color: white; }
+    .btn-danger:hover { background-color: #b91c1c; }
+    .btn-primary { background-color: #3b82f6; color: white; }
+    .btn-warning { background-color: #f59e0b; color: #0f172a; }
+
+    /* STATİSTİKA KARTLARI */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; text-align: center; }
+    .stat-card h4 { font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+    .stat-card .num { font-size: 22px; font-weight: bold; color: #38bdf8; }
+
+    /* CƏDVƏL DİZAYNI */
+    .table-wrapper { overflow-x: auto; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #f8fafc; }
+    th, td { padding: 10px; border: 1px solid #334155; }
+    th { background: #0f172a; color: #f59e0b; }
+    tr:nth-child(even) { background-color: #172133; }
+
+    .badge { padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    .badge-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
+    .badge-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+
+    .option-row { display: flex; align-items: center; gap: 10px; background: #0f172a; padding: 8px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 8px; }
+    .option-label { font-weight: bold; width: 25px; color: #f59e0b; }
+    
+    .footer-text { text-align: center; font-size: 12px; color: #64748b; margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2>🛡️ DQ Platform - Mərkəzi İdarəetmə Paneli</h2>
+    <div>
+      <button class="btn btn-warning" onclick="window.location.reload()">🔄 Yenilə</button>
+      <button class="btn btn-danger" onclick="alert('Admin rejimi bağlandı.')">❌ Çıxış</button>
+    </div>
+  </div>
+
+  <!-- NƏZARƏT MODULLARI NAVİQASİYASI -->
+  <div class="admin-nav-grid">
+    <div class="admin-nav-card active" onclick="switchTab('tab-control', this)"><span class="icon">📡</span> Canlı Nəzarət</div>
+    <div class="admin-nav-card" onclick="switchTab('tab-questions', this)"><span class="icon">📝</span> Sual Redaktoru</div>
+    <div class="admin-nav-card" onclick="switchTab('tab-codes', this)"><span class="icon">🔑</span> Giriş Kodları</div>
+    <div class="admin-nav-card" onclick="switchTab('tab-students', this)"><span class="icon">📋</span> İştirakçılar</div>
+    <div class="admin-nav-card" onclick="switchTab('tab-results', this)"><span class="icon">📈</span> Nəticələr</div>
+    <div class="admin-nav-card" onclick="switchTab('tab-pult', this)"><span class="icon">⚙️</span> Pult/Tənzimləmə</div>
+  </div>
+
+  <!-- 1. CANLI NƏZARƏT PANELİ -->
+  <div id="tab-control" class="tab-content active">
+    <h3>📡 Canlı Nəzarət Və Aktiv Sessiyalar</h3>
+    <br>
+    <div class="stats-grid">
+      <div class="stat-card"><h4>Aktiv İştirakçılar</h4><div class="num" id="activeUsersCount">1</div></div>
+      <div class="stat-card"><h4>Tamamlanan İmtahanlar</h4><div class="num" id="finishedCount">0</div></div>
+      <div class="stat-card"><h4>Ümumi İcazəli Tələbələr</h4><div class="num" id="totalAllowedCount">0</div></div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>İştirakçı Adı</th>
+            <th>FIN Kod</th>
+            <th>Sınaq №</th>
+            <th>Status</th>
+            <th>Əməliyyat</th>
+          </tr>
+        </thead>
+        <tbody id="liveControlBody">
+          <tr>
+            <td>Yunis İmanov</td>
+            <td><code>77C2UF7</code></td>
+            <td>Sınaq 1</td>
+            <td><span class="badge badge-success">İmtahandadır</span></td>
+            <td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;" onclick="terminateSession(this)">Dayandır</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. SUAL REDAKTORU -->
+  <div id="tab-questions" class="tab-content">
+    <h3>📝 Sual Tərtibatı Və Baza İdarəçiliyi</h3>
+    <br>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Sınaq Seçin</label>
+        <select class="form-control" id="qExamSelect">
+          <option value="1">Sınaq 1</option>
+          <option value="2">Sınaq 2</option>
+          <option value="3">Sınaq 3</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fənn</label>
+        <select class="form-control" id="qSubjectSelect">
+          <option value="Qanunvericilik">Qanunvericilik</option>
+          <option value="Azərbaycan dili">Azərbaycan dili</option>
+          <option value="İnformatika">İnformatika</option>
+          <option value="Məntiqi təfəkkür">Məntiqi təfəkkür</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Sual Nömrəsi</label>
+        <input type="number" class="form-control" id="qNo" value="1" min="1" max="100">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Sual Mətni:</label>
+      <textarea class="form-control" id="qText" rows="3" placeholder="Sualı daxil edin..."></textarea>
+    </div>
+
+    <div id="optionsContainer">
+      <div class="option-row"><span class="option-label">A)</span><input type="text" class="form-control q-opt" placeholder="A variantı"><label><input type="radio" name="correctRadio" value="0" checked> Düzgün</label></div>
+      <div class="option-row"><span class="option-label">B)</span><input type="text" class="form-control q-opt" placeholder="B variantı"><label><input type="radio" name="correctRadio" value="1"> Düzgün</label></div>
+      <div class="option-row"><span class="option-label">C)</span><input type="text" class="form-control q-opt" placeholder="C variantı"><label><input type="radio" name="correctRadio" value="2"> Düzgün</label></div>
+      <div class="option-row"><span class="option-label">D)</span><input type="text" class="form-control q-opt" placeholder="D variantı"><label><input type="radio" name="correctRadio" value="3"> Düzgün</label></div>
+    </div>
+
+    <button class="btn btn-success" style="margin-top: 10px;" onclick="saveQuestionToDb()">💾 Sualı Bazaya Yaz</button>
+    <p id="qStatusMsg" style="margin-top:8px; font-size:12px; font-weight:bold;"></p>
+  </div>
+
+  <!-- 3. GİRİŞ KODLARI VƏ İCAZƏLƏR -->
+  <div id="tab-codes" class="tab-content">
+    <h3>🔑 Giriş Kodları Və Tələbə İcazələri</h3>
+    <br>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Ad Soyad</label>
+        <input type="text" id="codeStudentName" class="form-control" placeholder="Məs: Yunis İmanov">
+      </div>
+      <div class="form-group">
+        <label>FIN Kod</label>
+        <input type="text" id="codeStudentFin" class="form-control" placeholder="Məs: 77C2UF7" maxlength="7">
+      </div>
+    </div>
+    <button class="btn btn-success" onclick="allowStudentDirect()">🔑 İcazə Ver Və Yadda Saxla</button>
+    <p id="codeStatusMsg" style="margin-top: 8px; font-size: 12px;"></p>
+  </div>
+
+  <!-- 4. İŞTİRAKÇI SİYAHISI -->
+  <div id="tab-students" class="tab-content">
+    <h3>📋 İcazə Verilmiş Tələbələrin Siyahısı</h3>
+    <br>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Ad Soyad</th>
+            <th>FIN Kod</th>
+            <th>Əməliyyat</th>
+          </tr>
+        </thead>
+        <tbody id="allowedStudentsTable">
+          <tr><td colspan="3">Yüklənir...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5. İMTAHAN NƏTİCƏLƏRİ -->
+  <div id="tab-results" class="tab-content">
+    <h3>📈 Yekun İmtahan Nəticələri</h3>
+    <br>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Ad Soyad</th>
+            <th>FIN</th>
+            <th>Sınaq №</th>
+            <th>Doğru</th>
+            <th>Yanlış</th>
+            <th>Bal</th>
+          </tr>
+        </thead>
+        <tbody id="resultsTableBody">
+          <tr><td colspan="6">Yüklənir...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. PULT VƏ SİSTEM TƏNZİMLƏMƏLƏRİ -->
+  <div id="tab-pult" class="tab-content">
+    <h3>⚙️ Sistem Pultu Və Parametrlər</h3>
+    <br>
+    <div class="form-group">
+      <label>Portal Başlığı</label>
+      <input type="text" class="form-control" value="Dövlət Qulluğu Tədris Portalı - DQ Platform">
+    </div>
+    <div class="form-group">
+      <label>Sistem İdarəçisi</label>
+      <input type="text" class="form-control" value="Yunis İmanov" disabled>
+    </div>
+    <button class="btn btn-primary" onclick="alert('Tənzimləmələr yadda saxlanıldı!')">💾 Ayarları Saxla</button>
+  </div>
+
+  <div class="footer-text">
+    © 2026 DQ Platform – Developed by Yunis İmanov
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    loadAllowedStudentsData();
+    loadResultsData();
+  });
+
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.admin-nav-card').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function terminateSession(btn) {
+    if (confirm("Bu iştirakçının imtahanını dayandırmaq istədiyinizdən əminsiniz?")) {
+      const row = btn.closest('tr');
+      const badge = row.querySelector('.badge');
+      badge.className = 'badge badge-danger';
+      badge.innerText = 'Dayandırıldı';
+      btn.disabled = true;
+    }
+  }
+
+  async function saveQuestionToDb() {
+    const examId = document.getElementById("qExamSelect").value;
+    const qNo = parseInt(document.getElementById("qNo").value);
+    const subject = document.getElementById("qSubjectSelect").value;
+    const qText = document.getElementById("qText").value.trim();
+    const msg = document.getElementById("qStatusMsg");
+
+    const optInputs = document.querySelectorAll(".q-opt");
+    let options = [];
+    optInputs.forEach(input => { if(input.value.trim() !== "") options.push(input.value.trim()); });
+
+    const correctRadio = document.querySelector('input[name="correctRadio"]:checked');
+
+    if (!qText || options.length < 2) {
+      msg.style.color = "#ef4444";
+      msg.innerText = "Sual mətnini və ən azı 2 variantı doldurun!";
+      return;
+    }
+
+    msg.style.color = "#38bdf8";
+    msg.innerText = "Yadda saxlanılır...";
+
+    const { error } = await _supabase.from('exam_questions').upsert([{
+      exam_id: examId,
+      q_number: qNo,
+      subject: subject,
+      question: qText,
+      options: options,
+      correct: parseInt(correctRadio.value)
+    }], { onConflict: 'exam_id, q_number' });
+
+    if (error) {
+      msg.style.color = "#ef4444";
+      msg.innerText = "Xəta: " + error.message;
+    } else {
+      msg.style.color = "#22c55e";
+      msg.innerText = "Sual uğurla bazaya əlavə edildi!";
+    }
+  }
+
+  async function allowStudentDirect() {
+    const name = document.getElementById("codeStudentName").value.trim();
+    const fin = document.getElementById("codeStudentFin").value.trim().toUpperCase();
+    const msg = document.getElementById("codeStatusMsg");
+
+    if (!name || !fin) {
+      msg.style.color = "#ef4444";
+      msg.innerText = "Ad və FIN daxil edin!";
+      return;
+    }
+
+    const { error } = await _supabase.from('allowed_students').insert([{ name, fin }]);
+    if (error) {
+      msg.style.color = "#ef4444";
+      msg.innerText = "Xəta: " + error.message;
+    } else {
+      msg.style.color = "#22c55e";
+      msg.innerText = "Tələbəyə icazə verildi!";
+      document.getElementById("codeStudentName").value = "";
+      document.getElementById("codeStudentFin").value = "";
+      loadAllowedStudentsData();
+    }
+  }
+
+  async function loadAllowedStudentsData() {
+    const { data } = await _supabase.from('allowed_students').select('*');
+    const tbody = document.getElementById("allowedStudentsTable");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3">Qeydiyyatlı tələbə tapılmadı.</td></tr>`;
+      document.getElementById("totalAllowedCount").innerText = 0;
+      return;
+    }
+    document.getElementById("totalAllowedCount").innerText = data.length;
+    let html = "";
+    data.forEach(s => {
+      html += `<tr><td>${s.name || '-'}</td><td><b>${s.fin}</b></td><td><button class="btn btn-danger" style="padding: 2px 6px; font-size:11px;" onclick="deleteStudent('${s.fin}')">Sil</button></td></tr>`;
+    });
+    tbody.innerHTML = html;
+  }
+
+  async function deleteStudent(fin) {
+    if (confirm(`${fin} FİN kodunu silmək istədiyinizdən əminsiniz?`)) {
+      await _supabase.from('allowed_students').delete().eq('fin', fin);
+      loadAllowedStudentsData();
+    }
+  }
+
+  async function loadResultsData() {
+    const { data } = await _supabase.from('exam_results').select('*');
+    const tbody = document.getElementById("resultsTableBody");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6">Hələ heç bir nəticə yoxdur.</td></tr>`;
+      return;
+    }
+    document.getElementById("finishedCount").innerText = data.length;
+    let html = "";
+    data.forEach(r => {
+      html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td style="color:#22c55e">${r.correct_count}</td><td style="color:#ef4444">${r.wrong_count}</td><td><b>${r.score}</b></td></tr>`;
+    });
+    tbody.innerHTML = html;
+  }
+</script>
+</body>
+</html>
+
