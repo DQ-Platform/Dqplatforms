@@ -3,297 +3,311 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mərkəzi Modul İdarəetmə Kompleksi - DQ Platform</title>
-
-  <!-- External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Modul 3 — Kataloq</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Monaco Editor CSS/JS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/vscode-devoth.min.css">
-
   <style>
     :root {
-      --bg-main: #0b1120;
-      --bg-card: #1e293b;
-      --bg-sidebar: #0f172a;
-      --accent-gold: #f59e0b;
-      --accent-blue: #38bdf8;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border-color: #334155;
-      --success: #22c55e;
-      --danger: #ef4444;
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --border-color: #30363d;
+      --text-main: #c9d1d9;
+      --accent-color: #58a6ff;
+      --hover-bg: #21262d;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
-
-    /* Main Container Structure */
-    .app-wrapper { display: flex; flex-direction: column; height: 100vh; }
-    
-    /* Top Navigation Header */
-    .app-header {
-      background: var(--bg-sidebar);
-      border-bottom: 1px solid var(--border-color);
-      padding: 12px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    .brand-title { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--accent-gold); }
-    .brand-title i { font-size: 20px; }
 
-    .header-actions { display: flex; gap: 10px; align-items: center; }
-
-    /* IDE Layout */
-    .ide-container { display: flex; flex: 1; overflow: hidden; }
-
-    /* File Explorer Sidebar */
-    .explorer-sidebar {
-      width: 300px;
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border-color);
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 40px 20px;
       display: flex;
       flex-direction: column;
-      user-select: none;
-    }
-    .explorer-header {
-      padding: 12px 16px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-between;
       align-items: center;
     }
 
-    .tree-view { overflow-y: auto; flex: 1; padding: 10px 0; }
-    .tree-folder { padding: 6px 16px; font-size: 13px; font-weight: 600; color: var(--accent-gold); display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .tree-files { list-style: none; padding-left: 20px; }
-    .tree-file-item {
-      padding: 8px 16px;
-      font-size: 13px;
-      color: var(--text-muted);
+    .container {
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #f0f6fc;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      color: #8b949e;
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8b949e;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 15px 10px 40px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--accent-color);
+    }
+
+    .stats {
+      font-size: 0.85rem;
+      color: #8b949e;
+      background: var(--card-bg);
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .catalog-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      text-decoration: none;
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 10px;
-      cursor: pointer;
+      gap: 15px;
       transition: all 0.2s ease;
-      border-left: 2px solid transparent;
     }
-    .tree-file-item:hover { background: rgba(255, 255, 255, 0.04); color: var(--text-main); }
-    .tree-file-item.active { background: #1e293b; color: var(--accent-blue); border-left-color: var(--accent-blue); font-weight: 600; }
 
-    /* Editor and Workspace Area */
-    .workspace { flex: 1; display: flex; flex-direction: column; background: #090d16; }
-    
-    .workspace-toolbar {
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border-color);
-      padding: 8px 16px;
+    .catalog-card i {
+      font-size: 1.4rem;
+      color: var(--accent-color);
+    }
+
+    .catalog-card .card-info {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
     }
-    .active-tab { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); background: var(--bg-sidebar); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border-color); }
 
-    .view-mode-toggle { display: flex; background: var(--bg-sidebar); padding: 3px; border-radius: 6px; border: 1px solid var(--border-color); }
-    .toggle-btn { padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-muted); border: none; background: transparent; cursor: pointer; border-radius: 4px; transition: 0.2s; }
-    .toggle-btn.active { background: var(--accent-blue); color: #000; }
+    .catalog-card .title {
+      font-weight: 600;
+      color: #f0f6fc;
+      font-size: 1rem;
+    }
 
-    /* Split Editor Framework */
-    .editor-frame-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; }
-    .pane { flex: 1; height: 100%; position: relative; }
-    .pane-editor { display: none; border-right: 1px solid var(--border-color); }
-    .pane-preview { display: block; background: #ffffff; }
+    .catalog-card .path {
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-top: 2px;
+    }
 
-    /* Monaco Container */
-    #monacoContainer { width: 100%; height: 100%; }
-    
-    /* Live Preview Iframe */
-    #previewFrame { width: 100%; height: 100%; border: none; }
+    .catalog-card:hover {
+      background-color: var(--hover-bg);
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
 
-    /* UI Controls */
-    .btn { padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
-    .btn-primary { background: var(--accent-blue); color: #0f172a; }
-    .btn-primary:hover { opacity: 0.9; }
-    .btn-success { background: var(--success); color: #ffffff; }
-    .btn-danger { background: var(--danger); color: #ffffff; }
-    
-    /* Status Bar */
-    .status-bar { background: var(--bg-sidebar); border-top: 1px solid var(--border-color); padding: 4px 16px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; }
+    .empty-state {
+      display: none;
+      text-align: center;
+      padding: 40px;
+      color: #8b949e;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
 
-<div class="app-wrapper">
-  <!-- Top Navigation -->
-  <header class="app-header">
-    <div class="brand-title">
-      <i class="fa-solid fa-shield-halved"></i>
-      <span>DQ Platform IDE Engine v2.5</span>
+  <div class="container">
+    <header>
+      <h1>Modul 3 Kataloqu</h1>
+      <p>Bütün idarəetmə və sistem səhifələrinə cəld keçid paneli</p>
+    </header>
+
+    <div class="controls">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Səhifə axtar..." onkeyup="filterCards()">
+      </div>
+      <div class="stats" id="pageCount">Cəmi: 13 səhifə</div>
     </div>
-    <div class="header-actions">
-      <button class="btn btn-primary" onclick="promptAdminAuth()"><i class="fa-solid fa-lock"></i> Admin Girişi</button>
-      <button class="btn btn-danger" id="logoutBtn" style="display:none;" onclick="logoutAdmin()"><i class="fa-solid fa-power-off"></i> Çıxış</button>
+
+    <div class="catalog-grid" id="catalogGrid">
+      <a href="Idare.html" class="catalog-card">
+        <i class="fa-solid fa-bars-progress"></i>
+        <div class="card-info">
+          <span class="title">İdarə</span>
+          <span class="path">Idare.html</span>
+        </div>
+      </a>
+
+      <a href="Kabinet.html" class="catalog-card">
+        <i class="fa-solid fa-user-gear"></i>
+        <div class="card-info">
+          <span class="title">Kabinet</span>
+          <span class="path">Kabinet.html</span>
+        </div>
+      </a>
+
+      <a href="Kod.html" class="catalog-card">
+        <i class="fa-solid fa-code"></i>
+        <div class="card-info">
+          <span class="title">Kod</span>
+          <span class="path">Kod.html</span>
+        </div>
+      </a>
+
+      <a href="Kontrol.html" class="catalog-card">
+        <i class="fa-solid fa-sliders"></i>
+        <div class="card-info">
+          <span class="title">Kontrol</span>
+          <span class="path">Kontrol.html</span>
+        </div>
+      </a>
+
+      <a href="Pult.html" class="catalog-card">
+        <i class="fa-solid fa-gamepad"></i>
+        <div class="card-info">
+          <span class="title">Pult</span>
+          <span class="path">Pult.html</span>
+        </div>
+      </a>
+
+      <a href="Siyaha.html" class="catalog-card">
+        <i class="fa-solid fa-list-check"></i>
+        <div class="card-info">
+          <span class="title">Siyahı</span>
+          <span class="path">Siyaha.html</span>
+        </div>
+      </a>
+
+      <a href="Statistika.html" class="catalog-card">
+        <i class="fa-solid fa-chart-line"></i>
+        <div class="card-info">
+          <span class="title">Statistika</span>
+          <span class="path">Statistika.html</span>
+        </div>
+      </a>
+
+      <a href="Suallar.html" class="catalog-card">
+        <i class="fa-solid fa-circle-question"></i>
+        <div class="card-info">
+          <span class="title">Suallar</span>
+          <span class="path">Suallar.html</span>
+        </div>
+      </a>
+
+      <a href="admin.html" class="catalog-card">
+        <i class="fa-solid fa-user-shield"></i>
+        <div class="card-info">
+          <span class="title">Admin Panel</span>
+          <span class="path">admin.html</span>
+        </div>
+      </a>
+
+      <a href="index.html" class="catalog-card">
+        <i class="fa-solid fa-house"></i>
+        <div class="card-info">
+          <span class="title">Ana Səhifə</span>
+          <span class="path">index.html</span>
+        </div>
+      </a>
+
+      <a href="modul.html" class="catalog-card">
+        <i class="fa-solid fa-cubes"></i>
+        <div class="card-info">
+          <span class="title">Modul</span>
+          <span class="path">modul.html</span>
+        </div>
+      </a>
+
+      <a href="redakte.html" class="catalog-card">
+        <i class="fa-solid fa-pen-to-square"></i>
+        <div class="card-info">
+          <span class="title">Redaktə</span>
+          <span class="path">redakte.html</span>
+        </div>
+      </a>
+
+      <a href="Cavablar.html" class="catalog-card">
+        <i class="fa-solid fa-square-poll-vertical"></i>
+        <div class="card-info">
+          <span class="title">Cavablar</span>
+          <span class="path">Cavablar.html</span>
+        </div>
+      </a>
     </div>
-  </header>
 
-  <!-- IDE Core Container -->
-  <div class="ide-container">
-    <!-- File System Explorer -->
-    <aside class="explorer-sidebar" id="explorerSidebar" style="display: none;">
-      <div class="explorer-header">
-        <span>Fayl Kataloqu</span>
-        <i class="fa-solid fa-folder-tree"></i>
-      </div>
-      <div class="tree-view">
-        <div class="tree-folder"><i class="fa-solid fa-folder-open"></i> root/modules</div>
-        <ul class="tree-files" id="fileSystemTree">
-          <li class="tree-file-item active" onclick="loadModule('Idare.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Idare.html</li>
-          <li class="tree-file-item" onclick="loadModule('admin.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> admin.html</li>
-          <li class="tree-file-item" onclick="loadModule('redakte.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> redakte.html</li>
-          <li class="tree-file-item" onclick="loadModule('Suallar.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Suallar.html</li>
-          <li class="tree-file-item" onclick="loadModule('Cavablar.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Cavablar.html</li>
-          <li class="tree-file-item" onclick="loadModule('Kod.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Kod.html</li>
-          <li class="tree-file-item" onclick="loadModule('Siyaha.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Siyaha.html</li>
-          <li class="tree-file-item" onclick="loadModule('Statistika.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Statistika.html</li>
-          <li class="tree-file-item" onclick="loadModule('Kontrol.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Kontrol.html</li>
-          <li class="tree-file-item" onclick="loadModule('Pult.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Pult.html</li>
-          <li class="tree-file-item" onclick="loadModule('Modul3.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Modul3.html</li>
-          <li class="tree-file-item" onclick="loadModule('index.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> index.html</li>
-          <li class="tree-file-item" onclick="loadModule('Kabinet.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Kabinet.html</li>
-        </ul>
-      </div>
-    </aside>
-
-    <!-- Workspace Main Area -->
-    <main class="workspace">
-      <div class="workspace-toolbar">
-        <div class="active-tab" id="activeTabLabel">
-          <i class="fa-solid fa-code"></i> Idare.html
-        </div>
-
-        <div class="view-mode-toggle" id="modeControls" style="display: none;">
-          <button class="toggle-btn active" id="btnPreview" onclick="setMode('preview')"><i class="fa-solid fa-eye"></i> Canlı Baxış</button>
-          <button class="toggle-btn" id="btnSplit" onclick="setMode('split')"><i class="fa-solid fa-columns"></i> Bölünmüş (Split)</button>
-          <button class="toggle-btn" id="btnEditor" onclick="setMode('editor')"><i class="fa-solid fa-terminal"></i> Kod Redaktoru</button>
-        </div>
-
-        <div id="saveActionGroup" style="display: none;">
-          <button class="btn btn-success" onclick="commitCode()"><i class="fa-solid fa-floppy-disk"></i> Yadda Saxla</button>
-        </div>
-      </div>
-
-      <!-- Content Split View -->
-      <div class="editor-frame-wrapper">
-        <div class="pane pane-editor" id="editorPane">
-          <div id="monacoContainer"></div>
-        </div>
-        <div class="pane pane-preview" id="previewPane">
-          <iframe id="previewFrame" src="Idare.html"></iframe>
-        </div>
-      </div>
-    </main>
+    <div class="empty-state" id="emptyState">
+      Axtarışa uyğun səhifə tapılmadı.
+    </div>
   </div>
 
-  <!-- Status Info -->
-  <footer class="status-bar">
-    <div>Sistem: <span style="color:var(--success)">Aktiv</span> | Mərkəzi Server İnteqrasiyası</div>
-    <div>© 2026 DQ Platform – Developed by Yunis İmanov</div>
-  </footer>
-</div>
+  <script>
+    function filterCards() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const cards = document.querySelectorAll('.catalog-card');
+      const emptyState = document.getElementById('emptyState');
+      const stats = document.getElementById('pageCount');
+      let visibleCount = 0;
 
-<!-- Monaco Editor Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
-<script>
-  const AUTH_KEY = "6675157";
-  let activeFile = "Idare.html";
-  let monacoInstance = null;
-  let isAuthorized = false;
+      cards.forEach(card => {
+        const title = card.querySelector('.title').textContent.toLowerCase();
+        const path = card.querySelector('.path').textContent.toLowerCase();
 
-  // Monaco Editor Initialization
-  require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
-
-  function initMonaco() {
-    require(['vs/editor/editor.main'], function () {
-      monacoInstance = monaco.editor.create(document.getElementById('monacoContainer'), {
-        value: `<!-- ${activeFile} Faylının Məzmunu Loading... -->`,
-        language: 'html',
-        theme: 'vs-dark',
-        automaticLayout: true,
-        fontSize: 13,
-        minimap: { enabled: true }
+        if (title.includes(input) || path.includes(input)) {
+          card.style.display = 'flex';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
       });
-    });
-  }
 
-  function promptAdminAuth() {
-    let input = prompt("Sistem İdarəçisi Şifrəsi:");
-    if (input === AUTH_KEY) {
-      isAuthorized = true;
-      document.getElementById("explorerSidebar").style.display = "flex";
-      document.getElementById("modeControls").style.display = "flex";
-      document.getElementById("saveActionGroup").style.display = "block";
-      document.getElementById("logoutBtn").style.display = "inline-flex";
-      
-      if (!monacoInstance) initMonaco();
-      alert("Təhlükəsizlik doğrulandı! İdarəetmə paneli aktivdir.");
-    } else {
-      alert("Giriş imtina edildi: Yanlış şifrə!");
+      stats.textContent = `Göstərilir: ${visibleCount}`;
+      emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
     }
-  }
-
-  function logoutAdmin() {
-    location.reload();
-  }
-
-  function loadModule(fileName, element) {
-    activeFile = fileName;
-    
-    document.querySelectorAll('.tree-file-item').forEach(el => el.classList.remove('active'));
-    if (element) element.classList.add('active');
-
-    document.getElementById('activeTabLabel').innerHTML = `<i class="fa-solid fa-code"></i> ${fileName}`;
-    document.getElementById('previewFrame').src = fileName;
-
-    if (monacoInstance) {
-      monacoInstance.setValue(`<!-- ${fileName} Məzmunu yukləndi -->\n<div class="module-root">\n  <!-- Dynamic Content -->\n</div>`);
-    }
-  }
-
-  function setMode(mode) {
-    const editorPane = document.getElementById('editorPane');
-    const previewPane = document.getElementById('previewPane');
-
-    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-
-    if (mode === 'preview') {
-      editorPane.style.display = 'none';
-      previewPane.style.display = 'block';
-      document.getElementById('btnPreview').classList.add('active');
-    } else if (mode === 'editor') {
-      editorPane.style.display = 'block';
-      previewPane.style.display = 'none';
-      document.getElementById('btnEditor').classList.add('active');
-    } else if (mode === 'split') {
-      editorPane.style.display = 'block';
-      previewPane.style.display = 'block';
-      document.getElementById('btnSplit').classList.add('active');
-    }
-    
-    if (monacoInstance) monacoInstance.layout();
-  }
-
-  function commitCode() {
-    if (!isAuthorized) return;
-    const content = monacoInstance.getValue();
-    alert(`[Uğurlu]: ${activeFile} dəyişiklikləri yadda saxlanıldı və modula tətbiq edildi!`);
-  }
-</script>
+  </script>
 </body>
 </html>
