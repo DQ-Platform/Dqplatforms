@@ -63,7 +63,9 @@
         .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .footer { text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         .footer-text { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
-        .secret-admin-trigger { cursor: pointer; text-decoration: underline; }
+        
+        /* DƏYİŞİKLİK: 'by' xətti ləğv edildi */
+        .secret-admin-trigger { cursor: pointer; text-decoration: none; color: inherit; }
         .error-msg { color: #ef4444; font-weight: bold; }
         
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
@@ -305,7 +307,7 @@
         let userAnswers = {};
         let flaggedQuestions = {};
         let currentQuestionIndex = 0;
-        let timerInterval;
+        let timerInterval = null;
         let timeLeft = testDuration;
         let examFinished = false;
 
@@ -376,88 +378,97 @@
             const errorMsg = document.getElementById("error-msg");
 
             if (!nameInput || finInput.length < 5) {
+                errorMsg.style.color = "#ef4444";
                 errorMsg.innerText = "Ad və etibarlı FIN kod daxil edin!";
                 return;
             }
 
-            errorMsg.style.color = "blue";
+            errorMsg.style.color = "#0284c7";
             errorMsg.innerText = "Məlumatlar yoxlanılır...";
 
-            // 1. İcazə yoxlanışı
-            const { data: allowedData } = await _supabase
-                .from('allowed_students')
-                .select('*')
-                .eq('fin', finInput);
+            try {
+                const { data: allowedData, error } = await _supabase
+                    .from('allowed_students')
+                    .select('*')
+                    .eq('fin', finInput);
 
-            if (!allowedData || allowedData.length === 0) {
+                if (error || !allowedData || allowedData.length === 0) {
+                    errorMsg.style.color = "#ef4444";
+                    errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
+                    return;
+                }
+
+                currentStudentName = nameInput;
+                currentActiveFin = finInput;
+
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("exam-select-screen").style.display = "block";
+            } catch (err) {
                 errorMsg.style.color = "#ef4444";
-                errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
-                return;
+                errorMsg.innerText = "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.";
             }
-
-            currentStudentName = nameInput;
-            currentActiveFin = finInput;
-
-            document.getElementById("login-screen").style.display = "none";
-            document.getElementById("exam-select-screen").style.display = "block";
         }
 
         async function startExamSession() {
             selectedExamId = document.getElementById("exam-selector").value;
 
-            // 1 DƏFƏ İŞTİRAK YOXLANILMASI
-            const { data: existingResults } = await _supabase
-                .from('exam_results')
-                .select('*')
-                .eq('fin', currentActiveFin)
-                .eq('exam_no', selectedExamId);
+            try {
+                const { data: existingResults } = await _supabase
+                    .from('exam_results')
+                    .select('*')
+                    .eq('fin', currentActiveFin)
+                    .eq('exam_no', selectedExamId);
 
-            if (existingResults && existingResults.length > 0) {
-                alert(`Siz artıq Sınaq ${selectedExamId} üzrə imtahanda iştirak etmisiniz! Hər bir sınaqda yalnız 1 dəfə iştirak etmək mümkündür.`);
-                return;
+                if (existingResults && existingResults.length > 0) {
+                    alert(`Siz artıq Sınaq ${selectedExamId} üzrə imtahanda iştirak etmisiniz! Hər bir sınaqda yalnız 1 dəfə iştirak etmək mümkündür.`);
+                    return;
+                }
+
+                const { data, error } = await _supabase
+                    .from('exam_questions')
+                    .select('*')
+                    .eq('exam_id', selectedExamId)
+                    .order('q_number', { ascending: true });
+
+                if (error || !data || data.length === 0) {
+                    alert("Bu sınaq üçün hələ sual əlavə edilməyib!");
+                    return;
+                }
+
+                allQuestions = data.map(q => ({
+                    id: q.q_number,
+                    subject: q.subject,
+                    question: q.question,
+                    options: q.options,
+                    correct: q.correct
+                }));
+
+                userAnswers = {};
+                flaggedQuestions = {};
+                currentQuestionIndex = 0;
+                timeLeft = testDuration;
+                examFinished = false;
+
+                document.getElementById("exam-select-screen").style.display = "none";
+                document.getElementById("exam-screen").style.display = "block";
+                document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
+
+                saveSessionState();
+                loadNavGrid();
+                renderCurrentQuestion();
+                startTimer(timeLeft);
+            } catch (err) {
+                alert("İmtahan yüklənərkən xəta baş verdi: " + err.message);
             }
-
-            const { data, error } = await _supabase
-                .from('exam_questions')
-                .select('*')
-                .eq('exam_id', selectedExamId)
-                .order('q_number', { ascending: true });
-
-            if (error || !data || data.length === 0) {
-                alert("Bu sınaq üçün hələ sual əlavə edilməyib!");
-                return;
-            }
-
-            allQuestions = data.map(q => ({
-                id: q.q_number,
-                subject: q.subject,
-                question: q.question,
-                options: q.options,
-                correct: q.correct
-            }));
-
-            userAnswers = {};
-            flaggedQuestions = {};
-            currentQuestionIndex = 0;
-            timeLeft = testDuration;
-            examFinished = false;
-
-            document.getElementById("exam-select-screen").style.display = "none";
-            document.getElementById("exam-screen").style.display = "block";
-            document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
-
-            saveSessionState();
-            loadNavGrid();
-            renderCurrentQuestion();
-            startTimer(timeLeft);
         }
 
         function renderCurrentQuestion() {
+            if (!allQuestions.length) return;
             const q = allQuestions[currentQuestionIndex];
             const container = document.getElementById("single-question-container");
             const isFlagged = flaggedQuestions[q.id] ? "checked" : "";
             const userAns = userAnswers[q.id];
-            let letters = ["A", "B", "C", "D", "E"];
+            const letters = ["A", "B", "C", "D", "E"];
 
             let html = `
                 <div>
@@ -470,23 +481,25 @@
                     <div class="options">
             `;
 
-            q.options.forEach((opt, idx) => {
-                let checked = (userAns === idx) ? "checked" : "";
-                let disabledAttr = examFinished ? "disabled" : "";
-                let correctHighlight = "";
-                
-                if (examFinished) {
-                    if (idx === q.correct) correctHighlight = "background-color: #d1fae5; border: 2px solid #10b981; font-weight: bold;";
-                    else if (userAns === idx && userAns !== q.correct) correctHighlight = "background-color: #fef2f2; border: 2px solid #ef4444;";
-                }
+            if (Array.isArray(q.options)) {
+                q.options.forEach((opt, idx) => {
+                    let checked = (userAns === idx) ? "checked" : "";
+                    let disabledAttr = examFinished ? "disabled" : "";
+                    let correctHighlight = "";
+                    
+                    if (examFinished) {
+                        if (idx === q.correct) correctHighlight = "background-color: #d1fae5; border: 2px solid #10b981; font-weight: bold;";
+                        else if (userAns === idx && userAns !== q.correct) correctHighlight = "background-color: #fef2f2; border: 2px solid #ef4444;";
+                    }
 
-                html += `
-                    <label style="${correctHighlight}">
-                        <input type="radio" name="current_opt" value="${idx}" ${checked} ${disabledAttr} onclick="selectOption(${q.id}, ${idx})">
-                        ${letters[idx]}) ${opt}
-                    </label>
-                `;
-            });
+                    html += `
+                        <label style="${correctHighlight}">
+                            <input type="radio" name="current_opt" value="${idx}" ${checked} ${disabledAttr} onclick="selectOption(${q.id}, ${idx})">
+                            ${letters[idx] || (idx + 1)}) ${opt}
+                        </label>
+                    `;
+                });
+            }
 
             html += `</div></div>`;
             container.innerHTML = html;
@@ -511,7 +524,8 @@
         function selectOption(qId, optIdx) { 
             if(examFinished) return; 
             userAnswers[qId] = optIdx; 
-            document.getElementById(`nav_${qId}`).classList.add("answered"); 
+            const navBox = document.getElementById(`nav_${qId}`);
+            if (navBox) navBox.classList.add("answered"); 
             saveSessionState();
         }
         
@@ -519,8 +533,13 @@
             if(examFinished) return;
             let chk = document.getElementById("flag_chk").checked;
             let nav = document.getElementById(`nav_${qId}`);
-            if (chk) { flaggedQuestions[qId] = true; nav.classList.add("flagged"); } 
-            else { delete flaggedQuestions[qId]; nav.classList.remove("flagged"); }
+            if (chk) { 
+                flaggedQuestions[qId] = true; 
+                if (nav) nav.classList.add("flagged"); 
+            } else { 
+                delete flaggedQuestions[qId]; 
+                if (nav) nav.classList.remove("flagged"); 
+            }
             saveSessionState();
         }
 
@@ -540,14 +559,18 @@
             if (timerInterval) clearInterval(timerInterval);
             
             timerInterval = setInterval(() => {
-                if (examFinished) return;
+                if (examFinished) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
                 let hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
                 let minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
                 let seconds = String(timeLeft % 60).padStart(2, '0');
                 display.textContent = `${hours}:${minutes}:${seconds}`;
                 
                 timeLeft--;
-                if (timeLeft % 5 === 0) saveSessionState(); // Hər 5 saniyədən bir avto-yaddaş
+                if (timeLeft % 5 === 0) saveSessionState();
 
                 if (timeLeft < 0) { 
                     clearInterval(timerInterval); 
@@ -571,7 +594,7 @@
         }
 
         async function finishExam() {
-            clearInterval(timerInterval);
+            if (timerInterval) clearInterval(timerInterval);
             examFinished = true;
             clearSessionStorage();
 
@@ -586,15 +609,19 @@
 
             let bbGroup = getBBGroup(totalCorrect);
 
-            await _supabase.from('exam_results').insert([{
-                name: currentStudentName,
-                fin: currentActiveFin,
-                exam_no: selectedExamId,
-                correct_count: totalCorrect,
-                wrong_count: totalWrong,
-                score: totalCorrect,
-                bb_group: bbGroup
-            }]);
+            try {
+                await _supabase.from('exam_results').insert([{
+                    name: currentStudentName,
+                    fin: currentActiveFin,
+                    exam_no: selectedExamId,
+                    correct_count: totalCorrect,
+                    wrong_count: totalWrong,
+                    score: totalCorrect,
+                    bb_group: bbGroup
+                }]);
+            } catch (err) {
+                console.error("Nəticə yazılarkən xəta:", err);
+            }
 
             document.getElementById("exam-screen").style.display = "none";
             document.getElementById("result-screen").style.display = "block";
@@ -627,18 +654,28 @@
                 loadAdminPanelData();
             }
         }
-        function closeAdminPanel() { document.getElementById("admin-panel").style.display = "none"; document.getElementById("login-screen").style.display = "block"; }
+        
+        function closeAdminPanel() { 
+            document.getElementById("admin-panel").style.display = "none"; 
+            document.getElementById("login-screen").style.display = "block"; 
+        }
 
         async function allowStudent() {
             let name = document.getElementById("adm-student-name").value.trim();
             let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
             let msg = document.getElementById("adm-student-msg");
 
-            if (!name || !fin) { msg.style.color = "red"; msg.innerText = "Xanaları doldurun!"; return; }
+            if (!name || !fin) { 
+                msg.style.color = "red"; 
+                msg.innerText = "Xanaları doldurun!"; 
+                return; 
+            }
 
             const { error } = await _supabase.from('allowed_students').insert([{ name, fin }]);
-            if (error) { msg.style.color = "red"; msg.innerText = "Xəta: " + error.message; }
-            else { 
+            if (error) { 
+                msg.style.color = "red"; 
+                msg.innerText = "Xəta: " + error.message; 
+            } else { 
                 msg.style.color = "green"; 
                 msg.innerText = "Tələbəyə icazə verildi!"; 
                 document.getElementById("adm-student-name").value = "";
@@ -697,6 +734,11 @@
             let text = document.getElementById("new-q-text").value.trim();
             let optInputs = document.querySelectorAll(".opt-input");
             let correct = parseInt(document.getElementById("new-q-correct").value);
+
+            if (!text) {
+                alert("Sualın mətnini daxil edin!");
+                return;
+            }
 
             let options = [];
             optInputs.forEach(input => options.push(input.value.trim()));
