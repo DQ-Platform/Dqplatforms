@@ -52,6 +52,7 @@
     .btn-primary { background-color: #007bff; color: white; }
     .btn-danger { background-color: #dc3545; color: white; padding: 4px 8px; font-size: 12px; }
     .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
+    .left-buttons { display: flex; gap: 10px; }
   </style>
 </head>
 <body>
@@ -150,7 +151,7 @@
 
       <div class="form-group">
         <label>Sual Nömrəsi</label>
-        <input type="number" class="form-control" id="questionNumber" value="1" min="1" max="100">
+        <input type="number" class="form-control" id="questionNumber" value="1" min="1" max="100" onchange="loadQuestionData(this.value)">
       </div>
     </div>
 
@@ -166,28 +167,7 @@
 
     <!-- 1. Qapalı Sual Variantları -->
     <div id="closedOptionsContainer">
-      <div id="optionsList">
-        <div class="option-row">
-          <span class="option-label">A)</span>
-          <input type="text" class="form-control option-input" placeholder="Variant mətni...">
-          <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
-        </div>
-        <div class="option-row">
-          <span class="option-label">B)</span>
-          <input type="text" class="form-control option-input" placeholder="Variant mətni...">
-          <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
-        </div>
-        <div class="option-row">
-          <span class="option-label">C)</span>
-          <input type="text" class="form-control option-input" placeholder="Variant mətni...">
-          <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
-        </div>
-        <div class="option-row">
-          <span class="option-label">D)</span>
-          <input type="text" class="form-control option-input" placeholder="Variant mətni...">
-          <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
-        </div>
-      </div>
+      <div id="optionsList"></div>
       <button class="btn btn-dark" onclick="addDynamicOption()">+ Dinamik Variant Əlavə Et</button>
     </div>
 
@@ -234,8 +214,11 @@
 
     <!-- Alt Düymələr -->
     <div class="actions-bar">
-      <button class="btn btn-success" onclick="saveQuestion()">💾 Sualı Yadda Saxla</button>
-      <button class="btn btn-primary" onclick="nextQuestion()">➡️ Növbəti Suala Keç</button>
+      <div class="left-buttons">
+        <button class="btn btn-dark" onclick="prevQuestion()">⬅️ Əvvəlki Sual</button>
+        <button class="btn btn-success" onclick="saveQuestion()">💾 Sualı Yadda Saxla</button>
+      </div>
+      <button class="btn btn-primary" onclick="nextQuestion()">➡️ Növbəti Sual</button>
     </div>
   </div>
 
@@ -243,6 +226,14 @@
     let currentExam = "Sınaq 1";
     let currentCategory = "BA";
     const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+
+    // Bütün sualları yaddaşda saxlayan obyekt
+    let questionsDatabase = {};
+
+    function getQuestionKey(num) {
+      const subject = document.getElementById('activeSubjectInput').value;
+      return `${currentExam}_${currentCategory}_${subject}_Q${num}`;
+    }
 
     function selectExam(exam) {
       currentExam = exam;
@@ -261,8 +252,10 @@
     function openEditor(subject) {
       document.getElementById('navSubject').innerText = subject;
       document.getElementById('activeSubjectInput').value = subject;
+      document.getElementById('questionNumber').value = 1;
       document.getElementById('stepSubjects').style.display = 'none';
       document.getElementById('stepEditor').style.display = 'block';
+      loadQuestionData(1);
     }
 
     function showStep(step) {
@@ -282,7 +275,6 @@
       }
     }
 
-    // Qapalı / Açıq sual keçidi
     function toggleQuestionType() {
       const type = document.getElementById('questionType').value;
       const closedBox = document.getElementById('closedOptionsContainer');
@@ -297,7 +289,6 @@
       }
     }
 
-    // Açıq Sualın Cavab Rejiminin Dəyişdirilməsi
     function toggleOpenAnswerMode() {
       const mode = document.getElementById('openAnswerType').value;
       const textMode = document.getElementById('openTextMode');
@@ -312,35 +303,29 @@
       }
     }
 
-    // Dinamik Variant Əlavə Etmə
-    function addDynamicOption() {
+    function addDynamicOption(textValue = "", isCorrect = false) {
       const optionsList = document.getElementById('optionsList');
       const currentCount = optionsList.getElementsByClassName('option-row').length;
 
-      if (currentCount >= optionLetters.length) {
-        alert("Maksimum variant limitinə çatdınız!");
-        return;
-      }
+      if (currentCount >= optionLetters.length) return;
 
       const letter = optionLetters[currentCount];
       const div = document.createElement('div');
       div.className = 'option-row';
       div.innerHTML = `
         <span class="option-label">${letter})</span>
-        <input type="text" class="form-control option-input" placeholder="Variant mətni...">
-        <label class="correct-radio"><input type="radio" name="ans"> Düzgün</label>
+        <input type="text" class="form-control option-input" placeholder="Variant mətni..." value="${textValue}">
+        <label class="correct-radio"><input type="radio" name="ans" ${isCorrect ? 'checked' : ''}> Düzgün</label>
         <button class="btn btn-danger" onclick="removeOption(this)">X</button>
       `;
       optionsList.appendChild(div);
     }
 
-    // Variant Silmə
     function removeOption(btn) {
       btn.parentElement.remove();
       reindexOptions();
     }
 
-    // Variant Hərflərini Yeniləmə
     function reindexOptions() {
       const rows = document.querySelectorAll('#optionsList .option-row');
       rows.forEach((row, index) => {
@@ -350,30 +335,107 @@
       });
     }
 
-    // Sualı Yadda Saxlamaq
-    function saveQuestion() {
-      alert("Sual uğurla yadda saxlanıldı!");
+    // Sualı yaddaşa saxlayır
+    function saveQuestion(silent = false) {
+      const num = document.getElementById('questionNumber').value;
+      const key = getQuestionKey(num);
+
+      const type = document.getElementById('questionType').value;
+      const text = document.getElementById('questionText').value;
+
+      let options = [];
+      if (type === 'closed') {
+        document.querySelectorAll('#optionsList .option-row').forEach(row => {
+          options.push({
+            text: row.querySelector('.option-input').value,
+            isCorrect: row.querySelector('input[name="ans"]').checked
+          });
+        });
+      }
+
+      const openType = document.getElementById('openAnswerType').value;
+      const openText = document.getElementById('openTextAnswer').value;
+      let openNumbers = [];
+      document.querySelectorAll('.num-checkbox:checked').forEach(cb => {
+        openNumbers.push(cb.value);
+      });
+
+      questionsDatabase[key] = {
+        type,
+        text,
+        options,
+        openType,
+        openText,
+        openNumbers
+      };
+
+      if (!silent) {
+        alert(`${num}-ci sual uğurla yadda saxlanıldı!`);
+      }
     }
 
-    // Növbəti Suala Keçid (Formanı təmizləyir və nömrəni 1 artırır)
-    function nextQuestion() {
-      const numInput = document.getElementById('questionNumber');
-      numInput.value = parseInt(numInput.value) + 1;
+    // Yaddaşda saxlanılmış sual verilənlərini formaya doldurur
+    function loadQuestionData(num) {
+      const key = getQuestionKey(num);
+      const data = questionsDatabase[key];
 
-      // Mətnləri təmizlə
+      // Formanı sıfırla
       document.getElementById('questionText').value = '';
       document.getElementById('questionImage').value = '';
       document.getElementById('openTextAnswer').value = '';
-
-      // Checkbox-ları sıfırla
       document.querySelectorAll('.num-checkbox').forEach(cb => cb.checked = false);
 
-      // Variant daxiletmələrini təmizlə və radioları seçilməmiş et
-      document.querySelectorAll('.option-input').forEach(input => input.value = '');
-      document.querySelectorAll('input[name="ans"]').forEach(radio => radio.checked = false);
+      if (!data) {
+        // Yeni sualdırsa standart 4 boş variant yaradır
+        document.getElementById('questionType').value = 'closed';
+        toggleQuestionType();
+        document.getElementById('optionsList').innerHTML = '';
+        for (let i = 0; i < 4; i++) addDynamicOption();
+        return;
+      }
 
-      alert("Növbəti suala keçildi (" + numInput.value + "-ci sual)");
+      // Məlumatlar varsa formanı yükləyir
+      document.getElementById('questionType').value = data.type;
+      toggleQuestionType();
+      document.getElementById('questionText').value = data.text;
+
+      if (data.type === 'closed') {
+        document.getElementById('optionsList').innerHTML = '';
+        data.options.forEach(opt => addDynamicOption(opt.text, opt.isCorrect));
+      } else {
+        document.getElementById('openAnswerType').value = data.openType;
+        toggleOpenAnswerMode();
+        document.getElementById('openTextAnswer').value = data.openText;
+        document.querySelectorAll('.num-checkbox').forEach(cb => {
+          cb.checked = data.openNumbers.includes(cb.value);
+        });
+      }
+    }
+
+    function nextQuestion() {
+      const numInput = document.getElementById('questionNumber');
+      saveQuestion(true); // Keçid edərkən avtomatik yadda saxlama
+      
+      let currentNum = parseInt(numInput.value);
+      if (currentNum < 100) {
+        currentNum++;
+        numInput.value = currentNum;
+        loadQuestionData(currentNum);
+      }
+    }
+
+    function prevQuestion() {
+      const numInput = document.getElementById('questionNumber');
+      saveQuestion(true); // Keçid edərkən avtomatik yadda saxlama
+      
+      let currentNum = parseInt(numInput.value);
+      if (currentNum > 1) {
+        currentNum--;
+        numInput.value = currentNum;
+        loadQuestionData(currentNum);
+      }
     }
   </script>
 </body>
 </html>
+
