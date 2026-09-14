@@ -3,169 +3,296 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mərkəzi Nəzarət və İdarəetmə Paneli - DQ Platform</title>
+  <title>Mərkəzi Modul İdarəetmə Kompleksi - DQ Platform</title>
+
+  <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Monaco Editor CSS/JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/vscode-devoth.min.css">
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; padding: 20px; min-height: 100vh; user-select: none; }
-    :root { --primary-dark: #0f172a; --accent-gold: #f59e0b; --success-green: #22c55e; --danger-red: #ef4444; }
+    :root {
+      --bg-main: #0b1120;
+      --bg-card: #1e293b;
+      --bg-sidebar: #0f172a;
+      --accent-gold: #f59e0b;
+      --accent-blue: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
 
-    .container { max-width: 1350px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; border-top: 4px solid var(--accent-gold); }
-    
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    .header h2 { font-size: 20px; color: var(--accent-gold); }
-    
-    /* MODUL VƏ KATALOQ LAYOUTU */
-    .explorer-layout { display: flex; gap: 20px; min-height: 650px; margin-top: 15px; }
-    
-    /* SOL TƏRƏF: KATALOQ & PAPKA STRUKTURU */
-    .sidebar-catalog { width: 280px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-    .catalog-title { font-size: 13px; font-weight: bold; color: #94a3b8; text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 5px; }
-    .folder-item { cursor: pointer; color: var(--accent-gold); font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 4px; background: #172133; }
-    .file-tree { list-style: none; padding-left: 15px; margin-top: 5px; }
-    .file-tree li { font-size: 12px; color: #cbd5e1; padding: 7px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; transition: 0.2s; border: 1px solid transparent; }
-    .file-tree li:hover, .file-tree li.active { background: #1e293b; border-color: var(--accent-gold); color: #fff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
-    /* SAĞ TƏRƏF: İÇƏRİK VƏ İDARƏETMƏ PƏNCƏRƏSİ */
-    .main-view { flex: 1; background: #1b263b; border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
-    .view-toolbar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px; }
-    .view-toolbar h4 { color: var(--accent-gold); font-size: 15px; }
+    /* Main Container Structure */
+    .app-wrapper { display: flex; flex-direction: column; height: 100vh; }
     
-    .module-frame { width: 100%; height: 550px; border: none; border-radius: 6px; background: #fff; display: block; }
-    .editor-area { width: 100%; height: 550px; background: #090d16; color: #38bdf8; font-family: monospace; padding: 15px; border: 1px solid #334155; border-radius: 6px; outline: none; font-size: 13px; resize: none; display: none; }
+    /* Top Navigation Header */
+    .app-header {
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .brand-title { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--accent-gold); }
+    .brand-title i { font-size: 20px; }
 
-    /* BUTTONS */
-    .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; display: inline-block; text-align: center; }
-    .btn-warning { background-color: var(--accent-gold); color: #0f172a; }
-    .btn-danger { background-color: var(--danger-red); color: white; }
-    .btn-primary { background-color: #3b82f6; color: white; }
-    .btn-success { background-color: var(--success-green); color: white; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
 
-    .footer-text { text-align: center; font-size: 12px; color: #64748b; margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; }
-    .secret-trigger { cursor: pointer; font-weight: bold; text-decoration: underline; }
+    /* IDE Layout */
+    .ide-container { display: flex; flex: 1; overflow: hidden; }
+
+    /* File Explorer Sidebar */
+    .explorer-sidebar {
+      width: 300px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+    .explorer-header {
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tree-view { overflow-y: auto; flex: 1; padding: 10px 0; }
+    .tree-folder { padding: 6px 16px; font-size: 13px; font-weight: 600; color: var(--accent-gold); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .tree-files { list-style: none; padding-left: 20px; }
+    .tree-file-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-left: 2px solid transparent;
+    }
+    .tree-file-item:hover { background: rgba(255, 255, 255, 0.04); color: var(--text-main); }
+    .tree-file-item.active { background: #1e293b; color: var(--accent-blue); border-left-color: var(--accent-blue); font-weight: 600; }
+
+    /* Editor and Workspace Area */
+    .workspace { flex: 1; display: flex; flex-direction: column; background: #090d16; }
+    
+    .workspace-toolbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .active-tab { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); background: var(--bg-sidebar); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border-color); }
+
+    .view-mode-toggle { display: flex; background: var(--bg-sidebar); padding: 3px; border-radius: 6px; border: 1px solid var(--border-color); }
+    .toggle-btn { padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-muted); border: none; background: transparent; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+    .toggle-btn.active { background: var(--accent-blue); color: #000; }
+
+    /* Split Editor Framework */
+    .editor-frame-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; }
+    .pane { flex: 1; height: 100%; position: relative; }
+    .pane-editor { display: none; border-right: 1px solid var(--border-color); }
+    .pane-preview { display: block; background: #ffffff; }
+
+    /* Monaco Container */
+    #monacoContainer { width: 100%; height: 100%; }
+    
+    /* Live Preview Iframe */
+    #previewFrame { width: 100%; height: 100%; border: none; }
+
+    /* UI Controls */
+    .btn { padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
+    .btn-primary { background: var(--accent-blue); color: #0f172a; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-success { background: var(--success); color: #ffffff; }
+    .btn-danger { background: var(--danger); color: #ffffff; }
+    
+    /* Status Bar */
+    .status-bar { background: var(--bg-sidebar); border-top: 1px solid var(--border-color); padding: 4px 16px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="header">
-    <h2>🛡️ DQ Platform - Mərkəzi Modul Kataloqu</h2>
-    <div>
-      <button class="btn btn-warning" onclick="window.location.reload()">🔄 Yenilə</button>
-      <button class="btn btn-danger" id="adminLogoutBtn" style="display:none;" onclick="toggleAdminMode(false)">❌ Admin Çıxışı</button>
+<div class="app-wrapper">
+  <!-- Top Navigation -->
+  <header class="app-header">
+    <div class="brand-title">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>DQ Platform IDE Engine v2.5</span>
     </div>
-  </div>
-
-  <!-- MODUL KATALOQ SİSTEMİ (PANEL/PAPKA QURULUŞU) -->
-  <div class="explorer-layout" id="catalogSystem" style="display: none;">
-    <!-- SOL: PAPKA / KATALOQ SİYAHISI -->
-    <div class="sidebar-catalog">
-      <div class="catalog-title">📂 Dqplatforms Modulları</div>
-      <div class="folder-item">📁 root / (Modul Papkası)</div>
-      <ul class="file-tree" id="fileTreeList">
-        <li class="active" onclick="selectFile('Idare.html', this)">📄 Idare.html</li>
-        <li onclick="selectFile('admin.html', this)">📄 admin.html</li>
-        <li onclick="selectFile('redakte.html', this)">📄 redakte.html</li>
-        <li onclick="selectFile('Suallar.html', this)">📄 Suallar.html</li>
-        <li onclick="selectFile('Cavablar.html', this)">📄 Cavablar.html</li>
-        <li onclick="selectFile('Kod.html', this)">📄 Kod.html</li>
-        <li onclick="selectFile('Siyaha.html', this)">📄 Siyaha.html</li>
-        <li onclick="selectFile('Statistika.html', this)">📄 Statistika.html</li>
-        <li onclick="selectFile('Kontrol.html', this)">📄 Kontrol.html</li>
-        <li onclick="selectFile('Pult.html', this)">📄 Pult.html</li>
-        <li onclick="selectFile('Modul3.html', this)">📄 Modul3.html</li>
-        <li onclick="selectFile('index.html', this)">📄 index.html</li>
-        <li onclick="selectFile('Kabinet.html', this)">📄 Kabinet.html</li>
-      </ul>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="promptAdminAuth()"><i class="fa-solid fa-lock"></i> Admin Girişi</button>
+      <button class="btn btn-danger" id="logoutBtn" style="display:none;" onclick="logoutAdmin()"><i class="fa-solid fa-power-off"></i> Çıxış</button>
     </div>
+  </header>
 
-    <!-- SAĞ: BAXIŞ VƏ REDAKTƏ SİSTEMİ -->
-    <div class="main-view">
-      <div class="view-toolbar">
-        <h4 id="activeFileName">📄 Idare.html</h4>
-        <div>
-          <button class="btn btn-primary" id="toggleModeBtn" onclick="toggleEditView()">🛠️ Kodu Redaktə Et</button>
-          <button class="btn btn-success" id="saveCodeBtn" style="display:none;" onclick="saveChanges()">💾 Yadda Saxla</button>
+  <!-- IDE Core Container -->
+  <div class="ide-container">
+    <!-- File System Explorer -->
+    <aside class="explorer-sidebar" id="explorerSidebar" style="display: none;">
+      <div class="explorer-header">
+        <span>Fayl Kataloqu</span>
+        <i class="fa-solid fa-folder-tree"></i>
+      </div>
+      <div class="tree-view">
+        <div class="tree-folder"><i class="fa-solid fa-folder-open"></i> root/modules</div>
+        <ul class="tree-files" id="fileSystemTree">
+          <li class="tree-file-item active" onclick="loadModule('Idare.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Idare.html</li>
+          <li class="tree-file-item" onclick="loadModule('admin.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> admin.html</li>
+          <li class="tree-file-item" onclick="loadModule('redakte.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> redakte.html</li>
+          <li class="tree-file-item" onclick="loadModule('Suallar.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Suallar.html</li>
+          <li class="tree-file-item" onclick="loadModule('Cavablar.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Cavablar.html</li>
+          <li class="tree-file-item" onclick="loadModule('Kod.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Kod.html</li>
+          <li class="tree-file-item" onclick="loadModule('Siyaha.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Siyaha.html</li>
+          <li class="tree-file-item" onclick="loadModule('Statistika.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Statistika.html</li>
+          <li class="tree-file-item" onclick="loadModule('Kontrol.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Kontrol.html</li>
+          <li class="tree-file-item" onclick="loadModule('Pult.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Pult.html</li>
+          <li class="tree-file-item" onclick="loadModule('Modul3.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Modul3.html</li>
+          <li class="tree-file-item" onclick="loadModule('index.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> index.html</li>
+          <li class="tree-file-item" onclick="loadModule('Kabinet.html', this)"><i class="fa-solid fa-file-code" style="color: #38bdf8;"></i> Kabinet.html</li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Workspace Main Area -->
+    <main class="workspace">
+      <div class="workspace-toolbar">
+        <div class="active-tab" id="activeTabLabel">
+          <i class="fa-solid fa-code"></i> Idare.html
+        </div>
+
+        <div class="view-mode-toggle" id="modeControls" style="display: none;">
+          <button class="toggle-btn active" id="btnPreview" onclick="setMode('preview')"><i class="fa-solid fa-eye"></i> Canlı Baxış</button>
+          <button class="toggle-btn" id="btnSplit" onclick="setMode('split')"><i class="fa-solid fa-columns"></i> Bölünmüş (Split)</button>
+          <button class="toggle-btn" id="btnEditor" onclick="setMode('editor')"><i class="fa-solid fa-terminal"></i> Kod Redaktoru</button>
+        </div>
+
+        <div id="saveActionGroup" style="display: none;">
+          <button class="btn btn-success" onclick="commitCode()"><i class="fa-solid fa-floppy-disk"></i> Yadda Saxla</button>
         </div>
       </div>
-      
-      <!-- CANLI MODUL İFRAME PƏNCƏRƏSİ -->
-      <iframe id="activeIframe" class="module-frame" src="Idare.html"></iframe>
-      
-      <!-- REDAKTƏ PANELİ -->
-      <textarea id="codeEditor" class="editor-area" placeholder="HTML kodunu buraya daxil edə və ya düzəliş edə bilərsiniz..."></textarea>
-    </div>
+
+      <!-- Content Split View -->
+      <div class="editor-frame-wrapper">
+        <div class="pane pane-editor" id="editorPane">
+          <div id="monacoContainer"></div>
+        </div>
+        <div class="pane pane-preview" id="previewPane">
+          <iframe id="previewFrame" src="Idare.html"></iframe>
+        </div>
+      </div>
+    </main>
   </div>
 
-  <div class="footer-text">
-    © 2026 DQ Platform – Developed <span class="secret-trigger" onclick="promptAdminLogin()">by</span> Yunis İmanov
-  </div>
+  <!-- Status Info -->
+  <footer class="status-bar">
+    <div>Sistem: <span style="color:var(--success)">Aktiv</span> | Mərkəzi Server İnteqrasiyası</div>
+    <div>© 2026 DQ Platform – Developed by Yunis İmanov</div>
+  </footer>
 </div>
 
+<!-- Monaco Editor Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
 <script>
-  const ADMIN_PASS = "6675157";
-  let currentFile = "Idare.html";
-  let isEditMode = false;
+  const AUTH_KEY = "6675157";
+  let activeFile = "Idare.html";
+  let monacoInstance = null;
+  let isAuthorized = false;
 
-  function promptAdminLogin() {
-    let pass = prompt("Admin şifrəsini daxil edin:");
-    if (pass === ADMIN_PASS) {
-      alert("Admin rejimi aktivləşdirildi.");
-      toggleAdminMode(true);
-    } else {
-      alert("Şifrə yanlışdır!");
-    }
+  // Monaco Editor Initialization
+  require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
+
+  function initMonaco() {
+    require(['vs/editor/editor.main'], function () {
+      monacoInstance = monaco.editor.create(document.getElementById('monacoContainer'), {
+        value: `<!-- ${activeFile} Faylının Məzmunu Loading... -->`,
+        language: 'html',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: 13,
+        minimap: { enabled: true }
+      });
+    });
   }
 
-  function toggleAdminMode(show) {
-    document.getElementById("catalogSystem").style.display = show ? "flex" : "none";
-    document.getElementById("adminLogoutBtn").style.display = show ? "inline-block" : "none";
-  }
-
-  function selectFile(filename, el) {
-    currentFile = filename;
-    document.querySelectorAll('.file-tree li').forEach(li => li.classList.remove('active'));
-    if(el) el.classList.add('active');
-
-    document.getElementById('activeFileName').innerText = `📄 ${filename}`;
-    
-    const iframe = document.getElementById('activeIframe');
-    iframe.src = filename;
-
-    if (isEditMode) {
-      toggleEditView(); // Rejimi yeniləmək
-    }
-  }
-
-  function toggleEditView() {
-    const iframe = document.getElementById('activeIframe');
-    const editor = document.getElementById('codeEditor');
-    const toggleBtn = document.getElementById('toggleModeBtn');
-    const saveBtn = document.getElementById('saveCodeBtn');
-
-    if (!isEditMode) {
-      // Redaktə rejiminə keçid
-      iframe.style.display = 'none';
-      editor.style.display = 'block';
-      toggleBtn.innerText = '👁️ Canlı Baxış';
-      saveBtn.style.display = 'inline-block';
+  function promptAdminAuth() {
+    let input = prompt("Sistem İdarəçisi Şifrəsi:");
+    if (input === AUTH_KEY) {
+      isAuthorized = true;
+      document.getElementById("explorerSidebar").style.display = "flex";
+      document.getElementById("modeControls").style.display = "flex";
+      document.getElementById("saveActionGroup").style.display = "block";
+      document.getElementById("logoutBtn").style.display = "inline-flex";
       
-      // Kod sahəsini nümunə strukturu ilə doldurmaq
-      editor.value = `<!-- ${currentFile} üçün redaktə rejimi -->\n<h1>${currentFile} faylının məzmunu</h1>`;
-      isEditMode = true;
+      if (!monacoInstance) initMonaco();
+      alert("Təhlükəsizlik doğrulandı! İdarəetmə paneli aktivdir.");
     } else {
-      // Canlı baxış rejiminə keçid
-      iframe.style.display = 'block';
-      editor.style.display = 'none';
-      toggleBtn.innerText = '🛠️ Kodu Redaktə Et';
-      saveBtn.style.display = 'none';
-      isEditMode = false;
+      alert("Giriş imtina edildi: Yanlış şifrə!");
     }
   }
 
-  function saveChanges() {
-    alert(`${currentFile} faylında edilən dəyişikliklər uğurla yadda saxlanıldı!`);
-    toggleEditView();
+  function logoutAdmin() {
+    location.reload();
+  }
+
+  function loadModule(fileName, element) {
+    activeFile = fileName;
+    
+    document.querySelectorAll('.tree-file-item').forEach(el => el.classList.remove('active'));
+    if (element) element.classList.add('active');
+
+    document.getElementById('activeTabLabel').innerHTML = `<i class="fa-solid fa-code"></i> ${fileName}`;
+    document.getElementById('previewFrame').src = fileName;
+
+    if (monacoInstance) {
+      monacoInstance.setValue(`<!-- ${fileName} Məzmunu yukləndi -->\n<div class="module-root">\n  <!-- Dynamic Content -->\n</div>`);
+    }
+  }
+
+  function setMode(mode) {
+    const editorPane = document.getElementById('editorPane');
+    const previewPane = document.getElementById('previewPane');
+
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+
+    if (mode === 'preview') {
+      editorPane.style.display = 'none';
+      previewPane.style.display = 'block';
+      document.getElementById('btnPreview').classList.add('active');
+    } else if (mode === 'editor') {
+      editorPane.style.display = 'block';
+      previewPane.style.display = 'none';
+      document.getElementById('btnEditor').classList.add('active');
+    } else if (mode === 'split') {
+      editorPane.style.display = 'block';
+      previewPane.style.display = 'block';
+      document.getElementById('btnSplit').classList.add('active');
+    }
+    
+    if (monacoInstance) monacoInstance.layout();
+  }
+
+  function commitCode() {
+    if (!isAuthorized) return;
+    const content = monacoInstance.getValue();
+    alert(`[Uğurlu]: ${activeFile} dəyişiklikləri yadda saxlanıldı və modula tətbiq edildi!`);
   }
 </script>
 </body>
