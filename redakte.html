@@ -7,6 +7,7 @@
     <!-- FontAwesome və Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #f8fafc;
@@ -18,6 +19,8 @@
             --border-color: #e2e8f0;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
         }
 
         * {
@@ -59,6 +62,68 @@
             color: var(--text-muted);
             margin-top: 8px;
         }
+
+        /* Axtarış Və Filter Paneli */
+        .controls-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-secondary { background-color: #e2e8f0; color: var(--text-main); }
+        .btn-secondary:hover { background-color: #cbd5e1; }
 
         /* Grid Layout */
         .grid-container {
@@ -115,6 +180,12 @@
             margin-bottom: 16px;
         }
 
+        .card-footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .card-meta {
             font-size: 0.75rem;
             font-weight: 600;
@@ -122,8 +193,14 @@
             background-color: #f8fafc;
             padding: 4px 8px;
             border-radius: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success-color);
+            border-radius: 50%;
             display: inline-block;
-            align-self: flex-start;
         }
 
         /* Footer */
@@ -146,117 +223,201 @@
             <p>GitHub reposundakı bütün modul fayllarının mərkəzləşdirilmiş idarəetmə interfeysi.</p>
         </header>
 
+        <!-- Idarəetmə və Axtarış Zolağı -->
+        <div class="controls-panel">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Modul və ya fayl adı ilə axtarın...">
+            </div>
+            <div class="action-btns">
+                <button class="btn btn-secondary" onclick="window.location.reload()"><i class="fa-solid fa-rotate"></i> Yenilə</button>
+                <a href="https://github.com/DQ-Platform/Dqplatforms" target="_blank" class="btn btn-primary"><i class="fa-brands fa-github"></i> GitHub Repozitoriyası</a>
+            </div>
+        </div>
+
         <!-- Modul Kartları Grid -->
-        <main class="grid-container">
+        <main class="grid-container" id="cardsGrid">
+
+            <!-- Əsas İndeks Page -->
+            <a href="index.html" class="card" data-title="Əsas Səhifə İndeks" data-file="index.html">
+                <div>
+                    <div class="card-icon"><i class="fa-solid fa-house"></i></div>
+                    <div class="card-title">Əsas Navigation Səhifəsi</div>
+                    <div class="card-desc">İstifadəçilərin qarşılandığı ana interfeys və keçid marşrutları.</div>
+                </div>
+                <div class="card-footer-row">
+                    <div class="card-meta">index.html</div>
+                    <span class="status-dot" title="Aktiv Fayl"></span>
+                </div>
+            </a>
 
             <!-- Suallar Modulu -->
-            <a href="Suallar.html" class="card">
+            <a href="Suallar.html" class="card" data-title="Suallar Redaktoru" data-file="Suallar.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-file-pen"></i></div>
                     <div class="card-title">Suallar Redaktoru</div>
                     <div class="card-desc">Test variantlarını və sual bazasını əlavə edin, redaktə edin.</div>
                 </div>
-                <div class="card-meta">Suallar.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Suallar.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
-            <!-- Bütün Suallar Bazası -->
-            <a href="Suallar.html" class="card">
+            <!-- Məzmun Redaktə Modulu -->
+            <a href="redakte.html" class="card" data-title="Məzmun Redaktə Mərkəzi" data-file="redakte.html">
                 <div>
-                    <div class="card-icon"><i class="fa-solid fa-folder-open"></i></div>
-                    <div class="card-title">Bütün Suallara Baxış & Silmə</div>
-                    <div class="card-desc">Aktiv sualları cədvəl şəklində açın, cəld redaktə edin və ya silin.</div>
+                    <div class="card-icon"><i class="fa-solid fa-newspaper"></i></div>
+                    <div class="card-title">Məzmun Redaktə Paneli</div>
+                    <div class="card-desc">Platformadakı mətnlərin, fənlərin və xəbərlərin idarə edilməsi.</div>
                 </div>
-                <div class="card-meta">Suallar.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">redakte.html</div>
+                    <span class="status-dot"></span>
+                </div>
+            </a>
+
+            <!-- Modul Sınaq Sistemi (Modul.html) -->
+            <a href="modul.html" class="card" data-title="Modul İmtahan İcra Paneli" data-file="modul.html">
+                <div>
+                    <div class="card-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <div class="card-title">Modul İmtahan Paneli</div>
+                    <div class="card-desc">Mövzular üzrə blok modul sınaqlarının tələbələrə təqdimatı.</div>
+                </div>
+                <div class="card-footer-row">
+                    <div class="card-meta">modul.html</div>
+                    <span class="status-dot"></span>
+                </div>
+            </a>
+
+            <!-- Modul 3 Interfeysi -->
+            <a href="Modul3.html" class="card" data-title="Xüsusi Modul 3 Sınaq Bazas" data-file="Modul3.html">
+                <div>
+                    <div class="card-icon"><i class="fa-solid fa-cubes"></i></div>
+                    <div class="card-title">Modul 3 İmtahan Interfeysi</div>
+                    <div class="card-desc">Spesifik 3-cü modul imtahan bazası və fərdiləşdirilmiş suallar.</div>
+                </div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Modul3.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- İdarə & Ayarlar -->
-            <a href="İdare.html" class="card">
+            <a href="İdare.html" class="card" data-title="İştirakçı İcazələri" data-file="İdare.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
                     <div class="card-title">İştirakçı İcazələri</div>
                     <div class="card-desc">FIN kod icazələrini və tələbə siyahısını idarə edin.</div>
                 </div>
-                <div class="card-meta">İdare.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">İdare.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- Şəxsi Kabinet -->
-            <a href="Kabinet.html" class="card">
+            <a href="Kabinet.html" class="card" data-title="Şəxsi Kabinet" data-file="Kabinet.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-user-gear"></i></div>
                     <div class="card-title">Şəxsi Kabinet</div>
                     <div class="card-desc">İstifadəçi məlumatlarını və server statusunu yeniləyin.</div>
                 </div>
-                <div class="card-meta">Kabinet.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Kabinet.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- Kod Generatoru -->
-            <a href="Kod.html" class="card">
+            <a href="Kod.html" class="card" data-title="Kod Generatoru" data-file="Kod.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-key"></i></div>
                     <div class="card-title">Kod Generatoru</div>
                     <div class="card-desc">İmtahana giriş və aktivasiya kodları generasiya edin.</div>
                 </div>
-                <div class="card-meta">Kod.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Kod.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- Təhlükəsizlik Monitoringi -->
-            <a href="Kontrol.html" class="card">
+            <a href="Kontrol.html" class="card" data-title="Təhlükəsizlik Monitoringi" data-file="Kontrol.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
                     <div class="card-title">Təhlükəsizlik Monitoringi</div>
                     <div class="card-desc">Canlı imtahan sessiyalarına və anti-cheat sisteminə nəzarət edin.</div>
                 </div>
-                <div class="card-meta">Kontrol.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Kontrol.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- İdarəetmə Pultu -->
-            <a href="Pult.html" class="card">
+            <a href="Pult.html" class="card" data-title="İdarəetmə Pultu" data-file="Pult.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-gamepad"></i></div>
                     <div class="card-title">İdarəetmə Pultu</div>
                     <div class="card-desc">İmtahan vaxtlarını idarə edin və ya sessiyaları dayandırın.</div>
                 </div>
-                <div class="card-meta">Pult.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Pult.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- İştirakçılar Siyahısı -->
-            <a href="Siyaha.html" class="card">
+            <a href="Siyaha.html" class="card" data-title="İştirakçılar Siyahısı" data-file="Siyaha.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-users"></i></div>
                     <div class="card-title">İştirakçılar Siyahısı</div>
                     <div class="card-desc">İmtahan vermiş bütün iştirakçıların statusuna baxın.</div>
                 </div>
-                <div class="card-meta">Siyaha.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Siyaha.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- Statistika Modulu -->
-            <a href="Statistika.html" class="card">
+            <a href="Statistika.html" class="card" data-title="Statistika Modulu" data-file="Statistika.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
                     <div class="card-title">Statistika Modulu</div>
                     <div class="card-desc">Ümumi iştirakçı sayı və ortalama ballara baxın.</div>
                 </div>
-                <div class="card-meta">Statistika.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Statistika.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- Admin Paneli -->
-            <a href="admin.html" class="card">
+            <a href="admin.html" class="card" data-title="Əsas Admin Paneli" data-file="admin.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-user-shield"></i></div>
                     <div class="card-title">Əsas Admin Paneli</div>
                     <div class="card-desc">Ümumi sistem konfiqurasiyası və layout strukturu.</div>
                 </div>
-                <div class="card-meta">admin.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">admin.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
             <!-- Cavablar Və Nəticələr -->
-            <a href="Cavablar.html" class="card">
+            <a href="Cavablar.html" class="card" data-title="Cavablar Va Nəticələr" data-file="Cavablar.html">
                 <div>
                     <div class="card-icon"><i class="fa-solid fa-square-check"></i></div>
                     <div class="card-title">Cavablar Va Nəticələr</div>
                     <div class="card-desc">Tələbələrin doğru və yanlış cavab cədvəli.</div>
                 </div>
-                <div class="card-meta">Cavablar.html</div>
+                <div class="card-footer-row">
+                    <div class="card-meta">Cavablar.html</div>
+                    <span class="status-dot"></span>
+                </div>
             </a>
 
         </main>
@@ -267,6 +428,27 @@
         </footer>
     </div>
 
+    <script>
+        // Supabase Konfiqurasiyası
+        const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Dinamik Kart Axtarış Funksiyası
+        function filterCards() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.card');
+
+            cards.forEach(card => {
+                const title = card.getAttribute('data-title').toLowerCase();
+                const file = card.getAttribute('data-file').toLowerCase();
+                if (title.includes(input) || file.includes(input)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+    </script>
 </body>
 </html>
-
