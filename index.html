@@ -78,7 +78,6 @@
         .toggle-details-btn:hover { background: #0369a1; }
         .review-mode-banner { background: #fef3c7; color: #92400e; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin-bottom: 15px; }
 
-        /* SUALLAR REDAKTORU MODULU STİLLƏRİ */
         .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
         .breadcrumb-nav span { color: #007bff; cursor: pointer; font-weight: 600; }
         .breadcrumb-nav span:hover { text-decoration: underline; }
@@ -198,7 +197,7 @@
                 <h3>🔑 Mərkəzi Admin Və İdarəetmə Paneli</h3>
             </div>
 
-            <!-- ADMİN İDARƏETMƏ NAVİQASİYASI (ƏLAVƏ EDİLƏN BÜTÜN FAYLLAR MƏRKƏZİLƏŞDİRİLDİ) -->
+            <!-- ADMİN İDARƏETMƏ NAVİQASİYASI -->
             <div class="admin-nav-grid">
                 <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
@@ -209,6 +208,7 @@
                 <div class="admin-nav-card" onclick="switchAdminTab('siyahi')"><span class="icon">📋</span> İştirakçılar (Siyahı)</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('statistika')"><span class="icon">📊</span> Statistika</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('cavablar')"><span class="icon">📑</span> Cavablar</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Modulu</div>
             </div>
 
             <!-- MODUL 1: SUALLAR REDAKTORU MODULU -->
@@ -474,6 +474,50 @@
                         </thead>
                         <tbody id="results-table-body"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- MODUL 10: REDAKTƏ MODULU -->
+            <div id="mod-redakte" class="admin-module-block">
+                <h4>✏️ Sınaq Və Məzmun Redaktə Qovluğu</h4>
+                <p>Bütün sınaq fayllarının, mövzuların və baza məlumatlarının birbaşa mərkəzləşdirilmiş idarəsi.</p>
+                
+                <div class="folder-grid" style="margin-top: 15px;">
+                    <div class="folder-card" onclick="switchAdminTab('suallar')">
+                        <div class="folder-icon">📝</div>
+                        <div class="folder-title">Sual Bazasını Redaktə Et</div>
+                        <div class="folder-desc">Mövcud sualların variantlarını, cavablarını və mətnlərini yeniləyin.</div>
+                    </div>
+                    <div class="folder-card" onclick="fetchAndListQuestionsForEdit()">
+                        <div class="folder-icon">📂</div>
+                        <div class="folder-title">Bütün Suallara Baxış & Silmə</div>
+                        <div class="folder-desc">Bazadakı aktiv sualların tam siyahısını açın və birbaşa redaktə edin.</div>
+                    </div>
+                    <div class="folder-card" onclick="switchAdminTab('idare')">
+                        <div class="folder-icon">👤</div>
+                        <div class="folder-title">İştirakçı Siyahısını Redaktə Et</div>
+                        <div class="folder-desc">Giriş hüququ olan FİN kodları və tələbə məlumatlarını dəyişdirin.</div>
+                    </div>
+                </div>
+
+                <div id="edit-questions-list-area" style="margin-top: 20px; display: none;">
+                    <h4>📋 Bazadakı Sualların Redaktə Siyahısı</h4>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Sınaq №</th>
+                                    <th>Sual №</th>
+                                    <th>Fənn</th>
+                                    <th>Sual Mətni</th>
+                                    <th>Əməliyyat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="edit-questions-tbody">
+                                <tr><td colspan="5">Yüklənir...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -944,9 +988,7 @@
             document.getElementById("generated-code-display").value = res;
         }
 
-        /* ----------------------------------------------------
-           SUALLARIN REDAKTƏSİ MODULUNUN JAVASCRIPT MƏNTİQİ 
-        ---------------------------------------------------- */
+        /* SUALLARIN REDAKTƏSİ MODULUNUN JAVASCRIPT MƏNTİQİ */
         let currentExamRedaktor = "1";
         let currentCategoryRedaktor = "BA";
         const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H"];
@@ -1173,6 +1215,64 @@
                 loadQuestionData(currentNum);
             }
         }
+
+        /* REDAKTƏ MODULUNUN ƏLAVƏ İŞLƏK FUNKSİYALARI */
+        async function fetchAndListQuestionsForEdit() {
+            const listArea = document.getElementById('edit-questions-list-area');
+            const tbody = document.getElementById('edit-questions-tbody');
+            listArea.style.display = 'block';
+            tbody.innerHTML = '<tr><td colspan="5">Yüklənir...</td></tr>';
+
+            const { data, error } = await _supabase
+                .from('exam_questions')
+                .select('*')
+                .order('exam_id', { ascending: true })
+                .order('q_number', { ascending: true });
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">Bazada heç bir sual tapılmadı.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            data.forEach(q => {
+                let shortText = q.question.length > 50 ? q.question.substring(0, 50) + "..." : q.question;
+                html += `
+                    <tr>
+                        <td><b>Sınaq ${q.exam_id}</b></td>
+                        <td>Sual ${q.q_number}</td>
+                        <td>${q.subject || '-'}</td>
+                        <td style="text-align: left;">${shortText}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="quickEditQuestion('${q.exam_id}', '${q.subject}', ${q.q_number})">✏️ Redaktə Et</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteQuestionByDbId(${q.id})">🗑️ Sil</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function quickEditQuestion(examId, subject, qNum) {
+            switchAdminTab('suallar');
+            selectExam('Sınaq ' + examId);
+            openEditor(subject);
+            document.getElementById('questionNumber').value = qNum;
+            loadQuestionData(qNum);
+        }
+
+        async function deleteQuestionByDbId(id) {
+            if (confirm("Bu sualı bazadan həmişəlik silmək istədiyinizə əminsiniz?")) {
+                const { error } = await _supabase.from('exam_questions').delete().eq('id', id);
+                if (error) {
+                    alert("Silinərkən xəta baş verdi: " + error.message);
+                } else {
+                    alert("Sual silindi!");
+                    fetchAndListQuestionsForEdit();
+                }
+            }
+        }
     </script>
 </body>
 </html>
+
