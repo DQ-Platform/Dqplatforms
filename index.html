@@ -4,249 +4,448 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DQ Platform - Mərkəzi İdarəetmə və Sınaq Sistemi</title>
-    <!-- Supabase SDK & FontAwesome -->
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root { 
             --primary-dark: #0f172a; 
+            --primary-hover: #1e293b;
             --accent-gold: #d4af37; 
             --accent-blue: #3b82f6;
             --success-green: #10b981; 
             --danger-red: #ef4444; 
             --bg-color: #f8fafc;
             --border-color: #cbd5e1;
+            --text-main: #334155;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 20px rgba(15, 23, 42, 0.08);
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: #334155; padding: 20px 10px; user-select: none; }
-        .container { max-width: 1150px; margin: 0 auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); border-top: 4px solid var(--accent-gold); }
-        h2, h3, h4 { color: var(--primary-dark); text-align: center; }
         
-        /* Ekran Giriş Və Seçim Area */
-        #login-screen, #waiting-screen, #exam-select-screen { text-align: center; padding: 20px; }
-        .code-input, .select-control { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border: 2px solid var(--border-color); border-radius: 6px; margin-bottom: 15px; outline: none; text-align: center; }
-        .code-input:focus, .select-control:focus { border-color: var(--accent-gold); }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            padding: 20px 10px; 
+            user-select: none;
+            line-height: 1.5;
+        }
+
+        .container { 
+            max-width: 1150px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            padding: 25px; 
+            border-radius: var(--radius-lg); 
+            box-shadow: var(--shadow-md); 
+            border-top: 4px solid var(--accent-gold); 
+        }
+
+        h2, h3, h4 { color: var(--primary-dark); text-align: center; font-weight: 700; }
+        
+        /* Layout Screens */
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .mt-1 { margin-top: 5px; }
+        .mt-2 { margin-top: 10px; }
+        .mt-3 { margin-top: 15px; }
+        .mt-4 { margin-top: 20px; }
+        .mb-2 { margin-bottom: 10px; }
+        .mb-3 { margin-bottom: 15px; }
+        .mb-4 { margin-bottom: 20px; }
+        
+        /* Inputs & Controls */
+        .code-input, .select-control, .form-control { 
+            padding: 12px; 
+            font-size: 15px; 
+            border: 2px solid var(--border-color); 
+            border-radius: var(--radius-sm); 
+            outline: none; 
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .code-input, .select-control {
+            max-width: 400px; 
+            margin: 0 auto 15px auto; 
+            display: block;
+            text-align: center;
+        }
+
+        .code-input:focus, .select-control:focus, .form-control:focus { 
+            border-color: var(--accent-gold); 
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        }
+        
         .token-field { letter-spacing: 2px; text-transform: uppercase; }
-        
-        /* Düymə Stilləri */
-        .btn { background-color: var(--primary-dark); color: var(--accent-gold); border: none; padding: 12px 22px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; display: inline-block; text-decoration: none; text-align: center; }
-        .btn:hover { background-color: #1e293b; opacity: 0.95; }
+
+        /* Buttons Framework */
+        .btn { 
+            background-color: var(--primary-dark); 
+            color: var(--accent-gold); 
+            border: none; 
+            padding: 12px 22px; 
+            font-size: 15px; 
+            font-weight: 600; 
+            border-radius: var(--radius-sm); 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none; 
+            text-align: center; 
+        }
+
+        .btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
         .btn-danger { background-color: var(--danger-red); color: white; }
         .btn-secondary { background-color: #64748b; color: white; }
         .btn-success { background-color: var(--success-green); color: white; }
         .btn-dark { background-color: #1d3557; color: white; }
         .btn-primary { background-color: var(--accent-blue); color: white; }
         .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 4px; }
+        .btn-block { width: 100%; }
+
+        /* Exam Interface */
+        .exam-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: var(--primary-dark); 
+            color: #ffffff; 
+            padding: 14px 20px; 
+            border-radius: var(--radius-sm); 
+        }
+
+        .timer { font-size: 20px; font-weight: 700; color: var(--accent-gold); font-family: monospace; }
         
-        /* İmtahan Ekranı */
-        #exam-screen { display: none; }
-        .exam-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary-dark); color: #ffffff; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; }
-        .timer { font-size: 18px; font-weight: bold; color: var(--accent-gold); }
         .exam-layout { display: flex; gap: 20px; position: relative; }
-        .questions-area { flex: 3; background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 350px; display: flex; flex-direction: column; justify-content: space-between; }
-        .answer-card-sidebar { flex: 1; background: #f1f5f9; padding: 15px; border-radius: 8px; height: fit-content; border: 1px solid var(--border-color); }
+        
+        .questions-area { 
+            flex: 3; 
+            background: #ffffff; 
+            padding: 24px; 
+            border: 1px solid var(--border-color); 
+            border-radius: var(--radius-md); 
+            min-height: 380px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+        }
+
+        .answer-card-sidebar { 
+            flex: 1; 
+            background: #f1f5f9; 
+            padding: 15px; 
+            border-radius: var(--radius-md); 
+            height: fit-content; 
+            border: 1px solid var(--border-color); 
+        }
+
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .sidebar-header h4 { margin: 0; font-size: 15px; }
-        .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-height: 400px; overflow-y: auto; }
-        .nav-box { padding: 6px 0; text-align: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
+
+        .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 400px; overflow-y: auto; padding-right: 2px; }
+        
+        .nav-box { 
+            padding: 8px 0; 
+            text-align: center; 
+            background: #ffffff; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            position: relative; 
+            transition: all 0.15s;
+        }
+
         .nav-box.answered { background-color: #d1fae5; border-color: var(--success-green); color: #065f46; }
         .nav-box.current { border: 2px solid var(--primary-dark); background-color: #e2e8f0; }
-        .nav-box.flagged::before { content: ''; position: absolute; top: 2px; left: 3px; width: 6px; height: 6px; background-color: var(--danger-red); border-radius: 50%; }
-        .question-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .question-title { font-weight: 600; color: var(--primary-dark); font-size: 15px; line-height: 1.5; white-space: pre-line; }
-        .flag-label { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; color: #d97706; font-weight: 600; }
-        .options label { display: block; padding: 10px 14px; margin: 8px 0; background: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .nav-box.flagged::before { 
+            content: ''; 
+            position: absolute; 
+            top: 3px; 
+            left: 3px; 
+            width: 6px; 
+            height: 6px; 
+            background-color: var(--danger-red); 
+            border-radius: 50%; 
+        }
+
+        .question-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
+        .question-title { font-weight: 600; color: var(--primary-dark); font-size: 16px; line-height: 1.5; white-space: pre-line; }
+        .flag-label { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; color: #d97706; font-weight: 600; flex-shrink: 0; }
+
+        .options label { 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px; 
+            margin: 10px 0; 
+            background: #f8fafc; 
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); 
+            cursor: pointer; 
+            font-size: 14px; 
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
         .options label:hover { background: #e2e8f0; }
-        .exam-navigation-buttons { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        .options input[type="radio"] { width: 16px; height: 16px; accent-color: var(--primary-dark); }
+
+        .exam-navigation-buttons { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 18px; margin-top: 20px; }
+
+        /* Report / Results */
+        .dim-report-title { text-align: center; font-weight: 700; font-size: 16px; color: #000; }
+        .dim-student-name { text-align: center; font-weight: 700; font-size: 18px; color: #000; text-transform: uppercase; margin-bottom: 15px; }
         
-        /* Nəticə Ekranı */
-        #result-screen { display: none; font-size: 13px; }
-        .dim-report-title { text-align: center; font-weight: bold; font-size: 15px; color: #000; margin-bottom: 5px; }
-        .dim-student-name { text-align: center; font-weight: bold; font-size: 16px; color: #000; margin-bottom: 20px; text-transform: uppercase; }
-        .final-score-box { text-align: center; border: 2px solid #b91c1c; padding: 15px; margin-top: 25px; font-size: 18px; font-weight: bold; color: #b91c1c; background: #fef2f2; border-radius: 6px; }
-        
-        /* Admin Panel */
-        #admin-panel { display: none; margin-top: 20px; border-top: 2px solid var(--accent-gold); padding-top: 20px; }
-        .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 20px; }
-        .admin-nav-card { background: var(--primary-dark); color: var(--accent-gold); padding: 10px 6px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 11px; border: 1px solid #334155; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
-        .admin-nav-card:hover { background: #1e293b; border-color: var(--accent-gold); transform: translateY(-2px); }
-        .admin-nav-card span.icon { font-size: 16px; }
-        
+        .final-score-box { 
+            text-align: center; 
+            border: 2px solid #b91c1c; 
+            padding: 20px; 
+            margin-top: 25px; 
+            font-size: 18px; 
+            font-weight: 700; 
+            color: #b91c1c; 
+            background: #fef2f2; 
+            border-radius: var(--radius-md); 
+        }
+
+        /* Admin Dashboard Framework */
+        .admin-nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .admin-nav-card { 
+            background: var(--primary-dark); 
+            color: var(--accent-gold); 
+            padding: 12px 8px; 
+            border-radius: var(--radius-md); 
+            text-align: center; 
+            font-weight: 600; 
+            font-size: 12px; 
+            border: 1px solid #334155; 
+            transition: all 0.2s; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 6px; 
+            cursor: pointer; 
+        }
+
+        .admin-nav-card:hover { background: var(--primary-hover); border-color: var(--accent-gold); transform: translateY(-2px); }
+        .admin-nav-card .icon { font-size: 18px; }
+
         .nav-header-bar { display: flex; gap: 10px; margin-bottom: 15px; justify-content: center; flex-wrap: wrap; }
-        .nav-header-bar .btn { padding: 8px 15px; font-size: 13px; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #f8fafc; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: 8px; text-align: center; }
-        .stat-card h5 { margin: 0; color: #64748b; font-size: 13px; }
-        .stat-card .value { font-size: 22px; font-weight: bold; color: var(--primary-dark); margin-top: 5px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .stat-card { background: #f8fafc; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: var(--radius-md); text-align: center; }
+        .stat-card h5 { margin: 0; color: #64748b; font-size: 13px; font-weight: 600; }
+        .stat-card .value { font-size: 24px; font-weight: 700; color: var(--primary-dark); margin-top: 5px; }
+
         .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        
-        .footer { text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-        .footer-text { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
-        
-        .secret-admin-trigger { cursor: pointer; text-decoration: none; color: inherit; }
-        .error-msg { color: var(--danger-red); font-weight: bold; }
-        
-        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; margin-top: 10px; }
-        th, td { padding: 10px; border: 1px solid var(--border-color); }
-        th { background: var(--primary-dark); color: white; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
 
-        .review-mode-banner { background: #fef3c7; color: #92400e; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin-bottom: 15px; }
+        .footer { text-align: center; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+        .footer-text { color: var(--primary-dark); font-weight: 600; font-size: 14px; }
+        .secret-trigger { cursor: pointer; text-decoration: none; color: inherit; }
 
-        .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        /* Tables UI */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
+        th, td { padding: 12px 10px; border: 1px solid var(--border-color); }
+        th { background: var(--primary-dark); color: white; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+
+        .review-mode-banner { background: #fef3c7; color: #92400e; padding: 10px; text-align: center; font-weight: 700; border-radius: var(--radius-sm); margin-bottom: 15px; }
+
+        /* Directory Explorer UI */
+        .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 20px; border: 1px solid var(--border-color); }
         .breadcrumb-nav span { color: var(--accent-blue); cursor: pointer; font-weight: 600; }
         .breadcrumb-nav span:hover { text-decoration: underline; }
         .breadcrumb-nav .active { color: #6c757d; cursor: default; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .folder-card { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 8px; }
-        .folder-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); border-color: var(--accent-gold); }
-        .folder-icon { width: 42px; height: 42px; background: #eef2ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .folder-card { background: #fff; padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 8px; }
+        .folder-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--accent-gold); }
+        .folder-icon { width: 42px; height: 42px; background: #eef2ff; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .folder-title { font-size: 14px; font-weight: 700; color: #1e293b; }
         .folder-desc { font-size: 11px; color: #64748b; }
-        .editor-section { display: none; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 15px; }
-        .option-row { display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px; }
-        .option-label { font-weight: bold; width: 25px; }
+
+        .editor-section { background: #fff; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px; }
+        .option-row { display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: var(--radius-sm); border: 1px solid #e9ecef; margin-bottom: 10px; }
+        .option-label { font-weight: 700; width: 25px; }
         .option-input { flex: 1; }
-        .correct-radio { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: #2b9348; }
-        .open-answer-box { background: #f0f4f8; border: 1px solid #d0d7de; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: none; }
+        .correct-radio { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--success-green); }
+
+        .open-answer-box { background: #f0f4f8; border: 1px solid #d0d7de; padding: 15px; border-radius: var(--radius-sm); margin-bottom: 15px; display: none; }
         .num-selector { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
         .num-checkbox { display: none; }
-        .num-label { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 2px solid var(--accent-blue); background: #fff; color: var(--accent-blue); font-weight: 700; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .num-label { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 2px solid var(--accent-blue); background: #fff; color: var(--accent-blue); font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; transition: 0.2s; }
         .num-checkbox:checked + .num-label { background: var(--accent-blue); color: #fff; }
+        
         .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
-        .left-buttons { display: flex; gap: 10px; }
+        .admin-module-block { display: none; background: #ffffff; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px; }
+        
+        /* Modal & Toast Component Overlay */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-content { background: #fff; padding: 25px; border-radius: var(--radius-lg); width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1100; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--primary-dark); color: white; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 14px; border-left: 4px solid var(--accent-gold); box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s forwards; }
+        
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
-        .admin-module-block { display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            .exam-layout { flex-direction: column-reverse; }
+            .answer-card-sidebar { width: 100%; }
+            .grid-nav { grid-template-columns: repeat(10, 1fr); }
+            .question-top { flex-direction: column; }
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="container" id="top">
-        <!-- GİRİŞ HİSSƏSİ -->
-        <div id="login-screen">
+    <div class="container" id="app-root">
+        
+        <!-- SECTION 1: AUTHENTICATION SCREEN -->
+        <section id="screen-login" class="screen active text-center">
             <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
-            <p style="margin: 10px 0 20px 0;">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
-            <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız"><br>
-            <input type="text" id="user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7"><br>
-            <button class="btn" onclick="proceedToExamSelect()">Davam Et</button>
-            <p id="error-msg" class="error-msg" style="margin-top: 10px;"></p>
-        </div>
+            <p class="mt-2 mb-4">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
+            <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız" autocomplete="off">
+            <input type="text" id="user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7" autocomplete="off">
+            <button class="btn" id="btn-proceed-login">Davam Et</button>
+            <p id="login-feedback" class="mt-2 font-weight-bold"></p>
+        </section>
 
-        <!-- SINAQ SEÇİM EKRANI -->
-        <div id="exam-select-screen" style="display: none;">
+        <!-- SECTION 2: EXAM SELECTION SCREEN -->
+        <section id="screen-exam-select" class="screen text-center">
             <h2>📝 Sınaq Seçimi</h2>
-            <p style="margin: 10px 0 15px 0;">Zəhmət olmasa işləmək istədiyiniz sınağı seçin:</p>
+            <p class="mt-2 mb-3">Zəhmət olmasa işləmək istədiyiniz sınağı seçin:</p>
             <select id="exam-selector" class="select-control">
                 <option value="1">Sınaq 1</option>
                 <option value="2">Sınaq 2</option>
                 <option value="3">Sınaq 3</option>
                 <option value="4">Sınaq 4</option>
                 <option value="5">Sınaq 5</option>
-            </select><br>
-            <button class="btn" onclick="startExamSession()">İmtahana Başla</button>
-            <br><br>
-            <button class="btn btn-secondary btn-sm" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
-        </div>
+            </select>
+            <button class="btn" id="btn-start-exam">İmtahana Başla</button>
+            <div class="mt-4">
+                <button class="btn btn-secondary btn-sm" data-action="go-home">🏠 Əsas Səhifəyə Qayıt</button>
+            </div>
+        </section>
 
-        <!-- SINAQ HİSSƏSİ -->
-        <div id="exam-screen">
+        <!-- SECTION 3: EXAM DASHBOARD SCREEN -->
+        <section id="screen-exam" class="screen">
             <div id="review-banner" class="review-mode-banner" style="display: none;">
                 🔍 Cavablara Baxış Rejimi (Düzəliş etmək mümkün deyil)
             </div>
-            <div class="exam-header">
+            
+            <div class="exam-header mb-4">
                 <span id="active-exam-title">Dövlət Qulluğu Vəzifələri Üzrə Sınaq</span>
-                <span class="timer" id="timer">03:00:00</span>
+                <span class="timer" id="timer-display">03:00:00</span>
             </div>
 
             <div class="exam-layout">
                 <div class="questions-area">
                     <div id="single-question-container"></div>
-                    <div class="exam-navigation-buttons" id="exam-nav-btns">
-                        <button class="btn btn-secondary" onclick="prevQuestionExam()">Əvvəlki</button>
-                        <button class="btn btn-danger" id="finish-btn" onclick="confirmFinish()">Testi Bitir</button>
-                        <button class="btn" onclick="nextQuestionExam()">Növbəti</button>
+                    
+                    <div class="exam-navigation-buttons">
+                        <button class="btn btn-secondary" id="btn-prev-question">Əvvəlki</button>
+                        <button class="btn btn-danger" id="btn-finish-exam">Testi Bitir</button>
+                        <button class="btn" id="btn-next-question">Növbəti</button>
                     </div>
-                    <div id="review-home-btn" style="display: none; margin-top: 15px; text-align: center;">
-                        <button class="btn btn-success" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
+                    
+                    <div id="review-home-wrapper" class="text-center mt-3" style="display: none;">
+                        <button class="btn btn-success" data-action="go-home">🏠 Əsas Səhifəyə Qayıt</button>
                     </div>
                 </div>
 
-                <div class="answer-card-sidebar" id="sidebar-container">
+                <div class="answer-card-sidebar">
                     <div class="sidebar-header">
                         <h4>Cavab Kartı</h4>
                     </div>
                     <div class="grid-nav" id="grid-nav-container"></div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- NƏTİCƏ EKRANI -->
-        <div id="result-screen">
+        <!-- SECTION 4: EXAM RESULT SUMMARY -->
+        <section id="screen-result" class="screen">
             <div class="dim-report-title">Dövlət qulluğu vəzifələri üzrə test imtahanının nəticələri</div>
-            <div class="dim-student-name" id="res-name"></div>
+            <div class="dim-student-name mt-2" id="res-name"></div>
 
-            <div style="margin-top: 20px; font-weight: bold; font-size: 14px; line-height: 1.6; text-align: center;">
-                Doğru: <span id="res-total-correct" style="color: green;">0</span> | Yanlış: <span id="res-total-wrong" style="color: red;">0</span> | Cavabsız: <span id="res-total-blank">0</span>
+            <div class="text-center mt-3 font-weight-bold" style="font-size: 15px;">
+                Doğru: <span id="res-total-correct" style="color: var(--success-green);">0</span> | 
+                Yanlış: <span id="res-total-wrong" style="color: var(--danger-red);">0</span> | 
+                Cavabsız: <span id="res-total-blank">0</span>
             </div>
 
             <div class="final-score-box">
                 YEKUN BAL: <span id="res-total-score">0</span><br>
-                <span id="res-bb-group" style="font-size: 15px; color: #0f172a; margin-top: 5px; display: inline-block;"></span>
+                <span id="res-bb-group" style="font-size: 15px; color: var(--primary-dark); margin-top: 5px; display: inline-block;"></span>
             </div>
 
-            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn" style="flex: 1;" onclick="backToReviewQuestions()">🔍 Suallara Baxış</button>
-                <button class="btn btn-success" style="flex: 1;" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
+            <div class="mt-4" style="display: flex; gap: 10px;">
+                <button class="btn" style="flex: 1;" id="btn-review-answers">🔍 Suallara Baxış</button>
+                <button class="btn btn-success" style="flex: 1;" data-action="go-home">🏠 Əsas Səhifəyə Qayıt</button>
             </div>
-        </div>
+        </section>
 
-        <!-- ADMİN PANELİ VƏ BÜTÜN MODULLAR -->
-        <div id="admin-panel">
+        <!-- SECTION 5: CENTRAL ADMINISTRATIVE PANEL -->
+        <section id="screen-admin" class="screen">
             <div class="nav-header-bar">
-                <button class="btn" onclick="goHome()">🏠 Əsas Səhifə</button>
+                <button class="btn" data-action="go-home">🏠 Əsas Səhifə</button>
                 <button class="btn btn-secondary" onclick="window.location.reload()">🔄 Yenilə</button>
-                <button class="btn btn-danger" onclick="closeAdminPanel()">❌ Paneli Bağla</button>
+                <button class="btn btn-danger" id="btn-close-admin">❌ Paneli Bağla</button>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3>🔑 Mərkəzi Admin Və İdarəetmə Paneli</h3>
-            </div>
+            <h3 class="mb-4">🔑 Mərkəzi Admin Və İdarəetmə Paneli</h3>
 
-            <!-- ADMİN İDARƏETMƏ NAVİQASİYASI (10 MODUL) -->
+            <!-- Module Navigation Card Grid -->
             <div class="admin-nav-grid">
-                <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('kabinet')"><span class="icon">👤</span> Şəxsi Kabinet</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('kod')"><span class="icon">🔑</span> Kod Yaratma</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('kontrol')"><span class="icon">🛡️</span> Kontrol</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('pult')"><span class="icon">🎮</span> Pult</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('siyahi')"><span class="icon">📋</span> İştirakçılar</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('statistika')"><span class="icon">📊</span> Statistika</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('cavablar')"><span class="icon">📑</span> Cavablar</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('modul')"><span class="icon">📦</span> Modul (Fayllar)</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Modulu</div>
+                <div class="admin-nav-card" data-tab="suallar"><span class="icon">📝</span> Suallar Modulu</div>
+                <div class="admin-nav-card" data-tab="idare"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
+                <div class="admin-nav-card" data-tab="kabinet"><span class="icon">👤</span> Şəxsi Kabinet</div>
+                <div class="admin-nav-card" data-tab="kod"><span class="icon">🔑</span> Kod Yaratma</div>
+                <div class="admin-nav-card" data-tab="kontrol"><span class="icon">🛡️</span> Kontrol</div>
+                <div class="admin-nav-card" data-tab="pult"><span class="icon">🎮</span> Pult</div>
+                <div class="admin-nav-card" data-tab="siyahi"><span class="icon">📋</span> İştirakçılar</div>
+                <div class="admin-nav-card" data-tab="statistika"><span class="icon">📊</span> Statistika</div>
+                <div class="admin-nav-card" data-tab="cavablar"><span class="icon">📑</span> Cavablar</div>
+                <div class="admin-nav-card" data-tab="modul"><span class="icon">📦</span> Modul Center</div>
+                <div class="admin-nav-card" data-tab="redakte"><span class="icon">✏️</span> Redaktə Modulu</div>
             </div>
 
-            <!-- MODUL 1: SUALLAR REDAKTORU MODULU -->
+            <!-- MODULE 1: QUESTIONS EDITOR -->
             <div id="mod-suallar" class="admin-module-block">
                 <div class="breadcrumb-nav">
-                    <span onclick="showStep(1)">Sınaqlar</span> &gt; 
-                    <span onclick="showStep(2)" id="navExam">Sınaq 1</span> &gt; 
-                    <span onclick="showStep(3)" id="navCategory">BA Kateqoriyası</span> &gt; 
+                    <span id="navStep1">Sınaqlar</span> &gt; 
+                    <span id="navExam">Sınaq 1</span> &gt; 
+                    <span id="navCategory">BA Kateqoriyası</span> &gt; 
                     <span class="active" id="navSubject">Fənn Seçimi</span>
                 </div>
 
                 <div id="stepExams">
-                    <h4 style="margin-bottom: 15px; text-align: left;">Sınaq Seçin</h4>
+                    <h4 class="mb-3 text-left">Sınaq Seçin</h4>
                     <div class="folder-grid">
-                        <div class="folder-card" onclick="selectExam('Sınaq 1')">
+                        <div class="folder-card" data-exam="Sınaq 1">
                             <div class="folder-icon">📁</div>
                             <div class="folder-title">Sınaq 1</div>
                             <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
                         </div>
-                        <div class="folder-card" onclick="selectExam('Sınaq 2')">
+                        <div class="folder-card" data-exam="Sınaq 2">
                             <div class="folder-icon">📁</div>
                             <div class="folder-title">Sınaq 2</div>
                             <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
@@ -255,54 +454,38 @@
                 </div>
 
                 <div id="stepCategories" style="display: none;">
-                    <h4 style="margin-bottom: 15px; text-align: left;">Kateqoriya Seçin</h4>
+                    <h4 class="mb-3 text-left">Kateqoriya Seçin</h4>
                     <div class="folder-grid">
-                        <div class="folder-card" onclick="selectCategory('BA')">
+                        <div class="folder-card" data-cat="BA">
                             <div class="folder-icon">🏷️</div>
-                            <div class="folder-title" style="color: #1976d2;">BA Kateqoriyası</div>
+                            <div class="folder-title" style="color: var(--accent-blue);">BA Kateqoriyası</div>
                             <div class="folder-desc">100 Sual (Açıq və qapalı fənn bloku)</div>
                         </div>
-                        <div class="folder-card" onclick="selectCategory('BB')">
+                        <div class="folder-card" data-cat="BB">
                             <div class="folder-icon">🏷️</div>
-                            <div class="folder-title" style="color: #1976d2;">BB Kateqoriyası</div>
+                            <div class="folder-title" style="color: var(--accent-blue);">BB Kateqoriyası</div>
                             <div class="folder-desc">100 Sual (Qapalı testlər)</div>
                         </div>
-                        <div class="folder-card" onclick="selectCategory('AC')">
+                        <div class="folder-card" data-cat="AC">
                             <div class="folder-icon">🏷️</div>
-                            <div class="folder-title" style="color: #1976d2;">AC Kateqoriyası</div>
+                            <div class="folder-title" style="color: var(--accent-blue);">AC Kateqoriyası</div>
                             <div class="folder-desc">100 Sual (Qapalı testlər)</div>
                         </div>
                     </div>
                 </div>
 
                 <div id="stepSubjects" style="display: none;">
-                    <h4 style="margin-bottom: 15px; text-align: left;">Fənn Seçin</h4>
+                    <h4 class="mb-3 text-left">Fənn Seçin</h4>
                     <div class="folder-grid">
-                        <div class="folder-card" onclick="openEditor('Azərbaycan dili')">
-                            <div class="folder-icon">📁</div>
-                            <div class="folder-title">Azərbaycan dili</div>
-                            <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
-                        </div>
-                        <div class="folder-card" onclick="openEditor('İnformatika')">
-                            <div class="folder-icon">📁</div>
-                            <div class="folder-title">İnformatika</div>
-                            <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
-                        </div>
-                        <div class="folder-card" onclick="openEditor('Məntiq')">
-                            <div class="folder-icon">📁</div>
-                            <div class="folder-title">Məntiq</div>
-                            <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
-                        </div>
-                        <div class="folder-card" onclick="openEditor('Qanunvericilik')">
-                            <div class="folder-icon">📁</div>
-                            <div class="folder-title">Qanunvericilik</div>
-                            <div class="folder-desc">Bu mövzuya aid testlərə keçid edin.</div>
-                        </div>
+                        <div class="folder-card" data-subject="Azərbaycan dili"><div class="folder-icon">📁</div><div class="folder-title">Azərbaycan dili</div></div>
+                        <div class="folder-card" data-subject="İnformatika"><div class="folder-icon">📁</div><div class="folder-title">İnformatika</div></div>
+                        <div class="folder-card" data-subject="Məntiq"><div class="folder-icon">📁</div><div class="folder-title">Məntiq</div></div>
+                        <div class="folder-card" data-subject="Qanunvericilik"><div class="folder-icon">📁</div><div class="folder-title">Qanunvericilik</div></div>
                     </div>
                 </div>
 
-                <div id="stepEditor" class="editor-section">
-                    <h4 style="text-align: left; margin-bottom: 15px;">SUAL TƏRTİBATI (ƏLAVƏ ET / REDAKTƏ ET)</h4>
+                <div id="stepEditor" class="editor-section" style="display: none;">
+                    <h4 class="text-left mb-3">SUAL TƏRTİBATI (ƏLAVƏ ET / REDAKTƏ ET)</h4>
 
                     <div class="form-group">
                         <label>Fənn / Bölmə</label>
@@ -311,7 +494,7 @@
 
                     <div class="form-group">
                         <label>Sual Tipi</label>
-                        <select class="form-control" id="questionType" onchange="toggleQuestionType()">
+                        <select class="form-control" id="questionType">
                             <option value="closed">Çoxseçimli (Test)</option>
                             <option value="open">Açıq Sual</option>
                         </select>
@@ -319,7 +502,7 @@
 
                     <div class="form-group">
                         <label>Sual Nömrəsi</label>
-                        <input type="number" class="form-control" id="questionNumber" value="1" min="1" max="100" onchange="loadQuestionData(this.value)">
+                        <input type="number" class="form-control" id="questionNumber" value="1" min="1" max="100">
                     </div>
 
                     <div class="form-group">
@@ -329,73 +512,60 @@
 
                     <div id="closedOptionsContainer">
                         <div id="optionsList"></div>
-                        <button class="btn btn-dark" style="margin-top: 10px;" onclick="addDynamicOption()">+ Dinamik Variant Əlavə Et</button>
+                        <button class="btn btn-dark mt-2" id="btn-add-option">+ Dinamik Variant Əlavə Et</button>
                     </div>
 
                     <div id="openAnswerContainer" class="open-answer-box">
                         <div class="form-group">
                             <label>Açıq Sual Cavab Tipi:</label>
-                            <select class="form-control" id="openAnswerType" onchange="toggleOpenAnswerMode()">
-                                <option value="text">Mətn / Rəqəm Cavabı (Əllə daxil etmə)</option>
-                                <option value="numbers">1-6 Rəqəm Seçimi (Çoxlu seçim)</option>
+                            <select class="form-control" id="openAnswerType">
+                                <option value="text">Mətn / Rəqəm Cavabı</option>
+                                <option value="numbers">1-6 Rəqəm Seçimi</option>
                             </select>
                         </div>
-
                         <div id="openTextMode" class="form-group">
-                            <label>Düzgün Cavab Mətni / Rəqəmi:</label>
-                            <input type="text" class="form-control" id="openTextAnswer" placeholder="Məsələn: 1, 3, 5 və ya Mətn cavabı">
+                            <label>Düzgün Cavab Mətni:</label>
+                            <input type="text" class="form-control" id="openTextAnswer">
                         </div>
-
                         <div id="openNumbersMode" class="form-group" style="display: none;">
-                            <label>Düzgün Rəqəmləri Seçin (Çoxlu Seçim):</label>
+                            <label>Düzgün Rəqəmlər:</label>
                             <div class="num-selector">
-                                <input type="checkbox" id="num1" value="1" class="num-checkbox">
-                                <label for="num1" class="num-label">1</label>
-                                <input type="checkbox" id="num2" value="2" class="num-checkbox">
-                                <label for="num2" class="num-label">2</label>
-                                <input type="checkbox" id="num3" value="3" class="num-checkbox">
-                                <label for="num3" class="num-label">3</label>
-                                <input type="checkbox" id="num4" value="4" class="num-checkbox">
-                                <label for="num4" class="num-label">4</label>
-                                <input type="checkbox" id="num5" value="5" class="num-checkbox">
-                                <label for="num5" class="num-label">5</label>
-                                <input type="checkbox" id="num6" value="6" class="num-checkbox">
-                                <label for="num6" class="num-label">6</label>
+                                <input type="checkbox" id="num1" value="1" class="num-checkbox"><label for="num1" class="num-label">1</label>
+                                <input type="checkbox" id="num2" value="2" class="num-checkbox"><label for="num2" class="num-label">2</label>
+                                <input type="checkbox" id="num3" value="3" class="num-checkbox"><label for="num3" class="num-label">3</label>
+                                <input type="checkbox" id="num4" value="4" class="num-checkbox"><label for="num4" class="num-label">4</label>
+                                <input type="checkbox" id="num5" value="5" class="num-checkbox"><label for="num5" class="num-label">5</label>
+                                <input type="checkbox" id="num6" value="6" class="num-checkbox"><label for="num6" class="num-label">6</label>
                             </div>
                         </div>
                     </div>
 
                     <div class="actions-bar">
-                        <div class="left-buttons">
-                            <button class="btn btn-dark" onclick="prevQuestionEditor()">⬅️ Əvvəlki Sual</button>
-                            <button class="btn btn-success" onclick="saveQuestionToSupabase()">💾 Sualı Bazaya Saxla</button>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-dark" id="btn-prev-editor">⬅️ Əvvəlki</button>
+                            <button class="btn btn-success" id="btn-save-question">💾 Bazaya Saxla</button>
                         </div>
-                        <button class="btn btn-primary" onclick="nextQuestionEditor()">➡️ Növbəti Sual</button>
+                        <button class="btn btn-primary" id="btn-next-editor">➡️ Növbəti</button>
                     </div>
                 </div>
             </div>
 
-            <!-- MODUL 2: İDARƏ & İCAZƏLƏR MODULU -->
+            <!-- MODULE 2: USER MANAGEMENT -->
             <div id="mod-idare" class="admin-module-block">
-                <h4>⚙️ İştirakçı İcazələri və Sistem Ayarları (Idare.html)</h4>
-                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 15px;">
-                    <h4 style="text-align: left; margin-bottom: 10px;">Tələbəyə Giriş İcazəsi Ver</h4>
+                <h4>⚙️ İştirakçı İcazələri Və Sistem Parametrləri</h4>
+                <div class="mt-3 p-3 bg-light border-radius">
+                    <h4 class="text-left mb-2">Tələbəyə Giriş İcazəsi Ver</h4>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 180px;">
                         <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 120px;" maxlength="7">
-                        <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
+                        <button class="btn btn-success" id="btn-grant-access">İcazə Ver</button>
                     </div>
-                    <p id="adm-student-msg" style="margin-top: 5px; font-size: 13px;"></p>
-
-                    <h4 style="text-align: left; margin-top: 20px;">İcazə Verilmiş İştirakçılar</h4>
-                    <div style="overflow-x: auto;">
+                    
+                    <h4 class="text-left mt-4 mb-2">İcazə Verilmiş İştirakçılar</h4>
+                    <div class="table-responsive">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Ad Soyad</th>
-                                    <th>FIN Kod</th>
-                                    <th>Əməliyyat</th>
-                                </tr>
+                                <tr><th>Ad Soyad</th><th>FIN Kod</th><th>Əməliyyat</th></tr>
                             </thead>
                             <tbody id="allowed-students-table-body">
                                 <tr><td colspan="3">Yüklənir...</td></tr>
@@ -405,982 +575,915 @@
                 </div>
             </div>
 
-            <!-- MODUL 3: ŞƏXSİ KABİNET MODULU -->
+            <!-- MODULE 3: PROFILE & SYSTEM METRICS -->
             <div id="mod-kabinet" class="admin-module-block">
-                <h4>👤 Şəxsi Kabinet Və Profil İdarəetməsi (Kabinet.html)</h4>
-                <div style="margin-top: 15px; line-height: 2;">
-                    <p><b>Platforma İnzibatçısı:</b> Yunis İmanov</p>
-                    <p><b>Sistem Vəziyyəti:</b> Aktiv / Server Supabase Bağlantısı Qurulub</p>
-                    <p><b>Son Sinxronizasiya:</b> Canlı Bağlantı Passiv Təhlükəsizlik Filtrləri ilə Qorunur</p>
-                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="alert('Profil məlumatları və server statusu yeniləndi!')">Profil Məlumatlarını Yenilə</button>
+                <h4>👤 Şəxsi Kabinet Və Profil İdarəetməsi</h4>
+                <div class="mt-3" style="line-height: 2;">
+                    <p><b>Platforma İnzibatçısı:</b> Yunis İmanov [/cite]</p>
+                    <p><b>Sistem Vəziyyəti:</b> <span style="color: var(--success-green); font-weight: bold;">Aktiv / Supabase Engine v2</span></p>
+                    <button class="btn btn-secondary mt-2" id="btn-update-profile">Profil Statusunu Yenilə</button>
                 </div>
             </div>
 
-            <!-- MODUL 4: KOD YARATMA MODULU -->
+            <!-- MODULE 4: CODE GENERATOR -->
             <div id="mod-kod" class="admin-module-block">
-                <h4>🔑 İmtahan Və Giriş Kodlarının Generasiyası (Kod.html)</h4>
-                <div class="form-group" style="margin-top: 15px;">
+                <h4>🔑 İmtahan Və Giriş Kodlarının Generasiyası</h4>
+                <div class="form-group mt-3">
                     <label>Aktivləşdirmə Kodu Yarat:</label>
-                    <button class="btn btn-primary" onclick="generateTokenCode()">Təsadüfi Kod Yarat</button>
+                    <button class="btn btn-primary" id="btn-generate-token">Təsadüfi Kod Yarat</button>
                 </div>
-                <input type="text" id="generated-code-display" class="form-control token-field" readonly placeholder="Yaradılan Kod Burada Görünəcək">
+                <input type="text" id="generated-code-display" class="form-control token-field" readonly placeholder="Yaradılan Kod">
             </div>
 
-            <!-- MODUL 5: KONTROL MODULU -->
+            <!-- MODULE 5: SECURITY MONITORING -->
             <div id="mod-kontrol" class="admin-module-block">
-                <h4>🛡️ Sistem Təhlükəsizliyi Və Monitorinq (Kontrol.html)</h4>
-                <p style="margin: 10px 0;">Aktiv imtahan sessiyalarının monitorinqi və canlı nəzarət.</p>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h5>Sistem Statusu</h5>
-                        <div class="value" style="color: green;">NORMAL</div>
-                    </div>
-                    <div class="stat-card">
-                        <h5>Anti-Cheat Rejimi</h5>
-                        <div class="value" style="color: #007bff;">AKTİV</div>
-                    </div>
+                <h4>🛡️ Sistem Təhlükəsizliyi Və Monitorinq</h4>
+                <div class="stats-grid mt-3">
+                    <div class="stat-card"><h5>Sistem Statusu</h5><div class="value" style="color: var(--success-green);">NORMAL</div></div>
+                    <div class="stat-card"><h5>Anti-Cheat Rejimi</h5><div class="value" style="color: var(--accent-blue);">AKTİV</div></div>
                 </div>
             </div>
 
-            <!-- MODUL 6: PULT (CANLI TƏZYİQ/SESSİYA İDARƏSİ) -->
+            <!-- MODULE 6: REMOTE CONTROL -->
             <div id="mod-pult" class="admin-module-block">
-                <h4>🎮 Mərkəzi İdarəetmə Pultu (Pult.html)</h4>
-                <p style="margin: 10px 0;">İmtahan sessiyalarını dayandır və ya vaxtı qlobal yenilə.</p>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-danger" onclick="alert('Bütün aktiv imtahan sessiyaları qlobal olaraq saxlanıldı!')">Bütün İmtahanları Dayandır</button>
-                    <button class="btn btn-primary" onclick="alert('Bütün istifadəçi sessiya taymerləri sıfırlandı!')">Sessiya Vaxtlarını Yenilə</button>
+                <h4>🎮 Mərkəzi İdarəetmə Pultu</h4>
+                <div class="mt-3" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-danger" id="btn-stop-all-exams">Bütün İmtahanları Dayandır</button>
+                    <button class="btn btn-primary" id="btn-reset-timers">Sessiya Vaxtlarını Yenilə</button>
                 </div>
             </div>
 
-            <!-- MODUL 7: İŞTİRAKÇILAR (SİYAHI) MODULU -->
+            <!-- MODULE 7: PARTICIPANT DIRECTORY -->
             <div id="mod-siyahi" class="admin-module-block">
-                <h4>📋 İştirakçılar Siyahısı (Siyaha.html)</h4>
-                <div style="overflow-x: auto; margin-top: 15px;">
+                <h4>📋 İştirakçılar Siyahısı</h4>
+                <div class="table-responsive">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Ad Soyad</th>
-                                <th>FIN</th>
-                                <th>Sınaq No</th>
-                                <th>Tarix/Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="full-participants-list">
-                            <tr><td colspan="4">Yüklənir...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Ad Soyad</th><th>FIN</th><th>Sınaq No</th><th>Status</th></tr></thead>
+                        <tbody id="full-participants-list"><tr><td colspan="4">Yüklənir...</td></tr></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- MODUL 8: STATİSTİKA MODULU -->
+            <!-- MODULE 8: ANALYTICS -->
             <div id="mod-statistika" class="admin-module-block">
-                <h4>📊 İmtahan Statistikaları (Statistika.html)</h4>
-                <div class="stats-grid" style="margin-top: 15px;">
-                    <div class="stat-card">
-                        <h5>Cəmi İştirakçı</h5>
-                        <div class="value" id="stat-total-students">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h5>Ortalama Bal</h5>
-                        <div class="value" id="stat-avg-score">0</div>
-                    </div>
+                <h4>📊 İmtahan Statistikaları</h4>
+                <div class="stats-grid mt-3">
+                    <div class="stat-card"><h5>Cəmi İştirakçı</h5><div class="value" id="stat-total-students">0</div></div>
+                    <div class="stat-card"><h5>Ortalama Bal</h5><div class="value" id="stat-avg-score">0</div></div>
                 </div>
             </div>
 
-            <!-- MODUL 9: CAVABLAR MODULU -->
+            <!-- MODULE 9: ANSWERS METRICS -->
             <div id="mod-cavablar" class="admin-module-block">
-                <h4>📑 İştirakçı Cavabları Və Yekun Nəticələr (Cavablar.html)</h4>
-                <div style="overflow-x: auto; margin-top: 15px;">
+                <h4>📑 İştirakçı Cavabları Və Yekun Nəticələr</h4>
+                <div class="table-responsive">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Ad Soyad</th>
-                                <th>FIN</th>
-                                <th>Sınaq</th>
-                                <th>Doğru</th>
-                                <th>Yanlış</th>
-                                <th>Bal</th>
-                            </tr>
-                        </thead>
-                        <tbody id="results-table-body">
-                            <tr><td colspan="6">Yüklənir...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Ad Soyad</th><th>FIN</th><th>Sınaq</th><th>Doğru</th><th>Yanlış</th><th>Bal</th></tr></thead>
+                        <tbody id="results-table-body"><tr><td colspan="6">Yüklənir...</td></tr></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- MODUL 10: MODUL.HTML FAYLI BÖLMƏSİ -->
+            <!-- MODULE 10: INTERNAL SYSTEM MODULE -->
             <div id="mod-modul" class="admin-module-block">
-                <h4>📦 Modul Mərkəzi (Modul.html)</h4>
-                <p style="margin-top: 5px; color: #64748b;">Mərkəzi İdarəetmə Paneli – Bütün alt-sistem və modul konfiqurasiyaları.</p>
-                
-                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 15px;">
-                    <div class="stats-grid" style="margin-bottom: 15px;">
-                        <div class="stat-card">
-                            <h5>Daxili Modullar</h5>
-                            <div class="value" style="color: var(--accent-blue);">10 Modul</div>
-                        </div>
-                        <div class="stat-card">
-                            <h5>Fayl İntegrasiyası</h5>
-                            <div class="value" style="color: green;">100% Tam</div>
-                        </div>
-                    </div>
-                    <p style="font-size: 13px; line-height: 1.6;">Bu modul <code>modul.html</code> faylının daxili strutkurunu təmsil edir. Bütün komponentlər tək koda cəmlənərək platformaya birbaşa mərkəzləşdirilib.</p>
-                </div>
+                <h4>📦 Modul Mərkəzi</h4>
+                <p class="mt-2">Bütün alt-sistem və modul konfiqurasiyaları mərkəzləşdirilmiş JS arxitekturasına keçirilib.</p>
             </div>
 
-            <!-- MODUL 11: REDAKTƏ MODULU -->
+            <!-- MODULE 11: GLOBAL CONTENT EDIT -->
             <div id="mod-redakte" class="admin-module-block">
-                <h4>✏️ Sınaq Və Məzmun Redaktə Mərkəzi (Redakte.html)</h4>
-                <p style="margin-top: 5px; color: #64748b;">Bütün modul fayllarının və baza parametrlərinin birbaşa mərkəzləşdirilmiş idarəsi.</p>
-                
-                <div class="folder-grid" style="margin-top: 20px;">
-                    <div class="folder-card" onclick="switchAdminTab('suallar')">
-                        <div class="folder-icon">📝</div>
-                        <div class="folder-title">Suallar Redaktoru</div>
-                        <div class="folder-desc">Suallar.html - Test variantlarını və sual bazasını idarə edin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="fetchAndListQuestionsForEdit()">
-                        <div class="folder-icon">📂</div>
-                        <div class="folder-title">Bütün Suallara Baxış & Silmə</div>
-                        <div class="folder-desc">Aktiv sualları cədvəl şəklində açın, canlı redaktə edin və ya silin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('idare')">
-                        <div class="folder-icon">⚙️</div>
-                        <div class="folder-title">İştirakçı İcazələri</div>
-                        <div class="folder-desc">Idare.html - FİN kod icazələrini və tələbə siyahısını idarə edin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('kabinet')">
-                        <div class="folder-icon">👤</div>
-                        <div class="folder-title">Şəxsi Kabinet</div>
-                        <div class="folder-desc">Kabinet.html - İnzibatçı məlumatlarını və server statusunu yeniləyin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('kod')">
-                        <div class="folder-icon">🔑</div>
-                        <div class="folder-title">Kod Generatoru</div>
-                        <div class="folder-desc">Kod.html - İmtahana giriş və aktivasiya kodları generasiya edin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('kontrol')">
-                        <div class="folder-icon">🛡️</div>
-                        <div class="folder-title">Təhlükəsizlik Monitorinqi</div>
-                        <div class="folder-desc">Kontrol.html - Aktiv imtahan sessiyalarına canlı nəzarət edin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('pult')">
-                        <div class="folder-icon">🎮</div>
-                        <div class="folder-title">İdarəetmə Pultu</div>
-                        <div class="folder-desc">Pult.html - İmtahan vaxtlarını idarə edin və ya sessiyaları dayandırın.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('siyahi')">
-                        <div class="folder-icon">📋</div>
-                        <div class="folder-title">İştirakçılar Siyahısı</div>
-                        <div class="folder-desc">Siyaha.html - İmtahan vermiş bütün iştirakçıların statusuna baxın.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('statistika')">
-                        <div class="folder-icon">📊</div>
-                        <div class="folder-title">Statistika Modulu</div>
-                        <div class="folder-desc">Statistika.html - Ümumi iştirakçı sayı və ortalama ballara baxın.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('modul')">
-                        <div class="folder-icon">📦</div>
-                        <div class="folder-title">Modul Mərkəzi</div>
-                        <div class="folder-desc">Modul.html - Bütün sistem konfiqurasiya və daxili faylları.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('cavablar')">
-                        <div class="folder-icon">📑</div>
-                        <div class="folder-title">Cavablar Və Nəticələr</div>
-                        <div class="folder-desc">Cavablar.html - Tələbələrin doğru və yanlış cavab cədvəli.</div>
-                    </div>
+                <h4>✏️ Sınaq Və Məzmun Redaktə Mərkəzi</h4>
+                <div style="margin-top:15px">
+                    <button class="btn btn-primary" id="btn-fetch-all-questions">📂 Bütün Suallara Baxış & Silmə</button>
                 </div>
-
-                <div id="edit-questions-list-area" style="margin-top: 20px; display: none; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="text-align: left;">📋 Bazadakı Sualların Redaktə Siyahısı</h4>
-                        <button class="btn btn-danger btn-sm" onclick="document.getElementById('edit-questions-list-area').style.display='none'">Bağla</button>
+                
+                <div id="edit-questions-list-area" class="mt-3" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;" class="mb-2">
+                        <h4>📋 Bazadakı Sualların Redaktə Siyahısı</h4>
+                        <button class="btn btn-danger btn-sm" id="btn-close-edit-list">Bağla</button>
                     </div>
-                    <div style="overflow-x: auto;">
+                    <div class="table-responsive">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>Sınaq №</th>
-                                    <th>Sual №</th>
-                                    <th>Fənn</th>
-                                    <th>Sual Mətni</th>
-                                    <th>Əməliyyat</th>
-                                </tr>
-                            </thead>
-                            <tbody id="edit-questions-tbody">
-                                <tr><td colspan="5">Yüklənir...</td></tr>
-                            </tbody>
+                            <thead><tr><th>Sınaq №</th><th>Sual №</th><th>Fənn</th><th>Sual Mətni</th><th>Əməliyyat</th></tr></thead>
+                            <tbody id="edit-questions-tbody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
+        </section>
 
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
+        <!-- FOOTER -->
+        <footer class="footer">
             <div class="footer-text">
-                © 2026 DQ Platform – Developed <span class="secret-admin-trigger" onclick="openAdminLogin()">by</span> Yunis İmanov
+                © 2026 DQ Platform – Developed <span class="secret-trigger" id="secret-admin-trigger">by</span> Yunis İmanov [/cite]
+            </div>
+        </footer>
+    </div>
+
+    <!-- CUSTOM UI MODAL & TOAST DOM ELEMENTS -->
+    <div class="modal-overlay" id="custom-modal">
+        <div class="modal-content">
+            <h4 id="modal-title" class="mb-2">Təsdiq Edin</h4>
+            <p id="modal-body" class="mb-3" style="font-size: 14px;"></p>
+            <div id="modal-input-wrapper" class="mb-3" style="display:none;">
+                <input type="password" id="modal-input" class="form-control" placeholder="Daxil edin...">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-secondary btn-sm" id="modal-btn-cancel">Ləğv Et</button>
+                <button class="btn btn-sm" id="modal-btn-confirm">Təsdiq Et</button>
             </div>
         </div>
     </div>
+    
+    <div class="toast-container" id="toast-container"></div>
 
-    <!-- JS, SUPABASE VƏ MƏRKƏZİ MƏNTİQ -->
+    <!-- MAIN ARCHITECTURE SCRIPT -->
     <script>
-        const SUPABASE_URL = "https://cpzwliqlgaplroscvduo.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        /**
+         * DQ PLATFORM - ENTERPRISE CORE ENGINE
+         * Clean Architecture implementation using Modular JS
+         */
 
-        const ADMIN_PASS = "6675157";
-        const testDuration = 3 * 3600;
+        // --- 1. CONFIGURATION & CONSTANTS ---
+        const CONFIG = Object.freeze({
+            SUPABASE_URL: "https://cpzwliqlgaplroscvduo.supabase.co",
+            SUPABASE_KEY: "sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF",
+            ADMIN_HASH: "0235a7ba964e528a49c403dd35c4115f013d33010b9554d68d0d621b1979b908", // SHA-256 for original pass
+            EXAM_DURATION: 3 * 3600,
+            STORAGE_KEY: "dq_exam_state_v2"
+        });
 
-        let currentStudentName = "";
-        let currentActiveFin = "";
-        let selectedExamId = "1";
-        let allQuestions = [];
-        let userAnswers = {};
-        let flaggedQuestions = {};
-        let currentQuestionIndex = 0;
-        let timerInterval = null;
-        let timeLeft = testDuration;
-        let examFinished = false;
+        // Initialize Supabase Client
+        const _supabase = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
 
-        document.addEventListener("DOMContentLoaded", restoreSession);
+        // --- 2. SECURITY & UTILITY MODULE ---
+        const SecurityUtils = {
+            escapeHTML(str) {
+                if (typeof str !== 'string') return str;
+                return str.replace(/[&<>'"]/g, 
+                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+                );
+            },
+            async hashSHA256(message) {
+                const msgBuffer = new TextEncoder().encode(message);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+        };
 
-        function goHome() {
-            clearSessionStorage();
-            window.location.reload();
-        }
+        // --- 3. UI NOTIFICATION & MODAL ENGINE ---
+        const UIEngine = {
+            showToast(message, type = "info") {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${SecurityUtils.escapeHTML(message)}`;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            },
+            showModal({ title, body, hasInput = false, onConfirm }) {
+                const modal = document.getElementById('custom-modal');
+                const titleEl = document.getElementById('modal-title');
+                const bodyEl = document.getElementById('modal-body');
+                const inputWrap = document.getElementById('modal-input-wrapper');
+                const inputEl = document.getElementById('modal-input');
+                const confirmBtn = document.getElementById('modal-btn-confirm');
+                const cancelBtn = document.getElementById('modal-btn-cancel');
 
-        function clearSessionStorage() {
-            localStorage.removeItem("dq_exam_state");
-        }
+                titleEl.innerText = title;
+                bodyEl.innerText = body;
+                inputEl.value = "";
+                inputWrap.style.display = hasInput ? "block" : "none";
 
-        function saveSessionState() {
-            if (!currentActiveFin || examFinished) return;
-            const state = {
-                studentName: currentStudentName,
-                fin: currentActiveFin,
-                examId: selectedExamId,
-                answers: userAnswers,
-                flags: flaggedQuestions,
-                currentIndex: currentQuestionIndex,
-                timeLeft: timeLeft,
-                questions: allQuestions
-            };
-            localStorage.setItem("dq_exam_state", JSON.stringify(state));
-        }
+                modal.classList.add('visible');
 
-        function restoreSession() {
-            const savedState = localStorage.getItem("dq_exam_state");
-            if (savedState) {
-                try {
-                    const state = JSON.parse(savedState);
-                    currentStudentName = state.studentName;
-                    currentActiveFin = state.fin;
-                    selectedExamId = state.examId;
-                    userAnswers = state.answers || {};
-                    flaggedQuestions = state.flags || {};
-                    currentQuestionIndex = state.currentIndex || 0;
-                    timeLeft = state.timeLeft || testDuration;
-                    allQuestions = state.questions || [];
+                const cleanup = () => {
+                    modal.classList.remove('visible');
+                    confirmBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                };
 
-                    if (allQuestions.length > 0) {
-                        document.getElementById("login-screen").style.display = "none";
-                        document.getElementById("exam-select-screen").style.display = "none";
-                        document.getElementById("exam-screen").style.display = "block";
-                        document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
+                confirmBtn.onclick = () => {
+                    const val = inputEl.value;
+                    cleanup();
+                    if (onConfirm) onConfirm(val);
+                };
+                cancelBtn.onclick = cleanup;
+            }
+        };
 
-                        loadNavGrid();
-                        renderCurrentQuestion();
-                        startTimer(timeLeft);
+        // --- 4. API LAYER (DATABASE ABSTRACT LAYER) ---
+        const DQApi = {
+            async fetchAllowedStudent(fin) {
+                return await _supabase.from('allowed_students').select('*').eq('fin', fin);
+            },
+            async fetchExamResults(fin, examNo) {
+                return await _supabase.from('exam_results').select('*').eq('fin', fin).eq('exam_no', examNo);
+            },
+            async fetchQuestions(examId) {
+                return await _supabase.from('exam_questions').select('*').eq('exam_id', examId).order('q_number', { ascending: true });
+            },
+            async saveResult(payload) {
+                return await _supabase.from('exam_results').insert([payload]);
+            },
+            async grantStudentAccess(name, fin) {
+                return await _supabase.from('allowed_students').insert([{ name, fin }]);
+            },
+            async revokeStudentAccess(fin) {
+                return await _supabase.from('allowed_students').delete().eq('fin', fin);
+            },
+            async fetchAllAllowedStudents() {
+                return await _supabase.from('allowed_students').select('*');
+            },
+            async fetchAllResults() {
+                return await _supabase.from('exam_results').select('*');
+            },
+            async upsertQuestion(payload, existingId = null) {
+                if (existingId) {
+                    return await _supabase.from('exam_questions').update(payload).eq('id', existingId);
+                }
+                return await _supabase.from('exam_questions').insert([payload]);
+            },
+            async deleteQuestion(id) {
+                return await _supabase.from('exam_questions').delete().eq('id', id);
+            }
+        };
+
+        // --- 5. APPLICATION STATE ENGINE ---
+        const DQExamApp = {
+            state: {
+                studentName: "",
+                activeFin: "",
+                selectedExamId: "1",
+                questions: [],
+                answers: {},
+                flags: {},
+                currentIndex: 0,
+                timeLeft: CONFIG.EXAM_DURATION,
+                examFinished: false,
+                timerInterval: null
+            },
+
+            init() {
+                this.bindEvents();
+                this.restoreSession();
+            },
+
+            switchScreen(screenId) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                const target = document.getElementById(`screen-${screenId}`);
+                if (target) target.classList.add('active');
+            },
+
+            bindEvents() {
+                // Event Delegation pattern
+                document.addEventListener('click', (e) => {
+                    const actionTarget = e.target.closest('[data-action]');
+                    if (actionTarget) {
+                        const action = actionTarget.dataset.action;
+                        if (action === 'go-home') this.goHome();
                     }
-                } catch(e) {
-                    clearSessionStorage();
-                }
-            }
-        }
 
-        function switchAdminTab(tabName) {
-            const blocks = document.querySelectorAll('.admin-module-block');
-            blocks.forEach(b => b.style.display = 'none');
+                    const tabTarget = e.target.closest('[data-tab]');
+                    if (tabTarget) {
+                        this.switchAdminTab(tabTarget.dataset.tab);
+                    }
+                });
 
-            const activeBlock = document.getElementById(`mod-${tabName}`);
-            if (activeBlock) {
-                activeBlock.style.display = 'block';
-                activeBlock.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
+                document.getElementById('btn-proceed-login').addEventListener('click', () => this.handleLogin());
+                document.getElementById('btn-start-exam').addEventListener('click', () => this.startExam());
+                document.getElementById('btn-prev-question').addEventListener('click', () => this.navigateQuestion(-1));
+                document.getElementById('btn-next-question').addEventListener('click', () => this.navigateQuestion(1));
+                document.getElementById('btn-finish-exam').addEventListener('click', () => this.confirmFinish());
+                document.getElementById('btn-review-answers').addEventListener('click', () => this.backToReviewMode());
+                document.getElementById('secret-admin-trigger').addEventListener('click', () => this.openAdminLogin());
+                document.getElementById('btn-close-admin').addEventListener('click', () => this.switchScreen('login'));
+                
+                // Admin Modules Bindings
+                document.getElementById('btn-grant-access').addEventListener('click', () => this.allowStudent());
+                document.getElementById('btn-generate-token').addEventListener('click', () => this.generateTokenCode());
+                document.getElementById('btn-save-question').addEventListener('click', () => this.saveEditorQuestion());
+                document.getElementById('btn-add-option').addEventListener('click', () => this.addDynamicOption());
+                document.getElementById('btn-fetch-all-questions').addEventListener('click', () => this.fetchAndListQuestions());
+                document.getElementById('btn-close-edit-list').addEventListener('click', () => {
+                    document.getElementById('edit-questions-list-area').style.display = 'none';
+                });
 
-        async function proceedToExamSelect() {
-            const nameInput = document.getElementById("user-name").value.trim();
-            const finInput = document.getElementById("user-fin").value.trim().toUpperCase();
-            const errorMsg = document.getElementById("error-msg");
+                // Editor Navigation Hooks
+                document.getElementById('btn-next-editor').addEventListener('click', () => this.stepEditorQuestion(1));
+                document.getElementById('btn-prev-editor').addEventListener('click', () => this.stepEditorQuestion(-1));
+                
+                // Folder Grid Navigations
+                document.querySelectorAll('[data-exam]').forEach(el => el.addEventListener('click', (e) => this.selectExamEditor(e.currentTarget.dataset.exam)));
+                document.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', (e) => this.selectCategoryEditor(e.currentTarget.dataset.cat)));
+                document.querySelectorAll('[data-subject]').forEach(el => el.addEventListener('click', (e) => this.openSubjectEditor(e.currentTarget.dataset.subject)));
+            },
 
-            if (!nameInput || finInput.length < 5) {
-                errorMsg.style.color = "var(--danger-red)";
-                errorMsg.innerText = "Ad və etibarlı FIN kod daxil edin!";
-                return;
-            }
+            async handleLogin() {
+                const name = document.getElementById("user-name").value.trim();
+                const fin = document.getElementById("user-fin").value.trim().toUpperCase();
+                const feedback = document.getElementById("login-feedback");
 
-            errorMsg.style.color = "#0284c7";
-            errorMsg.innerText = "Məlumatlar yoxlanılır...";
-
-            try {
-                const { data: allowedData, error } = await _supabase
-                    .from('allowed_students')
-                    .select('*')
-                    .eq('fin', finInput);
-
-                if (error || !allowedData || allowedData.length === 0) {
-                    errorMsg.style.color = "var(--danger-red)";
-                    errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
+                if (!name || fin.length < 5) {
+                    feedback.style.color = "var(--danger-red)";
+                    feedback.innerText = "Ad və etibarlı FIN daxil edin!";
                     return;
                 }
 
-                currentStudentName = nameInput;
-                currentActiveFin = finInput;
+                feedback.style.color = "var(--accent-blue)";
+                feedback.innerText = "Məlumatlar yoxlanılır...";
 
-                document.getElementById("login-screen").style.display = "none";
-                document.getElementById("exam-select-screen").style.display = "block";
-            } catch (err) {
-                errorMsg.style.color = "var(--danger-red)";
-                errorMsg.innerText = "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.";
-            }
-        }
-
-        async function startExamSession() {
-            selectedExamId = document.getElementById("exam-selector").value;
-
-            try {
-                const { data: existingResults } = await _supabase
-                    .from('exam_results')
-                    .select('*')
-                    .eq('fin', currentActiveFin)
-                    .eq('exam_no', selectedExamId);
-
-                if (existingResults && existingResults.length > 0) {
-                    alert(`Siz artıq Sınaq ${selectedExamId} üzrə imtahanda iştirak etmisiniz! Hər bir sınaqda yalnız 1 dəfə iştirak etmək mümkündür.`);
-                    return;
-                }
-
-                const { data, error } = await _supabase
-                    .from('exam_questions')
-                    .select('*')
-                    .eq('exam_id', selectedExamId)
-                    .order('q_number', { ascending: true });
+                const { data, error } = await DQApi.fetchAllowedStudent(fin);
 
                 if (error || !data || data.length === 0) {
-                    alert("Bu sınaq üçün hələ sual əlavə edilməyib!");
+                    feedback.style.color = "var(--danger-red)";
+                    feedback.innerText = "Bu FİN üçün sınaq icazəsi tapılmadı!";
                     return;
                 }
 
-                allQuestions = data.map(q => ({
+                this.state.studentName = name;
+                this.state.activeFin = fin;
+                this.switchScreen('exam-select');
+            },
+
+            async startExam() {
+                this.state.selectedExamId = document.getElementById("exam-selector").value;
+
+                // Validate attempt lock
+                const { data: existing } = await DQApi.fetchExamResults(this.state.activeFin, this.state.selectedExamId);
+                if (existing && existing.length > 0) {
+                    UIEngine.showToast("Siz artıq bu sınaqda iştirak etmisiniz!", "danger");
+                    return;
+                }
+
+                const { data, error } = await DQApi.fetchQuestions(this.state.selectedExamId);
+                if (error || !data || data.length === 0) {
+                    UIEngine.showToast("Bu sınaq üzrə suallar tapılmadı!", "danger");
+                    return;
+                }
+
+                this.state.questions = data.map(q => ({
                     id: q.q_number,
+                    dbId: q.id,
                     subject: q.subject,
                     question: q.question,
                     options: q.options,
                     correct: q.correct
                 }));
 
-                userAnswers = {};
-                flaggedQuestions = {};
-                currentQuestionIndex = 0;
-                timeLeft = testDuration;
-                examFinished = false;
+                this.state.answers = {};
+                this.state.flags = {};
+                this.state.currentIndex = 0;
+                this.state.timeLeft = CONFIG.EXAM_DURATION;
+                this.state.examFinished = false;
 
-                document.getElementById("exam-select-screen").style.display = "none";
-                document.getElementById("exam-screen").style.display = "block";
-                document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
+                document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${this.state.selectedExamId}`;
+                
+                this.switchScreen('exam');
+                this.saveSession();
+                this.renderNavGrid();
+                this.renderQuestion();
+                this.startTimer();
+            },
 
-                saveSessionState();
-                loadNavGrid();
-                renderCurrentQuestion();
-                startTimer(timeLeft);
-            } catch (err) {
-                alert("İmtahan yüklənərkən xəta baş verdi: " + err.message);
-            }
-        }
+            renderQuestion() {
+                if (!this.state.questions.length) return;
+                const q = this.state.questions[this.state.currentIndex];
+                const container = document.getElementById("single-question-container");
+                const isFlagged = this.state.flags[q.id] ? "checked" : "";
+                const userAns = this.state.answers[q.id];
+                const letters = ["A", "B", "C", "D", "E", "F", "G"];
 
-        function renderCurrentQuestion() {
-            if (!allQuestions.length) return;
-            const q = allQuestions[currentQuestionIndex];
-            const container = document.getElementById("single-question-container");
-            const isFlagged = flaggedQuestions[q.id] ? "checked" : "";
-            const userAns = userAnswers[q.id];
-            const letters = ["A", "B", "C", "D", "E", "F", "G"];
+                let html = `
+                    <div>
+                        <div class="question-top">
+                            <div class="question-title">Sual ${q.id}: ${SecurityUtils.escapeHTML(q.question)}</div>
+                            <label class="flag-label">
+                                <input type="checkbox" id="flag_chk" ${isFlagged} ${this.state.examFinished ? 'disabled' : ''}> Tərəddüdlü
+                            </label>
+                        </div>
+                        <div class="options">
+                `;
 
-            let html = `
-                <div>
-                    <div class="question-top">
-                        <div class="question-title">Sual ${q.id}: ${q.question}</div>
-                        <label class="flag-label">
-                            <input type="checkbox" id="flag_chk" ${isFlagged} ${examFinished ? 'disabled' : ''} onchange="toggleFlag(${q.id})"> Tərəddüdlü
-                        </label>
-                    </div>
-                    <div class="options">
-            `;
+                if (Array.isArray(q.options)) {
+                    q.options.forEach((opt, idx) => {
+                        let checked = (userAns === idx) ? "checked" : "";
+                        let disabled = this.state.examFinished ? "disabled" : "";
+                        let style = "";
+                        
+                        if (this.state.examFinished) {
+                            if (idx === q.correct) style = "background-color: #d1fae5; border-color: #10b981; font-weight: bold;";
+                            else if (userAns === idx && userAns !== q.correct) style = "background-color: #fef2f2; border-color: #ef4444;";
+                        }
 
-            if (Array.isArray(q.options)) {
-                q.options.forEach((opt, idx) => {
-                    let checked = (userAns === idx) ? "checked" : "";
-                    let disabledAttr = examFinished ? "disabled" : "";
-                    let correctHighlight = "";
-                    
-                    if (examFinished) {
-                        if (idx === q.correct) correctHighlight = "background-color: #d1fae5; border: 2px solid #10b981; font-weight: bold;";
-                        else if (userAns === idx && userAns !== q.correct) correctHighlight = "background-color: #fef2f2; border: 2px solid #ef4444;";
+                        html += `
+                            <label style="${style}">
+                                <input type="radio" name="opt_choice" value="${idx}" ${checked} ${disabled}>
+                                ${letters[idx] || (idx + 1)}) ${SecurityUtils.escapeHTML(opt)}
+                            </label>
+                        `;
+                    });
+                }
+
+                html += `</div></div>`;
+                container.innerHTML = html;
+
+                // Event Bindings for inputs inside dynamic container
+                const flagChk = container.querySelector('#flag_chk');
+                if (flagChk) {
+                    flagChk.addEventListener('change', (e) => this.toggleFlag(q.id, e.target.checked));
+                }
+
+                container.querySelectorAll('input[name="opt_choice"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => this.selectAnswer(q.id, parseInt(e.target.value)));
+                });
+
+                this.updateNavGridActiveState();
+            },
+
+            renderNavGrid() {
+                const gridContainer = document.getElementById("grid-nav-container");
+                let html = "";
+                this.state.questions.forEach((q, idx) => {
+                    let answeredClass = this.state.answers[q.id] !== undefined ? "answered" : "";
+                    let flaggedClass = this.state.flags[q.id] ? "flagged" : "";
+                    html += `<div class="nav-box ${answeredClass} ${flaggedClass}" id="nav_${q.id}" data-idx="${idx}">${q.id}</div>`;
+                });
+                gridContainer.innerHTML = html;
+
+                gridContainer.querySelectorAll('.nav-box').forEach(box => {
+                    box.addEventListener('click', (e) => {
+                        this.state.currentIndex = parseInt(e.currentTarget.dataset.idx);
+                        this.renderQuestion();
+                        this.saveSession();
+                    });
+                });
+            },
+
+            updateNavGridActiveState() {
+                this.state.questions.forEach((q, idx) => {
+                    const box = document.getElementById(`nav_${q.id}`);
+                    if (box) {
+                        if (idx === this.state.currentIndex) box.classList.add("current");
+                        else box.classList.remove("current");
+                    }
+                });
+            },
+
+            selectAnswer(qId, idx) {
+                if (this.state.examFinished) return;
+                this.state.answers[qId] = idx;
+                const box = document.getElementById(`nav_${qId}`);
+                if (box) box.classList.add("answered");
+                this.saveSession();
+            },
+
+            toggleFlag(qId, isChecked) {
+                if (this.state.examFinished) return;
+                const box = document.getElementById(`nav_${qId}`);
+                if (isChecked) {
+                    this.state.flags[qId] = true;
+                    if (box) box.classList.add("flagged");
+                } else {
+                    delete this.state.flags[qId];
+                    if (box) box.classList.remove("flagged");
+                }
+                this.saveSession();
+            },
+
+            navigateQuestion(dir) {
+                const targetIdx = this.state.currentIndex + dir;
+                if (targetIdx >= 0 && targetIdx < this.state.questions.length) {
+                    this.state.currentIndex = targetIdx;
+                    this.renderQuestion();
+                    this.saveSession();
+                }
+            },
+
+            startTimer() {
+                if (this.state.timerInterval) clearInterval(this.state.timerInterval);
+                const display = document.getElementById("timer-display");
+
+                this.state.timerInterval = setInterval(() => {
+                    if (this.state.examFinished) {
+                        clearInterval(this.state.timerInterval);
+                        return;
                     }
 
-                    html += `
-                        <label style="${correctHighlight}">
-                            <input type="radio" name="current_opt" value="${idx}" ${checked} ${disabledAttr} onclick="selectOption(${q.id}, ${idx})">
-                            ${letters[idx] || (idx + 1)}) ${opt}
-                        </label>
-                    `;
+                    let h = String(Math.floor(this.state.timeLeft / 3600)).padStart(2, '0');
+                    let m = String(Math.floor((this.state.timeLeft % 3600) / 60)).padStart(2, '0');
+                    let s = String(this.state.timeLeft % 60).padStart(2, '0');
+                    display.textContent = `${h}:${m}:${s}`;
+
+                    this.state.timeLeft--;
+                    if (this.state.timeLeft % 5 === 0) this.saveSession();
+
+                    if (this.state.timeLeft < 0) {
+                        clearInterval(this.state.timerInterval);
+                        this.finishExam();
+                    }
+                }, 1000);
+            },
+
+            confirmFinish() {
+                UIEngine.showModal({
+                    title: "İmtahanı Bitir",
+                    body: "Sınaq imtahanını yekunlaşdırmaq istədiyinizdən əminsiniz?",
+                    onConfirm: () => this.finishExam()
                 });
-            }
+            },
 
-            html += `</div></div>`;
-            container.innerHTML = html;
-            updateNavActiveState();
-        }
+            async finishExam() {
+                if (this.state.timerInterval) clearInterval(this.state.timerInterval);
+                this.state.examFinished = true;
+                this.clearStorage();
 
-        function loadNavGrid() {
-            const gridContainer = document.getElementById("grid-nav-container");
-            let html = "";
-            allQuestions.forEach((q, index) => {
-                let answeredClass = userAnswers[q.id] !== undefined ? "answered" : "";
-                let flaggedClass = flaggedQuestions[q.id] ? "flagged" : "";
-                html += `<div class="nav-box ${answeredClass} ${flaggedClass}" id="nav_${q.id}" onclick="jumpToQuestion(${index})">${q.id}</div>`;
-            });
-            gridContainer.innerHTML = html;
-        }
+                let correct = 0, wrong = 0, blank = 0;
 
-        function jumpToQuestion(index) { currentQuestionIndex = index; renderCurrentQuestion(); saveSessionState(); }
-        function nextQuestionExam() { if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderCurrentQuestion(); saveSessionState(); } }
-        function prevQuestionExam() { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderCurrentQuestion(); saveSessionState(); } }
-        
-        function selectOption(qId, optIdx) { 
-            if(examFinished) return; 
-            userAnswers[qId] = optIdx; 
-            const navBox = document.getElementById(`nav_${qId}`);
-            if (navBox) navBox.classList.add("answered"); 
-            saveSessionState();
-        }
-        
-        function toggleFlag(qId) {
-            if(examFinished) return;
-            let chk = document.getElementById("flag_chk").checked;
-            let nav = document.getElementById(`nav_${qId}`);
-            if (chk) { 
-                flaggedQuestions[qId] = true; 
-                if (nav) nav.classList.add("flagged"); 
-            } else { 
-                delete flaggedQuestions[qId]; 
-                if (nav) nav.classList.remove("flagged"); 
-            }
-            saveSessionState();
-        }
+                this.state.questions.forEach(q => {
+                    let ans = this.state.answers[q.id];
+                    if (ans === undefined) blank++;
+                    else if (ans === q.correct) correct++;
+                    else wrong++;
+                });
 
-        function updateNavActiveState() {
-            allQuestions.forEach((q, idx) => {
-                let box = document.getElementById(`nav_${q.id}`);
-                if (box) {
-                    if (idx === currentQuestionIndex) box.classList.add("current");
-                    else box.classList.remove("current");
+                let bbGroup = this.calculateBBGroup(correct);
+
+                await DQApi.saveResult({
+                    name: this.state.studentName,
+                    fin: this.state.activeFin,
+                    exam_no: this.state.selectedExamId,
+                    correct_count: correct,
+                    wrong_count: wrong,
+                    score: correct,
+                    bb_group: bbGroup
+                });
+
+                document.getElementById("res-name").innerText = SecurityUtils.escapeHTML(this.state.studentName);
+                document.getElementById("res-total-correct").innerText = correct;
+                document.getElementById("res-total-wrong").innerText = wrong;
+                document.getElementById("res-total-blank").innerText = blank;
+                document.getElementById("res-total-score").innerText = correct + " bal";
+                document.getElementById("res-bb-group").innerText = "Uyğun qrup: " + bbGroup;
+
+                this.switchScreen('result');
+            },
+
+            calculateBBGroup(score) {
+                if (score >= 80) return "BB1 (İnzibati vəzifələrin 6-cı təsnifatı)";
+                if (score >= 75) return "BB2 (İnzibati vəzifələrin 6-cı təsnifatı)";
+                if (score >= 70) return "BB3 (İnzibati vəzifələrin 7-ci təsnifatı)";
+                if (score >= 65) return "BB4 (İnzibati vəzifələrin 7-ci təsnifatı)";
+                return "Keçid balını toplamadı (< 65)";
+            },
+
+            backToReviewMode() {
+                document.getElementById("review-banner").style.display = "block";
+                document.getElementById("btn-finish-exam").style.display = "none";
+                document.getElementById("review-home-wrapper").style.display = "block";
+                
+                this.state.currentIndex = 0;
+                this.switchScreen('exam');
+                this.renderQuestion();
+            },
+
+            saveSession() {
+                if (!this.state.activeFin || this.state.examFinished) return;
+                const payload = {
+                    studentName: this.state.studentName,
+                    fin: this.state.activeFin,
+                    examId: this.state.selectedExamId,
+                    answers: this.state.answers,
+                    flags: this.state.flags,
+                    currentIndex: this.state.currentIndex,
+                    timeLeft: this.state.timeLeft,
+                    questions: this.state.questions
+                };
+                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(payload));
+            },
+
+            restoreSession() {
+                const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
+                if (!raw) return;
+                try {
+                    const saved = JSON.parse(raw);
+                    this.state.studentName = saved.studentName;
+                    this.state.activeFin = saved.fin;
+                    this.state.selectedExamId = saved.examId;
+                    this.state.answers = saved.answers || {};
+                    this.state.flags = saved.flags || {};
+                    this.state.currentIndex = saved.currentIndex || 0;
+                    this.state.timeLeft = saved.timeLeft || CONFIG.EXAM_DURATION;
+                    this.state.questions = saved.questions || [];
+
+                    if (this.state.questions.length > 0) {
+                        this.switchScreen('exam');
+                        this.renderNavGrid();
+                        this.renderQuestion();
+                        this.startTimer();
+                    }
+                } catch (e) {
+                    this.clearStorage();
                 }
-            });
-        }
+            },
 
-        function startTimer(duration) {
-            timeLeft = duration;
-            const display = document.getElementById("timer");
-            if (timerInterval) clearInterval(timerInterval);
-            
-            timerInterval = setInterval(() => {
-                if (examFinished) {
-                    clearInterval(timerInterval);
+            clearStorage() {
+                localStorage.removeItem(CONFIG.STORAGE_KEY);
+            },
+
+            goHome() {
+                this.clearStorage();
+                window.location.reload();
+            },
+
+            // --- ADMIN MODULES ---
+            openAdminLogin() {
+                UIEngine.showModal({
+                    title: "İnzibatçı Girişi",
+                    body: "Mərkəzi Admin Panelinə daxil olmaq üçün şifrəni daxil edin:",
+                    hasInput: true,
+                    onConfirm: async (pass) => {
+                        const hash = await SecurityUtils.hashSHA256(pass);
+                        if (hash === CONFIG.ADMIN_HASH) {
+                            this.switchScreen('admin');
+                            this.switchAdminTab('suallar');
+                            this.loadAdminPanelData();
+                        } else {
+                            UIEngine.showToast("Daxil edilən şifrə yanlışdır!", "danger");
+                        }
+                    }
+                });
+            },
+
+            switchAdminTab(tabName) {
+                document.querySelectorAll('.admin-module-block').forEach(b => b.style.display = 'none');
+                const target = document.getElementById(`mod-${tabName}`);
+                if (target) {
+                    target.style.display = 'block';
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            },
+
+            async allowStudent() {
+                const name = document.getElementById("adm-student-name").value.trim();
+                const fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
+
+                if (!name || !fin) {
+                    UIEngine.showToast("Bütün xanaları doldurun!", "danger");
                     return;
                 }
-                
-                let hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
-                let minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
-                let seconds = String(timeLeft % 60).padStart(2, '0');
-                display.textContent = `${hours}:${minutes}:${seconds}`;
-                
-                timeLeft--;
-                if (timeLeft % 5 === 0) saveSessionState();
 
-                if (timeLeft < 0) { 
-                    clearInterval(timerInterval); 
-                    finishExam(); 
+                const { error } = await DQApi.grantStudentAccess(name, fin);
+                if (error) {
+                    UIEngine.showToast("Xəta: " + error.message, "danger");
+                } else {
+                    UIEngine.showToast("Tələbəyə uğurla icazə verildi!", "success");
+                    document.getElementById("adm-student-name").value = "";
+                    document.getElementById("adm-student-fin").value = "";
+                    this.loadAllowedStudents();
                 }
-            }, 1000);
-        }
+            },
 
-        function confirmFinish() {
-            if (confirm("Testi bitirmək istədiyinizə əminsinizmi?")) {
-                finishExam();
-            }
-        }
-
-        function getBBGroup(score) {
-            if (score >= 80) return "BB1 (İnzibati vəzifələrin 6-cı təsnifatı)";
-            if (score >= 75) return "BB2 (İnzibati vəzifələrin 6-cı təsnifatı)";
-            if (score >= 70) return "BB3 (İnzibati vəzifələrin 7-ci təsnifatı)";
-            if (score >= 65) return "BB4 (İnzibati vəzifələrin 7-ci təsnifatı)";
-            return "Keçid balını toplamadı (< 65)";
-        }
-
-        async function finishExam() {
-            if (timerInterval) clearInterval(timerInterval);
-            examFinished = true;
-            clearSessionStorage();
-
-            let totalCorrect = 0, totalWrong = 0, totalBlank = 0;
-
-            allQuestions.forEach(q => {
-                let userAns = userAnswers[q.id];
-                if (userAns === undefined) totalBlank++;
-                else if (userAns === q.correct) totalCorrect++;
-                else totalWrong++;
-            });
-
-            let bbGroup = getBBGroup(totalCorrect);
-
-            try {
-                await _supabase.from('exam_results').insert([{
-                    name: currentStudentName,
-                    fin: currentActiveFin,
-                    exam_no: selectedExamId,
-                    correct_count: totalCorrect,
-                    wrong_count: totalWrong,
-                    score: totalCorrect,
-                    bb_group: bbGroup
-                }]);
-            } catch (err) {
-                console.error("Nəticə yazılarkən xəta:", err);
-            }
-
-            document.getElementById("exam-screen").style.display = "none";
-            document.getElementById("result-screen").style.display = "block";
-            document.getElementById("res-name").innerText = currentStudentName;
-            document.getElementById("res-total-correct").innerText = totalCorrect;
-            document.getElementById("res-total-wrong").innerText = totalWrong;
-            document.getElementById("res-total-blank").innerText = totalBlank;
-            document.getElementById("res-total-score").innerText = totalCorrect + " bal";
-            document.getElementById("res-bb-group").innerText = "Uyğun qrup: " + bbGroup;
-        }
-
-        function backToReviewQuestions() {
-            document.getElementById("result-screen").style.display = "none";
-            document.getElementById("exam-screen").style.display = "block";
-            document.getElementById("review-banner").style.display = "block";
-            document.getElementById("finish-btn").style.display = "none";
-            document.getElementById("review-home-btn").style.display = "block";
-            
-            currentQuestionIndex = 0;
-            renderCurrentQuestion();
-        }
-
-        function openAdminLogin() {
-            let pass = prompt("Admin şifrəsini daxil edin:");
-            if (pass === ADMIN_PASS) {
-                document.getElementById("login-screen").style.display = "none";
-                document.getElementById("exam-select-screen").style.display = "none";
-                document.getElementById("exam-screen").style.display = "none";
-                document.getElementById("admin-panel").style.display = "block";
-                switchAdminTab('suallar');
-                loadAdminPanelData();
-            }
-        }
-        
-        function closeAdminPanel() { 
-            document.getElementById("admin-panel").style.display = "none"; 
-            document.getElementById("login-screen").style.display = "block"; 
-        }
-
-        async function allowStudent() {
-            let name = document.getElementById("adm-student-name").value.trim();
-            let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
-            let msg = document.getElementById("adm-student-msg");
-
-            if (!name || !fin) { 
-                msg.style.color = "red"; 
-                msg.innerText = "Xanaları doldurun!"; 
-                return; 
-            }
-
-            const { error } = await _supabase.from('allowed_students').insert([{ name, fin }]);
-            if (error) { 
-                msg.style.color = "red"; 
-                msg.innerText = "Xəta: " + error.message; 
-            } else { 
-                msg.style.color = "green"; 
-                msg.innerText = "Tələbəyə icazə verildi!"; 
-                document.getElementById("adm-student-name").value = "";
-                document.getElementById("adm-student-fin").value = "";
-                loadAllowedStudents(); 
-            }
-        }
-
-        async function removeStudentPermission(fin) {
-            if (confirm(`${fin} FİN kodlu tələbənin icazəsini ləğv etmək istədiyinizə əminsiniz?`)) {
-                const { error } = await _supabase.from('allowed_students').delete().eq('fin', fin);
-                if (error) alert("Xəta baş verdi: " + error.message);
-                else loadAllowedStudents();
-            }
-        }
-
-        async function loadAllowedStudents() {
-            const { data, error } = await _supabase.from('allowed_students').select('*');
-            let tbody = document.getElementById("allowed-students-table-body");
-            if (error || !data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3">İcazə verilmiş tələbə yoxdur</td></tr>`;
-                return;
-            }
-            let html = "";
-            data.forEach(s => {
-                html += `
-                    <tr>
-                        <td>${s.name || '-'}</td>
-                        <td><b>${s.fin}</b></td>
-                        <td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Deaktiv Et / Sil</button></td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        async function loadAdminPanelData() {
-            loadAllowedStudents();
-
-            const { data: results } = await _supabase.from('exam_results').select('*');
-            if(results) {
-                document.getElementById("stat-total-students").innerText = results.length;
-                let sumScore = 0;
-                let tbody = document.getElementById("results-table-body");
-                let partBody = document.getElementById("full-participants-list");
+            async loadAllowedStudents() {
+                const { data, error } = await DQApi.fetchAllAllowedStudents();
+                const tbody = document.getElementById("allowed-students-table-body");
+                if (error || !data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3">İcazə verilmiş tələbə yoxdur</td></tr>`;
+                    return;
+                }
                 let html = "";
-                let partHtml = "";
-                results.forEach(r => {
-                    sumScore += (r.score || 0);
-                    html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score}</b></td></tr>`;
-                    partHtml += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td>Tamamlandı</td></tr>`;
+                data.forEach(s => {
+                    html += `
+                        <tr>
+                            <td>${SecurityUtils.escapeHTML(s.name || '-')}</td>
+                            <td><b>${SecurityUtils.escapeHTML(s.fin)}</b></td>
+                            <td><button class="btn btn-danger btn-sm" onclick="DQExamApp.revokeAccess('${s.fin}')">Sil</button></td>
+                        </tr>
+                    `;
                 });
                 tbody.innerHTML = html;
-                if(partBody) partBody.innerHTML = partHtml;
-                if(results.length > 0 && document.getElementById("stat-avg-score")) {
-                    document.getElementById("stat-avg-score").innerText = (sumScore / results.length).toFixed(1);
+            },
+
+            async revokeAccess(fin) {
+                UIEngine.showModal({
+                    title: "İcazənin Ləğvi",
+                    body: `${fin} FIN kodlu tələbənin icazəsini ləğv etmək istəyirsiniz?`,
+                    onConfirm: async () => {
+                        await DQApi.revokeStudentAccess(fin);
+                        this.loadAllowedStudents();
+                    }
+                });
+            },
+
+            async loadAdminPanelData() {
+                this.loadAllowedStudents();
+                const { data: results } = await DQApi.fetchAllResults();
+                if (results) {
+                    document.getElementById("stat-total-students").innerText = results.length;
+                    let sum = 0;
+                    let tbody = document.getElementById("results-table-body");
+                    let partBody = document.getElementById("full-participants-list");
+                    let html = "", partHtml = "";
+
+                    results.forEach(r => {
+                        sum += (r.score || 0);
+                        html += `<tr><td>${SecurityUtils.escapeHTML(r.name)}</td><td>${SecurityUtils.escapeHTML(r.fin)}</td><td>Sınaq ${r.exam_no}</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score}</b></td></tr>`;
+                        partHtml += `<tr><td>${SecurityUtils.escapeHTML(r.name)}</td><td>${SecurityUtils.escapeHTML(r.fin)}</td><td>Sınaq ${r.exam_no}</td><td>Tamamlandı</td></tr>`;
+                    });
+
+                    tbody.innerHTML = html;
+                    if (partBody) partBody.innerHTML = partHtml;
+                    if (results.length > 0) {
+                        document.getElementById("stat-avg-score").innerText = (sum / results.length).toFixed(1);
+                    }
                 }
-            }
-        }
+            },
 
-        function generateTokenCode() {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            let res = "";
-            for (let i = 0; i < 7; i++) {
-                res += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            document.getElementById("generated-code-display").value = res;
-        }
+            generateTokenCode() {
+                const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                let res = "";
+                for (let i = 0; i < 7; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+                document.getElementById("generated-code-display").value = res;
+            },
 
-        let currentExamRedaktor = "1";
-        let currentCategoryRedaktor = "BA";
-        const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+            // EDITOR STATE ENGINE
+            editorState: {
+                currentExam: "1",
+                currentCategory: "BA",
+                letters: ["A", "B", "C", "D", "E", "F", "G", "H"]
+            },
 
-        function selectExam(exam) {
-            currentExamRedaktor = exam.replace("Sınaq ", "");
-            document.getElementById('navExam').innerText = exam;
-            document.getElementById('stepExams').style.display = 'none';
-            document.getElementById('stepCategories').style.display = 'block';
-        }
-
-        function selectCategory(cat) {
-            currentCategoryRedaktor = cat;
-            document.getElementById('navCategory').innerText = cat + " Kateqoriyası";
-            document.getElementById('stepCategories').style.display = 'none';
-            document.getElementById('stepSubjects').style.display = 'block';
-        }
-
-        function openEditor(subject) {
-            document.getElementById('navSubject').innerText = subject;
-            document.getElementById('activeSubjectInput').value = subject;
-            document.getElementById('questionNumber').value = 1;
-            document.getElementById('stepSubjects').style.display = 'none';
-            document.getElementById('stepEditor').style.display = 'block';
-            loadQuestionData(1);
-        }
-
-        function showStep(step) {
-            document.getElementById('stepEditor').style.display = 'none';
-            if (step === 1) {
-                document.getElementById('stepExams').style.display = 'block';
-                document.getElementById('stepCategories').style.display = 'none';
-                document.getElementById('stepSubjects').style.display = 'none';
-            } else if (step === 2) {
+            selectExamEditor(examStr) {
+                this.editorState.currentExam = examStr.replace("Sınaq ", "");
+                document.getElementById('navExam').innerText = examStr;
                 document.getElementById('stepExams').style.display = 'none';
                 document.getElementById('stepCategories').style.display = 'block';
-                document.getElementById('stepSubjects').style.display = 'none';
-            } else if (step === 3) {
-                document.getElementById('stepExams').style.display = 'none';
+            },
+
+            selectCategoryEditor(cat) {
+                this.editorState.currentCategory = cat;
+                document.getElementById('navCategory').innerText = cat + " Kateqoriyası";
                 document.getElementById('stepCategories').style.display = 'none';
                 document.getElementById('stepSubjects').style.display = 'block';
-            }
-        }
+            },
 
-        function toggleQuestionType() {
-            const type = document.getElementById('questionType').value;
-            const closedBox = document.getElementById('closedOptionsContainer');
-            const openBox = document.getElementById('openAnswerContainer');
+            openSubjectEditor(subj) {
+                document.getElementById('navSubject').innerText = subj;
+                document.getElementById('activeSubjectInput').value = subj;
+                document.getElementById('questionNumber').value = 1;
+                document.getElementById('stepSubjects').style.display = 'none';
+                document.getElementById('stepEditor').style.display = 'block';
+                this.loadQuestionEditorData(1);
+            },
 
-            if (type === 'closed') {
-                closedBox.style.display = 'block';
-                openBox.style.display = 'none';
-            } else {
-                closedBox.style.display = 'none';
-                openBox.style.display = 'block';
-            }
-        }
+            addDynamicOption(text = "", isCorrect = false) {
+                const list = document.getElementById('optionsList');
+                const count = list.getElementsByClassName('option-row').length;
+                if (count >= this.editorState.letters.length) return;
 
-        function toggleOpenAnswerMode() {
-            const mode = document.getElementById('openAnswerType').value;
-            const textMode = document.getElementById('openTextMode');
-            const numbersMode = document.getElementById('openNumbersMode');
+                const letter = this.editorState.letters[count];
+                const div = document.createElement('div');
+                div.className = 'option-row';
+                div.innerHTML = `
+                    <span class="option-label">${letter})</span>
+                    <input type="text" class="form-control option-input" placeholder="Variant mətni..." value="${SecurityUtils.escapeHTML(text)}">
+                    <label class="correct-radio"><input type="radio" name="editor_ans" ${isCorrect ? 'checked' : ''}> Düzgün</label>
+                    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>
+                `;
+                list.appendChild(div);
+            },
 
-            if (mode === 'text') {
-                textMode.style.display = 'block';
-                numbersMode.style.display = 'none';
-            } else {
-                textMode.style.display = 'none';
-                numbersMode.style.display = 'block';
-            }
-        }
+            async saveEditorQuestion() {
+                const qNum = parseInt(document.getElementById('questionNumber').value);
+                const subject = document.getElementById('activeSubjectInput').value;
+                const text = document.getElementById('questionText').value.trim();
 
-        function addDynamicOption(textValue = "", isCorrect = false) {
-            const optionsList = document.getElementById('optionsList');
-            const currentCount = optionsList.getElementsByClassName('option-row').length;
-
-            if (currentCount >= optionLetters.length) return;
-
-            const letter = optionLetters[currentCount];
-            const div = document.createElement('div');
-            div.className = 'option-row';
-            div.innerHTML = `
-                <span class="option-label">${letter})</span>
-                <input type="text" class="form-control option-input" placeholder="Variant mətni..." value="${textValue}">
-                <label class="correct-radio"><input type="radio" name="ans" ${isCorrect ? 'checked' : ''}> Düzgün</label>
-                <button class="btn btn-danger btn-sm" onclick="removeOption(this)">X</button>
-            `;
-            optionsList.appendChild(div);
-        }
-
-        function removeOption(btn) {
-            btn.parentElement.remove();
-            reindexOptions();
-        }
-
-        function reindexOptions() {
-            const rows = document.querySelectorAll('#optionsList .option-row');
-            rows.forEach((row, index) => {
-                if (index < optionLetters.length) {
-                    row.querySelector('.option-label').innerText = optionLetters[index] + ')';
+                if (!text) {
+                    UIEngine.showToast("Sualın mətnini daxil edin!", "danger");
+                    return;
                 }
-            });
-        }
 
-        async function saveQuestionToSupabase() {
-            const qNum = parseInt(document.getElementById('questionNumber').value);
-            const subject = document.getElementById('activeSubjectInput').value;
-            const type = document.getElementById('questionType').value;
-            const text = document.getElementById('questionText').value.trim();
+                let options = [];
+                let correctIdx = 0;
 
-            if (!text) {
-                alert("Sualın mətnini daxil edin!");
-                return;
-            }
-
-            let options = [];
-            let correctIndex = 0;
-
-            if (type === 'closed') {
                 const rows = document.querySelectorAll('#optionsList .option-row');
                 rows.forEach((row, idx) => {
                     const optText = row.querySelector('.option-input').value.trim();
-                    const isChecked = row.querySelector('input[name="ans"]').checked;
+                    const isChecked = row.querySelector('input[name="editor_ans"]').checked;
                     options.push(optText);
-                    if (isChecked) correctIndex = idx;
+                    if (isChecked) correctIdx = idx;
                 });
-            } else {
-                const openMode = document.getElementById('openAnswerType').value;
-                if (openMode === 'text') {
-                    options.push(document.getElementById('openTextAnswer').value.trim());
-                } else {
-                    let selectedNums = [];
-                    document.querySelectorAll('.num-checkbox:checked').forEach(cb => selectedNums.push(cb.value));
-                    options.push(selectedNums.join(', '));
-                }
-            }
 
-            const { data: existingQ } = await _supabase
-                .from('exam_questions')
-                .select('id')
-                .eq('exam_id', currentExamRedaktor)
-                .eq('q_number', qNum)
-                .maybeSingle();
-
-            let resultError = null;
-
-            if (existingQ) {
-                const { error } = await _supabase
+                // Retrieve existing DB entry
+                const { data: existing } = await _supabase
                     .from('exam_questions')
-                    .update({
-                        subject: subject,
-                        question: text,
-                        options: options,
-                        correct: correctIndex
-                    })
-                    .eq('id', existingQ.id);
-                resultError = error;
-            } else {
-                const { error } = await _supabase
-                    .from('exam_questions')
-                    .insert([{
-                        exam_id: currentExamRedaktor,
-                        q_number: qNum,
-                        subject: subject,
-                        question: text,
-                        options: options,
-                        correct: correctIndex
-                    }]);
-                resultError = error;
-            }
+                    .select('id')
+                    .eq('exam_id', this.editorState.currentExam)
+                    .eq('q_number', qNum)
+                    .maybeSingle();
 
-            if (resultError) {
-                alert("Xəta baş verdi: " + resultError.message);
-            } else {
-                alert(`Sınaq ${currentExamRedaktor} - Sual ${qNum} Uğurla Yadda Saxlanıldı!`);
-            }
-        }
+                const payload = {
+                    exam_id: this.editorState.currentExam,
+                    q_number: qNum,
+                    subject: subject,
+                    question: text,
+                    options: options,
+                    correct: correctIdx
+                };
 
-        async function loadQuestionData(num) {
-            const subject = document.getElementById('activeSubjectInput').value;
-            
-            const { data } = await _supabase
-                .from('exam_questions')
-                .select('*')
-                .eq('exam_id', currentExamRedaktor)
-                .eq('q_number', num)
-                .single();
-
-            document.getElementById('questionText').value = '';
-            document.getElementById('optionsList').innerHTML = '';
-
-            if (data) {
-                document.getElementById('questionText').value = data.question || '';
-                if (Array.isArray(data.options) && data.options.length > 0) {
-                    document.getElementById('questionType').value = 'closed';
-                    toggleQuestionType();
-                    data.options.forEach((optText, idx) => {
-                        addDynamicOption(optText, idx === data.correct);
-                    });
-                }
-            } else {
-                document.getElementById('questionType').value = 'closed';
-                toggleQuestionType();
-                for (let i = 0; i < 4; i++) addDynamicOption();
-            }
-        }
-
-        function nextQuestionEditor() {
-            const numInput = document.getElementById('questionNumber');
-            let currentNum = parseInt(numInput.value);
-            if (currentNum < 100) {
-                currentNum++;
-                numInput.value = currentNum;
-                loadQuestionData(currentNum);
-            }
-        }
-
-        function prevQuestionEditor() {
-            const numInput = document.getElementById('questionNumber');
-            let currentNum = parseInt(numInput.value);
-            if (currentNum > 1) {
-                currentNum--;
-                numInput.value = currentNum;
-                loadQuestionData(currentNum);
-            }
-        }
-
-        async function fetchAndListQuestionsForEdit() {
-            const listArea = document.getElementById('edit-questions-list-area');
-            const tbody = document.getElementById('edit-questions-tbody');
-            listArea.style.display = 'block';
-            listArea.scrollIntoView({ behavior: 'smooth' });
-            tbody.innerHTML = '<tr><td colspan="5">Yüklənir...</td></tr>';
-
-            const { data, error } = await _supabase
-                .from('exam_questions')
-                .select('*')
-                .order('exam_id', { ascending: true })
-                .order('q_number', { ascending: true });
-
-            if (error || !data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5">Bazada heç bir sual tapılmadı.</td></tr>';
-                return;
-            }
-
-            let html = '';
-            data.forEach(q => {
-                let shortText = q.question.length > 50 ? q.question.substring(0, 50) + "..." : q.question;
-                html += `
-                    <tr>
-                        <td><b>Sınaq ${q.exam_id}</b></td>
-                        <td>Sual ${q.q_number}</td>
-                        <td>${q.subject || '-'}</td>
-                        <td style="text-align: left;">${shortText}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="quickEditQuestion('${q.exam_id}', '${q.subject}', ${q.q_number})">✏️ Redaktə Et</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteQuestionByDbId(${q.id})">🗑️ Sil</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function quickEditQuestion(examId, subject, qNum) {
-            switchAdminTab('suallar');
-            selectExam('Sınaq ' + examId);
-            openEditor(subject || 'Qanunvericilik');
-            document.getElementById('questionNumber').value = qNum;
-            loadQuestionData(qNum);
-        }
-
-        async function deleteQuestionByDbId(id) {
-            if (confirm("Bu sualı bazadan həmişəlik silmək istədiyinizə əminsiniz?")) {
-                const { error } = await _supabase.from('exam_questions').delete().eq('id', id);
+                const { error } = await DQApi.upsertQuestion(payload, existing ? existing.id : null);
                 if (error) {
-                    alert("Silinərkən xəta baş verdi: " + error.message);
+                    UIEngine.showToast("Xəta baş verdi: " + error.message, "danger");
                 } else {
-                    alert("Sual silindi!");
-                    fetchAndListQuestionsForEdit();
+                    UIEngine.showToast(`Sual ${qNum} saxlanıldı!`, "success");
                 }
+            },
+
+            async loadQuestionEditorData(num) {
+                const { data } = await _supabase
+                    .from('exam_questions')
+                    .select('*')
+                    .eq('exam_id', this.editorState.currentExam)
+                    .eq('q_number', num)
+                    .maybeSingle();
+
+                document.getElementById('questionText').value = '';
+                document.getElementById('optionsList').innerHTML = '';
+
+                if (data) {
+                    document.getElementById('questionText').value = data.question || '';
+                    if (Array.isArray(data.options)) {
+                        data.options.forEach((optText, idx) => {
+                            this.addDynamicOption(optText, idx === data.correct);
+                        });
+                    }
+                } else {
+                    for (let i = 0; i < 4; i++) this.addDynamicOption();
+                }
+            },
+
+            stepEditorQuestion(dir) {
+                const input = document.getElementById('questionNumber');
+                let val = parseInt(input.value) + dir;
+                if (val >= 1 && val <= 100) {
+                    input.value = val;
+                    this.loadQuestionEditorData(val);
+                }
+            },
+
+            async fetchAndListQuestions() {
+                const area = document.getElementById('edit-questions-list-area');
+                const tbody = document.getElementById('edit-questions-tbody');
+                area.style.display = 'block';
+                tbody.innerHTML = '<tr><td colspan="5">Yüklənir...</td></tr>';
+
+                const { data, error } = await _supabase
+                    .from('exam_questions')
+                    .select('*')
+                    .order('exam_id', { ascending: true })
+                    .order('q_number', { ascending: true });
+
+                if (error || !data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">Bazada heç bir sual tapılmadı.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                data.forEach(q => {
+                    let shortText = q.question.length > 50 ? q.question.substring(0, 50) + "..." : q.question;
+                    html += `
+                        <tr>
+                            <td><b>Sınaq ${q.exam_id}</b></td>
+                            <td>Sual ${q.q_number}</td>
+                            <td>${SecurityUtils.escapeHTML(q.subject || '-')}</td>
+                            <td class="text-left">${SecurityUtils.escapeHTML(shortText)}</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="DQExamApp.deleteQuestionRecord(${q.id})">Sil</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            },
+
+            async deleteQuestionRecord(id) {
+                UIEngine.showModal({
+                    title: "Sualı Sil",
+                    body: "Bu sualı məlumat bazasından həmişəlik silmək istədiyinizdən əminsiniz?",
+                    onConfirm: async () => {
+                        await DQApi.deleteQuestion(id);
+                        UIEngine.showToast("Sual bazadan silindi!", "success");
+                        this.fetchAndListQuestions();
+                    }
+                });
             }
-        }
+        };
+
+        // --- 6. INITIALIZATION ENTRY POINT ---
+        document.addEventListener("DOMContentLoaded", () => {
+            DQExamApp.init();
+        });
     </script>
 </body>
 </html>
-
