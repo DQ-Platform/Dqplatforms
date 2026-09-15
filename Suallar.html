@@ -33,10 +33,16 @@
     textarea.form-control { resize: vertical; min-height: 70px; }
 
     /* Variantlar (Qapalı Sual) */
-    .option-row { display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px; }
+    .option-row { display: flex; flex-direction: column; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 12px; gap: 8px; }
+    .option-main { display: flex; align-items: center; gap: 10px; }
     .option-label { font-weight: bold; width: 25px; }
     .option-input { flex: 1; }
-    .correct-radio { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: #2b9348; }
+    .correct-radio { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: #2b9348; white-space: nowrap; }
+
+    /* Variant Şəkil Bölməsi */
+    .option-file-box { display: flex; align-items: center; gap: 10px; margin-left: 35px; }
+    .option-file-input { font-size: 12px; flex: 1; }
+    .option-img-preview { max-height: 60px; max-width: 100px; border-radius: 4px; border: 1px solid #ccc; display: none; }
 
     /* Açıq Sual Cavab Bloku */
     .open-answer-box { background: #f0f4f8; border: 1px solid #d0d7de; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: none; }
@@ -162,7 +168,8 @@
 
     <div class="form-group" style="margin-bottom: 15px;">
       <label>📷 Sualın Əsas Şəkli:</label>
-      <input type="file" class="form-control" id="questionImage">
+      <input type="file" class="form-control" id="questionImage" accept="image/*" onchange="previewQuestionImage(this)">
+      <img id="questionImgPreview" src="" style="display:none; max-width: 100%; max-height: 180px; margin-top: 10px; border-radius: 6px; border: 1px solid #ccc;">
     </div>
 
     <!-- 1. Qapalı Sual Variantları -->
@@ -227,7 +234,6 @@
     let currentCategory = "BA";
     const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
-    // Bütün sualları yaddaşda saxlayan obyekt
     let questionsDatabase = {};
 
     function getQuestionKey(num) {
@@ -303,6 +309,37 @@
       }
     }
 
+    // Əsas sualın şəklini nümayiş etdirir
+    function previewQuestionImage(input) {
+      const imgPreview = document.getElementById('questionImgPreview');
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imgPreview.src = e.target.result;
+          imgPreview.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        imgPreview.style.display = 'none';
+      }
+    }
+
+    // Variant şəklinin canlı baxışı
+    function previewOptionImage(input) {
+      const imgPreview = input.nextElementSibling;
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imgPreview.src = e.target.result;
+          imgPreview.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        imgPreview.style.display = 'none';
+      }
+    }
+
+    // Dynamic Variant (Mətn + Şəkil Dəstəkli)
     function addDynamicOption(textValue = "", isCorrect = false) {
       const optionsList = document.getElementById('optionsList');
       const currentCount = optionsList.getElementsByClassName('option-row').length;
@@ -313,16 +350,23 @@
       const div = document.createElement('div');
       div.className = 'option-row';
       div.innerHTML = `
-        <span class="option-label">${letter})</span>
-        <input type="text" class="form-control option-input" placeholder="Variant mətni..." value="${textValue}">
-        <label class="correct-radio"><input type="radio" name="ans" ${isCorrect ? 'checked' : ''}> Düzgün</label>
-        <button class="btn btn-danger" onclick="removeOption(this)">X</button>
+        <div class="option-main">
+          <span class="option-label">${letter})</span>
+          <input type="text" class="form-control option-input" placeholder="Variant mətni..." value="${textValue}">
+          <label class="correct-radio"><input type="radio" name="ans" ${isCorrect ? 'checked' : ''}> Düzgün</label>
+          <button class="btn btn-danger" onclick="removeOption(this)">X</button>
+        </div>
+        <div class="option-file-box">
+          <label style="font-size:11px; font-weight:600; color:#555;">🖼️ Variant Şəkli:</label>
+          <input type="file" class="option-file-input form-control" accept="image/*" onchange="previewOptionImage(this)">
+          <img class="option-img-preview" src="" alt="Variant Şəkli">
+        </div>
       `;
       optionsList.appendChild(div);
     }
 
     function removeOption(btn) {
-      btn.parentElement.remove();
+      btn.closest('.option-row').remove();
       reindexOptions();
     }
 
@@ -374,19 +418,17 @@
       }
     }
 
-    // Yaddaşda saxlanılmış sual verilənlərini formaya doldurur
     function loadQuestionData(num) {
       const key = getQuestionKey(num);
       const data = questionsDatabase[key];
 
-      // Formanı sıfırla
       document.getElementById('questionText').value = '';
       document.getElementById('questionImage').value = '';
+      document.getElementById('questionImgPreview').style.display = 'none';
       document.getElementById('openTextAnswer').value = '';
       document.querySelectorAll('.num-checkbox').forEach(cb => cb.checked = false);
 
       if (!data) {
-        // Yeni sualdırsa standart 4 boş variant yaradır
         document.getElementById('questionType').value = 'closed';
         toggleQuestionType();
         document.getElementById('optionsList').innerHTML = '';
@@ -394,7 +436,6 @@
         return;
       }
 
-      // Məlumatlar varsa formanı yükləyir
       document.getElementById('questionType').value = data.type;
       toggleQuestionType();
       document.getElementById('questionText').value = data.text;
@@ -414,7 +455,7 @@
 
     function nextQuestion() {
       const numInput = document.getElementById('questionNumber');
-      saveQuestion(true); // Keçid edərkən avtomatik yadda saxlama
+      saveQuestion(true);
       
       let currentNum = parseInt(numInput.value);
       if (currentNum < 100) {
@@ -426,7 +467,7 @@
 
     function prevQuestion() {
       const numInput = document.getElementById('questionNumber');
-      saveQuestion(true); // Keçid edərkən avtomatik yadda saxlama
+      saveQuestion(true);
       
       let currentNum = parseInt(numInput.value);
       if (currentNum > 1) {
@@ -438,4 +479,3 @@
   </script>
 </body>
 </html>
-
