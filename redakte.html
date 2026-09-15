@@ -108,6 +108,13 @@
         #monacoContainer { width: 100%; height: 100%; }
         #previewFrame { width: 100%; height: 100%; border: none; }
 
+        /* Dynamic Database Viewer Table Style */
+        .db-container { padding: 20px; overflow-y: auto; height: 100%; color: #0f172a; }
+        .db-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; font-size: 13px; }
+        .db-table th { background: #1e293b; color: #fff; text-align: left; padding: 12px; }
+        .db-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        .db-table tr:hover { background: #f8fafc; }
+
         .footer { margin-top: 50px; text-align: center; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 20px; }
     </style>
 </head>
@@ -128,7 +135,7 @@
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-label">Daxili Modullar</div>
-                    <div class="stat-value">13 Modul</div>
+                    <div class="stat-value" id="statModuleCount">13 Modul</div>
                 </div>
                 <div class="stat-box success-border">
                     <div class="stat-label">Fayl İnteqrasiyası</div>
@@ -150,7 +157,7 @@
             <div class="action-btns">
                 <button class="btn btn-dark" onclick="openIDE('redakte.html')"><i class="fa-solid fa-code"></i> IDE Rejimi</button>
                 <button class="btn btn-secondary" onclick="window.location.reload()"><i class="fa-solid fa-rotate"></i> Yenilə</button>
-                <a href="https://github.com/DQ-Platform/Dqplatforms" target="_blank" class="btn btn-primary"><i class="fa-brands fa-github"></i> GitHub Repozitoriyası</a>
+                <a href="https://github.com/DQ-Platform/Dqplatforms" target="_blank" rel="noopener" class="btn btn-primary"><i class="fa-brands fa-github"></i> GitHub Repozitoriyası</a>
             </div>
         </div>
 
@@ -327,7 +334,7 @@
                 <span>DQ Platform IDE Engine v2.5</span>
             </div>
             <div>
-                <button class="btn btn-secondary" onclick="promptAdminAuth()"><i class="fa-solid fa-lock"></i> Admin Girişi</button>
+                <button class="btn btn-secondary" id="adminAuthBtn" onclick="promptAdminAuth()"><i class="fa-solid fa-lock"></i> Admin Girişi</button>
                 <button class="btn btn-danger" onclick="closeIDE()"><i class="fa-solid fa-xmark"></i> Bağla</button>
             </div>
         </div>
@@ -393,16 +400,39 @@
         // Monaco Editor Loader
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
 
-        function initMonaco() {
-            if (monacoInstance) return;
-            require(['vs/editor/editor.main'], function () {
-                monacoInstance = monaco.editor.create(document.getElementById('monacoContainer'), {
-                    value: `<!-- ${activeFile} Faylının Məzmunu Loading... -->`,
-                    language: 'html',
-                    theme: 'vs-dark',
-                    automaticLayout: true,
-                    fontSize: 13,
-                    minimap: { enabled: true }
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sessiyada saxlanılan adminlik statusunu yoxla
+            if (sessionStorage.getItem("adminAuthorized") === "true") {
+                grantAdminAccess();
+            }
+        });
+
+        function initMonaco(initialContent = "") {
+            return new Promise((resolve) => {
+                if (monacoInstance) {
+                    if (initialContent) monacoInstance.setValue(initialContent);
+                    resolve();
+                    return;
+                }
+                require(['vs/editor/editor.main'], function () {
+                    monacoInstance = monaco.editor.create(document.getElementById('monacoContainer'), {
+                        value: initialContent || `<!-- ${activeFile} Yüklənir... -->`,
+                        language: 'html',
+                        theme: 'vs-dark',
+                        automaticLayout: true,
+                        fontSize: 13,
+                        minimap: { enabled: true }
+                    });
+
+                    // Kod dəyişdikcə Split rejimi üçün iframe-i canlı yenilə
+                    monacoInstance.onDidChangeModelContent(() => {
+                        const code = monacoInstance.getValue();
+                        const previewFrame = document.getElementById('previewFrame');
+                        if (document.getElementById('editorPane').style.display !== 'none') {
+                            previewFrame.srcdoc = code;
+                        }
+                    });
+                    resolve();
                 });
             });
         }
@@ -416,28 +446,68 @@
             document.getElementById('ideOverlay').style.display = 'none';
         }
 
-        function switchFile(fileName) {
+        async function switchFile(fileName) {
             activeFile = fileName;
             document.getElementById('activeTabLabel').innerHTML = `<i class="fa-solid fa-code"></i> ${fileName}`;
-            document.getElementById('previewFrame').src = fileName;
-            if (monacoInstance) {
-                monacoInstance.setValue(`<!-- ${fileName} Yükləndi -->\n<div class="module-root">\n  <!-- ${fileName} Məzmunu -->\n</div>`);
+            const previewFrame = document.getElementById('previewFrame');
+            previewFrame.removeAttribute('srcdoc');
+
+            // Xüsusi interaktiv idarəetmə funksiyası (Bütün suallara baxış və silmə üçün)
+            if (fileName === 'redakte.html' && isAuthorized) {
+                renderQuestionsTable();
+            } else {
+                previewFrame.src = fileName;
+            }
+
+            // Faylı HTTP üzərindən Fetch et
+            try {
+                const response = await fetch(fileName);
+                if (response.ok) {
+                    const text = await response.text();
+                    if (monacoInstance) monacoInstance.setValue(text);
+                    else await initMonaco(text);
+                } else {
+                    const fallbackCode = `<!-- ${fileName} local serverdə tapılmadı. Yeni shablon yaradıldı. -->\n<div class="module-root">\n  <h1>${fileName} Məzmunu</h1>\n</div>`;
+                    if (monacoInstance) monacoInstance.setValue(fallbackCode);
+                    else await initMonaco(fallbackCode);
+                }
+            } catch (e) {
+                const defaultText = `<!-- ${fileName} yükləndi -->\n<div class="container">\n  <h2>Modul: ${fileName}</h2>\n</div>`;
+                if (monacoInstance) monacoInstance.setValue(defaultText);
+                else await initMonaco(defaultText);
+            }
+
+            // Aktiv pəncərə rejiminə uyğun interfeysi yenilə
+            if (isAuthorized) {
+                document.querySelectorAll('.sidebar-item').forEach(item => {
+                    item.classList.toggle('active', item.innerText.trim() === fileName);
+                });
             }
         }
 
         function promptAdminAuth() {
+            if (isAuthorized) {
+                alert("Siz artıq sistem idarəçisi kimi daxil olmusunuz!");
+                return;
+            }
             let input = prompt("Sistem İdarəçisi Şifrəsi:");
             if (input === AUTH_KEY) {
-                isAuthorized = true;
-                document.getElementById("explorerSidebar").style.display = "block";
-                document.getElementById("modeControls").style.display = "flex";
-                document.getElementById("saveActionGroup").style.display = "block";
-                
-                initMonaco();
+                sessionStorage.setItem("adminAuthorized", "true");
+                grantAdminAccess();
                 alert("Təhlükəsizlik doğrulandı! İdarəetmə paneli və Kod Redaktoru aktivdir.");
             } else {
                 alert("Giriş imtina edildi: Yanlış şifrə!");
             }
+        }
+
+        function grantAdminAccess() {
+            isAuthorized = true;
+            document.getElementById("explorerSidebar").style.display = "block";
+            document.getElementById("modeControls").style.display = "flex";
+            document.getElementById("saveActionGroup").style.display = "block";
+            document.getElementById("adminAuthBtn").innerHTML = `<i class="fa-solid fa-unlock"></i> Admin: Aktiv`;
+            document.getElementById("adminAuthBtn").classList.replace("btn-secondary", "btn-primary");
+            initMonaco();
         }
 
         function setMode(mode) {
@@ -462,25 +532,102 @@
             if (monacoInstance) monacoInstance.layout();
         }
 
-        function commitCode() {
+        async function commitCode() {
             if (!isAuthorized) return;
-            alert(`[Uğurlu]: ${activeFile} dəyişiklikləri yadda saxlanıldı!`);
+            const updatedCode = monacoInstance.getValue();
+            
+            // Kod canlı olaraq Baxış Frame-ə tətbiq olunur
+            document.getElementById('previewFrame').srcdoc = updatedCode;
+            
+            alert(`[Uğurlu]: ${activeFile} dəyişiklikləri yadda saxlanıldı və icra edildi!`);
         }
+
+        // Supabase İnteqrasiyası: Sual Bazasını Cədvəl Halında Canlı Göstərmək Və Silmək
+        async function renderQuestionsTable() {
+            const previewFrame = document.getElementById('previewFrame');
+            previewFrame.removeAttribute('src');
+            
+            try {
+                const { data: questions, error } = await _supabase.from('questions').select('*');
+                
+                let htmlContent = `
+                    <style>
+                        body { font-family: 'Inter', sans-serif; padding: 20px; background: #f8fafc; color: #0f172a; }
+                        h2 { margin-bottom: 15px; font-size: 1.2rem; color: #1e293b; }
+                        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+                        th { background: #1e293b; color: #fff; text-align: left; padding: 10px 12px; font-size: 13px; }
+                        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+                        .btn-del { background: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; }
+                        .btn-del:hover { background: #dc2626; }
+                    </style>
+                    <h2>📋 Suallar Bazası (Canlı Supabase Məlumatları)</h2>
+                `;
+
+                if (error || !questions || questions.length === 0) {
+                    htmlContent += `<p style="color:#64748b;">Məlumat tapılmadı və ya bazaya qoşulma xətası baş verdi.</p>`;
+                } else {
+                    htmlContent += `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Sual Məzmunu</th>
+                                    <th>Düzgün Cavab</th>
+                                    <th>Əməliyyat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    questions.forEach(q => {
+                        htmlContent += `
+                            <tr>
+                                <td><b>${q.id}</b></td>
+                                <td>${q.question_text || q.title || 'Məzmun yoxdur'}</td>
+                                <td><span style="color:#22c55e; font-weight:600;">${q.correct_answer || 'A'}</span></td>
+                                <td><button class="btn-del" onclick="parent.deleteQuestion(${q.id})">Sil</button></td>
+                            </tr>
+                        `;
+                    });
+                    htmlContent += `</tbody></table>`;
+                }
+                
+                previewFrame.srcdoc = htmlContent;
+            } catch (e) {
+                previewFrame.srcdoc = `<p style="padding:20px; color:red;">Sual cədvəli yüklənərkən xəta yarandı.</p>`;
+            }
+        }
+
+        // Supabase-dən Sual Silmə Funksiyası
+        window.deleteQuestion = async function(id) {
+            if (!confirm(`ID: ${id} olan sualı silməyə əminsiniz?`)) return;
+            
+            const { error } = await _supabase.from('questions').delete().eq('id', id);
+            if (error) {
+                alert("Xəta baş verdi: " + error.message);
+            } else {
+                alert("Sual uğurla silindi!");
+                renderQuestionsTable();
+            }
+        };
 
         // Dinamik Kart Axtarış Funksiyası
         function filterCards() {
             const input = document.getElementById('searchInput').value.toLowerCase();
             const cards = document.querySelectorAll('.card');
+            let visibleCount = 0;
 
             cards.forEach(card => {
                 const title = card.getAttribute('data-title').toLowerCase();
                 const file = card.getAttribute('data-file').toLowerCase();
                 if (title.includes(input) || file.includes(input)) {
                     card.style.display = "flex";
+                    visibleCount++;
                 } else {
                     card.style.display = "none";
                 }
             });
+
+            document.getElementById('statModuleCount').innerText = `${visibleCount} Modul`;
         }
     </script>
 </body>
