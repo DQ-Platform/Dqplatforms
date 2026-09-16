@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="az">
 <head>
@@ -293,7 +294,7 @@
             <p id="error-msg" class="error-msg mt-2"></p>
         </div>
 
-        <!-- SINAQ SEÇİM EKRANI (DİNAMİK KARTLAR İLƏ YENİLƏNMİŞ) -->
+        <!-- SINAQ SEÇİM EKRANI -->
         <div id="exam-select-screen" class="screen text-center">
             <h2>Qeydiyyatdan keçdiyim imtahanlar</h2>
             <p class="mt-2 mb-3" style="color: #64748b; font-size: 14px;">Mövcud və keçmiş imtahanlarınızın siyahısı:</p>
@@ -941,13 +942,11 @@
             const container = document.getElementById("registered-exams-list");
             container.innerHTML = "<p>Sınaqlar yüklənir...</p>";
 
-            // Tələbənin bütün imtahan nəticələrini bazadan çəkirik
             const { data: results } = await _supabase
                 .from('exam_results')
                 .select('*')
                 .eq('fin', currentActiveFin);
 
-            // Nəticələri sınaq nömrəsinə görə qruplaşdırırıq: { "1": [res1, res2], "2": [res1] }
             const resultMap = {};
             if (results) {
                 results.forEach(r => {
@@ -967,21 +966,18 @@
                 let titleBadge = "";
 
                 if (examResults.length === 0) {
-                    // Heç bir kateqoriyadan iştirak edilməyib
                     statusHtml = `<div style="font-size: 13px; color: #64748b; margin-top: 4px;">İştirak edilməyib</div>`;
                     actionHtml = `<button class="btn btn-success btn-sm" onclick="startExamSession('${examNum}')">▶️ Başla</button>`;
                 } 
                 else if (examResults.length === 1) {
-                    // Yalnız 1 kateqoriyadan imtahan verilib
                     const res = examResults[0];
-                    const catName = res.category || 'BA'; // Baza sütununda yoxdursa 'BA' default götürür
+                    const catName = res.category || 'BA';
                     
                     titleBadge = ` <span style="font-size: 13px; color: var(--accent-blue); font-weight: normal;">(${catName})</span>`;
                     statusHtml = `<div style="font-size: 13px; color: var(--success-green); font-weight: 600; margin-top: 4px;">Nəticə: ${res.score} Bal</div>`;
                     actionHtml = `<button class="btn btn-primary btn-sm" onclick="viewAnswerCard('${examNum}', ${res.score}, ${res.correct_count}, ${res.wrong_count}, '${res.bb_group}')">📄 Cavab Kartını Gör</button>`;
                 } 
                 else {
-                    // 2 və ya daha artıq kateqoriyadan imtahan verilib
                     titleBadge = ` <span style="font-size: 13px; color: #d97706; font-weight: normal;">(${examResults.length} Kateqoriya)</span>`;
                     
                     let selectOptions = examResults.map((res, index) => {
@@ -1015,12 +1011,9 @@
             }
 
             container.innerHTML = html;
-            
-            // Çoxlu kateqoriya seçimi üçün data obyektini qlobal yadda saxlayaq
             window.currentExamResultsMap = resultMap;
         }
 
-        // Çoxlu kateqoriya olduqda seçilmiş nəticəni göstərən köməkçi funksiya
         function viewSelectedCategoryResult(examNum) {
             const selectEl = document.getElementById(`select-cat-exam-${examNum}`);
             if (!selectEl) return;
