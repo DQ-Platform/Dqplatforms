@@ -1,9 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="az">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Yunis İmanov">
     <title>DQ Platform - Mərkəzi İdarəetmə və Sınaq Sistemi</title>
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -271,14 +271,21 @@
         .num-label { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 2px solid var(--accent-blue); background: #fff; color: var(--accent-blue); font-weight: 700; border-radius: var(--radius-md); cursor: pointer; transition: 0.2s; }
         .num-checkbox:checked + .num-label { background: var(--accent-blue); color: #fff; }
 
+        .category-buttons { display: flex; gap: 8px; margin-bottom: 10px; }
+        .cat-btn { padding: 8px 16px; border: 1px solid var(--success-green); background: #ffffff; color: var(--success-green); font-weight: bold; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; }
+        .cat-btn.active { background: var(--success-green); color: #ffffff; }
+
+        .badge-cat { background: #e0e7ff; color: #3730a3; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin: 0 2px; }
+
         .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
         .left-buttons { display: flex; gap: 10px; }
         .admin-module-block { display: none; background: #ffffff; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px; }
 
-        /* Image Handling Styling */
         .preview-img { max-width: 100%; max-height: 250px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 10px; display: block; object-fit: contain; }
         .opt-preview-img { max-width: 120px; max-height: 80px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-top: 5px; object-fit: contain; }
         .img-input-btn { font-size: 12px; }
+        .table-wrapper { overflow-x: auto; margin-bottom: 15px; }
+        .subject-title { font-weight: bold; background: #e2e8f0; padding: 8px; border-radius: var(--radius-sm); margin-top: 15px; text-align: left; color: var(--primary-dark); }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -311,7 +318,7 @@
         <!-- SINAQ HİSSƏSİ -->
         <div id="exam-screen" class="screen">
             <div id="review-banner" class="review-mode-banner" style="display: none;">
-                🔍 Cavablara Baxış Rejimi (Düzəliş etmək mümkün deyil)
+                🔍 Cavablara Baxış Rejimi (Düzəliş etmək meşğuldur / mümkün deyil)
             </div>
             <div class="exam-header">
                 <span id="active-exam-title">Dövlət Qulluğu Vəzifələri Üzrə Sınaq</span>
@@ -345,13 +352,15 @@
             <div class="dim-report-title">Dövlət qulluğu vəzifələri üzrə test imtahanının nəticələri</div>
             <div class="dim-student-name" id="res-name"></div>
 
+            <div id="tablesContainer"></div>
+
             <div class="mt-4 text-center" style="font-weight: bold; font-size: 14px; line-height: 1.6;">
-                Doğru: <span id="res-total-correct" style="color: green;">0</span> | Yanlış: <span id="res-total-wrong" style="color: red;">0</span> | Cavabsız: <span id="res-total-blank">0</span>
+                Doğru: <span id="totalCorrect" style="color: green;">0</span> | Yanlış: <span id="totalWrong" style="color: red;">0</span> | Cavabsız: <span id="totalUnanswered">0</span>
             </div>
 
             <div class="final-score-box">
-                YEKUN BAL: <span id="res-total-score">0</span><br>
-                <span id="res-bb-group" class="mt-1" style="font-size: 15px; color: #0f172a; display: inline-block;"></span>
+                <span id="finalScoreText">YEKUN BAL: 0 bal</span><br>
+                <span id="finalStatusText" class="mt-1" style="font-size: 15px; color: #0f172a; display: inline-block;"></span>
             </div>
 
             <div class="mt-4" style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -372,7 +381,7 @@
                 <h3>🔑 Mərkəzi Admin Və İdarəetmə Paneli</h3>
             </div>
 
-            <!-- ADMİN İDARƏETMƏ NAVİQASİYASI -->
+            <!-- ADMİN NAVİQASİYASI -->
             <div class="admin-nav-grid">
                 <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
@@ -387,7 +396,7 @@
                 <div class="admin-nav-card" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Modulu</div>
             </div>
 
-            <!-- MODUL 1: SUALLAR REDAKTORU MODULU -->
+            <!-- MODUL 1: SUALLAR MODULU -->
             <div id="mod-suallar" class="admin-module-block">
                 <div class="breadcrumb-nav">
                     <span onclick="showStep(1)">Sınaqlar</span> &gt; 
@@ -543,16 +552,26 @@
                 </div>
             </div>
 
-            <!-- MODUL 2: İDARƏ & İCAZƏLƏR MODULU -->
+            <!-- MODUL 2: İDARƏ VƏ İCAZƏLƏR MODULU -->
             <div id="mod-idare" class="admin-module-block">
-                <h4>⚙️ İştirakçı İcazələri və Sistem Ayarları (Idare.html)</h4>
+                <h4>⚙️ İştirakçı İcazələri və Sistem Ayarları</h4>
                 <div class="mt-3" style="background: #f8fafc; padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
                     <h4 class="mb-2" style="text-align: left;">Tələbəyə Giriş İcazəsi Ver</h4>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;" class="mb-2">
                         <input type="text" id="adm-student-name" class="form-control" placeholder="Ad Soyad" style="flex: 2; min-width: 180px;">
                         <input type="text" id="adm-student-fin" class="form-control token-field" placeholder="FIN Kod" style="flex: 1; min-width: 120px;" maxlength="7">
-                        <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
+                        <input type="number" id="adm-exam-no" class="form-control" placeholder="Sınaq № (Məs: 1)" style="flex: 1; min-width: 100px;" value="1">
                     </div>
+
+                    <!-- Çoxlu Seçimli Kateqoriyalar -->
+                    <div class="category-buttons">
+                        <button type="button" class="cat-btn active" data-cat="BA" onclick="this.classList.toggle('active')">BA</button>
+                        <button type="button" class="cat-btn" data-cat="BB" onclick="this.classList.toggle('active')">BB</button>
+                        <button type="button" class="cat-btn" data-cat="AC" onclick="this.classList.toggle('active')">AC</button>
+                    </div>
+
+                    <button class="btn btn-success" onclick="allowStudent()">İcazə Ver</button>
                     <p id="adm-student-msg" class="mt-1" style="font-size: 13px;"></p>
 
                     <h4 class="mt-4" style="text-align: left;">İcazə Verilmiş İştirakçılar</h4>
@@ -562,11 +581,13 @@
                                 <tr>
                                     <th>Ad Soyad</th>
                                     <th>FIN Kod</th>
+                                    <th>Sınaq №</th>
+                                    <th>İcazəli Kateqoriyalar</th>
                                     <th>Əməliyyat</th>
                                 </tr>
                             </thead>
                             <tbody id="allowed-students-table-body">
-                                <tr><td colspan="3">Yüklənir...</td></tr>
+                                <tr><td colspan="5">Yüklənir...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -575,7 +596,7 @@
 
             <!-- MODUL 3: ŞƏXSİ KABİNET MODULU -->
             <div id="mod-kabinet" class="admin-module-block">
-                <h4>👤 Şəxsi Kabinet Və Profil İdarəetməsi (Kabinet.html)</h4>
+                <h4>👤 Şəxsi Kabinet Və Profil İdarəetməsi</h4>
                 <div class="mt-3" style="line-height: 2;">
                     <p><b>Platforma İnzibatçısı:</b> Yunis İmanov</p>
                     <p><b>Sistem Vəziyyəti:</b> Aktiv / Server Supabase Bağlantısı Qurulub</p>
@@ -586,7 +607,7 @@
 
             <!-- MODUL 4: KOD YARATMA MODULU -->
             <div id="mod-kod" class="admin-module-block">
-                <h4>🔑 İmtahan Və Giriş Kodlarının Generasiyası (Kod.html)</h4>
+                <h4>🔑 İmtahan Və Giriş Kodlarının Generasiyası</h4>
                 <div class="form-group mt-3">
                     <label>Aktivləşdirmə Kodu Yarat:</label>
                     <button class="btn btn-primary" onclick="generateTokenCode()">Təsadüfi Kod Yarat</button>
@@ -596,7 +617,7 @@
 
             <!-- MODUL 5: KONTROL MODULU -->
             <div id="mod-kontrol" class="admin-module-block">
-                <h4>🛡️ Sistem Təhlükəsizliyi Və Monitorinq (Kontrol.html)</h4>
+                <h4>🛡️ Sistem Təhlükəsizliyi Və Monitorinq</h4>
                 <p class="mt-2 mb-2">Aktiv imtahan sessiyalarının monitorinqi və canlı nəzarət.</p>
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -610,9 +631,9 @@
                 </div>
             </div>
 
-            <!-- MODUL 6: PULT -->
+            <!-- MODUL 6: PULT MODULU -->
             <div id="mod-pult" class="admin-module-block">
-                <h4>🎮 Mərkəzi İdarəetmə Pultu (Pult.html)</h4>
+                <h4>🎮 Mərkəzi İdarəetmə Pultu</h4>
                 <p class="mt-2 mb-2">İmtahan sessiyalarını dayandır və ya vaxtı qlobal yenilə.</p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-danger" onclick="alert('Bütün aktiv imtahan sessiyaları qlobal olaraq saxlanıldı!')">Bütün İmtahanları Dayandır</button>
@@ -622,7 +643,7 @@
 
             <!-- MODUL 7: İŞTİRAKÇILAR MODULU -->
             <div id="mod-siyahi" class="admin-module-block">
-                <h4>📋 İştirakçılar Siyahısı (Siyaha.html)</h4>
+                <h4>📋 İştirakçılar Siyahısı</h4>
                 <div class="mt-3" style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -642,7 +663,7 @@
 
             <!-- MODUL 8: STATİSTİKA MODULU -->
             <div id="mod-statistika" class="admin-module-block">
-                <h4>📊 İmtahan Statistikaları (Statistika.html)</h4>
+                <h4>📊 İmtahan Statistikaları</h4>
                 <div class="stats-grid mt-3">
                     <div class="stat-card">
                         <h5>Cəmi İştirakçı</h5>
@@ -657,7 +678,7 @@
 
             <!-- MODUL 9: CAVABLAR MODULU -->
             <div id="mod-cavablar" class="admin-module-block">
-                <h4>📑 İştirakçı Cavabları Və Yekun Nəticələr (Cavablar.html)</h4>
+                <h4>📑 İştirakçı Cavabları Və Yekun Nəticələr</h4>
                 <div class="mt-3" style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -679,34 +700,32 @@
 
             <!-- MODUL 10: MODUL.HTML -->
             <div id="mod-modul" class="admin-module-block">
-                <h4>📦 Modul Mərkəzi (Modul.html)</h4>
+                <h4>📦 Modul Mərkəzi</h4>
                 <p class="mt-1" style="color: #64748b;">Mərkəzi İdarəetmə Paneli – Bütün alt-sistem və modul konfiqurasiyaları.</p>
-                
                 <div class="mt-3" style="background: #f8fafc; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
                     <div class="stats-grid mb-3">
                         <div class="stat-card">
                             <h5>Daxili Modullar</h5>
-                            <div class="value" style="color: var(--accent-blue);">10 Modul</div>
+                            <div class="value" style="color: var(--accent-blue);">11 Modul</div>
                         </div>
                         <div class="stat-card">
                             <h5>Fayl İntegrasiyası</h5>
                             <div class="value" style="color: green;">100% Tam</div>
                         </div>
                     </div>
-                    <p style="font-size: 13px; line-height: 1.6;">Bu modul <code>modul.html</code> faylının daxili strutkurunu təmsil edir. Bütün komponentlər tək koda cəmlənərək platformaya birbaşa mərkəzləşdirilib.</p>
                 </div>
             </div>
 
             <!-- MODUL 11: REDAKTƏ MODULU -->
             <div id="mod-redakte" class="admin-module-block">
-                <h4>✏️ Sınaq Və Məzmun Redaktə Mərkəzi (Redakte.html)</h4>
+                <h4>✏️ Sınaq Və Məzmun Redaktə Mərkəzi</h4>
                 <p class="mt-1" style="color: #64748b;">Bütün modul fayllarının və baza parametrlərinin birbaşa mərkəzləşdirilmiş idarəsi.</p>
                 
                 <div class="folder-grid mt-4">
                     <div class="folder-card" onclick="switchAdminTab('suallar')">
                         <div class="folder-icon">📝</div>
                         <div class="folder-title">Suallar Redaktoru</div>
-                        <div class="folder-desc">Suallar.html - Test variantlarını və sual bazasını idarə edin.</div>
+                        <div class="folder-desc">Test variantlarını və sual bazasını idarə edin.</div>
                     </div>
 
                     <div class="folder-card" onclick="fetchAndListQuestionsForEdit()">
@@ -718,55 +737,7 @@
                     <div class="folder-card" onclick="switchAdminTab('idare')">
                         <div class="folder-icon">⚙️</div>
                         <div class="folder-title">İştirakçı İcazələri</div>
-                        <div class="folder-desc">Idare.html - FİN kod icazələrini və tələbə siyahısını idarə edin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('kabinet')">
-                        <div class="folder-icon">👤</div>
-                        <div class="folder-title">Şəxsi Kabinet</div>
-                        <div class="folder-desc">Kabinet.html - İnzibatçı məlumatlarını və server statusunu yeniləyin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('kod')">
-                        <div class="folder-icon">🔑</div>
-                        <div class="folder-title">Kod Generatoru</div>
-                        <div class="folder-desc">Kod.html - İmtahana giriş və aktivasiya kodları generasiya edin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('kontrol')">
-                        <div class="folder-icon">🛡️</div>
-                        <div class="folder-title">Təhlükəsizlik Monitorinqi</div>
-                        <div class="folder-desc">Kontrol.html - Aktiv imtahan sessiyalarına canlı nəzarət edin.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('pult')">
-                        <div class="folder-icon">🎮</div>
-                        <div class="folder-title">İdarəetmə Pultu</div>
-                        <div class="folder-desc">Pult.html - İmtahan vaxtlarını idarə edin və ya sessiyaları dayandırın.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('siyahi')">
-                        <div class="folder-icon">📋</div>
-                        <div class="folder-title">İştirakçılar Siyahısı</div>
-                        <div class="folder-desc">Siyaha.html - İmtahan vermiş bütün iştirakçıların statusuna baxın.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('statistika')">
-                        <div class="folder-icon">📊</div>
-                        <div class="folder-title">Statistika Modulu</div>
-                        <div class="folder-desc">Statistika.html - Ümumi iştirakçı sayı və ortalama ballara baxın.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('modul')">
-                        <div class="folder-icon">📦</div>
-                        <div class="folder-title">Modul Mərkəzi</div>
-                        <div class="folder-desc">Modul.html - Bütün sistem konfiqurasiya və daxili faylları.</div>
-                    </div>
-
-                    <div class="folder-card" onclick="switchAdminTab('cavablar')">
-                        <div class="folder-icon">📑</div>
-                        <div class="folder-title">Cavablar Və Nəticələr</div>
-                        <div class="folder-desc">Cavablar.html - Tələbələrin doğru və yanlış cavab cədvəli.</div>
+                        <div class="folder-desc">FİN kod icazələrini və tələbə siyahısını idarə edin.</div>
                     </div>
                 </div>
 
@@ -797,7 +768,7 @@
 
         </div>
 
-        <!-- Footer -->
+        <!-- FOOTER -->
         <div class="footer">
             <div class="footer-text">
                 © 2026 DQ Platform – Developed <span class="secret-admin-trigger" onclick="openAdminLogin()">by</span> Yunis İmanov
@@ -817,6 +788,7 @@
         let currentStudentName = "";
         let currentActiveFin = "";
         let selectedExamId = "1";
+        let userGroup = "BA";
         let allQuestions = [];
         let userAnswers = {};
         let flaggedQuestions = {};
@@ -826,6 +798,14 @@
         let examFinished = false;
         let currentQuestionImageData = null;
         let totalExamsCount = 5;
+
+        const openQuestionIds = [13, 14, 15, 48, 49, 50, 51, 52, 53, 54, 55, 68, 69, 70, 95, 96, 97, 98, 99, 100];
+        const examStructure = [
+          { title: "Azərbaycan dili", start: 1, end: 15 },
+          { title: "Qanunvericilik", start: 16, end: 55 },
+          { title: "İnformatika", start: 56, end: 70 },
+          { title: "Məntiq", start: 71, end: 100 }
+        ];
 
         document.addEventListener("DOMContentLoaded", restoreSession);
 
@@ -842,10 +822,18 @@
 
         function clearSessionStorage() {
             localStorage.removeItem("dq_exam_state");
+            localStorage.removeItem("dq_exam_end_time");
         }
 
         function saveSessionState() {
             if (!currentActiveFin || examFinished) return;
+
+            let endTime = localStorage.getItem("dq_exam_end_time");
+            if (!endTime) {
+                endTime = Date.now() + (timeLeft * 1000);
+                localStorage.setItem("dq_exam_end_time", endTime);
+            }
+
             const state = {
                 studentName: currentStudentName,
                 fin: currentActiveFin,
@@ -853,15 +841,17 @@
                 answers: userAnswers,
                 flags: flaggedQuestions,
                 currentIndex: currentQuestionIndex,
-                timeLeft: timeLeft,
-                questions: allQuestions
+                questions: allQuestions,
+                userGroup: userGroup
             };
             localStorage.setItem("dq_exam_state", JSON.stringify(state));
         }
 
         function restoreSession() {
             const savedState = localStorage.getItem("dq_exam_state");
-            if (savedState) {
+            const savedEndTime = localStorage.getItem("dq_exam_end_time");
+
+            if (savedState && savedEndTime) {
                 try {
                     const state = JSON.parse(savedState);
                     currentStudentName = state.studentName;
@@ -870,8 +860,19 @@
                     userAnswers = state.answers || {};
                     flaggedQuestions = state.flags || {};
                     currentQuestionIndex = state.currentIndex || 0;
-                    timeLeft = state.timeLeft || testDuration;
                     allQuestions = state.questions || [];
+                    userGroup = state.userGroup || "BA";
+
+                    const now = Date.now();
+                    const calculatedTimeLeft = Math.floor((parseInt(savedEndTime) - now) / 1000);
+
+                    if (calculatedTimeLeft <= 0) {
+                        timeLeft = 0;
+                        finishExam();
+                        return;
+                    } else {
+                        timeLeft = calculatedTimeLeft;
+                    }
 
                     if (allQuestions.length > 0) {
                         showScreen("exam-screen");
@@ -1056,6 +1057,8 @@
                 currentQuestionIndex = 0;
                 timeLeft = testDuration;
                 examFinished = false;
+                
+                localStorage.removeItem("dq_exam_end_time");
 
                 showScreen("exam-screen");
                 document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
@@ -1069,14 +1072,123 @@
             }
         }
 
+        function evaluateAnswer(userAns, etalonAns, isOpen) {
+            if (!userAns || String(userAns).trim() === "") {
+                return { status: "-", score: 0, isUnanswered: true };
+            }
+
+            const cleanUser = String(userAns).trim().toUpperCase();
+            const cleanEtalon = String(etalonAns).trim().toUpperCase();
+
+            if (cleanUser === cleanEtalon) {
+                return { status: "+", score: isOpen ? 2 : 1, isCorrect: true };
+            }
+
+            if (isOpen && cleanEtalon.includes(",")) {
+                const userArr = cleanUser.split(",").map(s => s.trim()).filter(Boolean);
+                const etalonArr = cleanEtalon.split(",").map(s => s.trim()).filter(Boolean);
+                
+                const isSame = userArr.length === etalonArr.length && userArr.every(val => etalonArr.includes(val));
+                if (isSame) {
+                    return { status: "+", score: 2, isCorrect: true };
+                }
+            }
+
+            return { status: "-", score: 0, isWrong: true };
+        }
+
+        function calculateSubgroup(group, score) {
+            const g = group ? group.toUpperCase().trim() : '';
+            if (g === 'BA') {
+                if (score >= 102) return 'BA1';
+                if (score >= 96) return 'BA2';
+                if (score >= 90) return 'BA3';
+                if (score >= 84) return 'BA4';
+            } else if (g === 'AC' || g === 'BB') {
+                if (score >= 80) return `${g}1`;
+                if (score >= 75) return `${g}2`;
+                if (score >= 70) return `${g}3`;
+                if (score >= 65) return `${g}4`;
+            }
+            return `Keçid balını toplamadı (< 65)`;
+        }
+
+        function renderExamResultTables() {
+            const container = document.getElementById('tablesContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let totalCorrect = 0, totalWrong = 0, totalUnanswered = 0, totalScore = 0;
+            const letters = ["A", "B", "C", "D", "E", "F", "G"];
+
+            examStructure.forEach(sec => {
+                const block = document.createElement('div');
+                block.className = 'subject-block';
+
+                let tableHtml = `<div class="subject-title">${sec.title}</div>
+                  <div class="table-wrapper">
+                    <table class="result-table">
+                      <tr><th>Nº</th>`;
+                
+                let etalonRow = '<tr><th>Etalon</th>';
+                let userRow = '<tr><th>İştirakçı</th>';
+                let resultRow = '<tr><th>Nəticə</th>';
+
+                for (let i = sec.start; i <= sec.end; i++) {
+                    const qData = allQuestions.find(q => q.id === i);
+                    const isOpen = openQuestionIds.includes(i);
+                    
+                    let etalonVal = "A";
+                    if (qData) {
+                        if (isOpen && Array.isArray(qData.options) && qData.options[0]) {
+                            etalonVal = qData.options[0].text || "1,2";
+                        } else if (typeof qData.correct === 'number') {
+                            etalonVal = letters[qData.correct] || "A";
+                        }
+                    }
+
+                    let rawUserAns = userAnswers[i];
+                    let userVal = "";
+                    if (rawUserAns !== undefined) {
+                        userVal = isOpen ? rawUserAns : (letters[rawUserAns] || rawUserAns);
+                    }
+
+                    const res = evaluateAnswer(userVal, etalonVal, isOpen);
+
+                    if (res.isUnanswered) totalUnanswered++;
+                    else if (res.isCorrect) totalCorrect++;
+                    else totalWrong++;
+
+                    totalScore += res.score;
+
+                    tableHtml += `<td>${i}</td>`;
+                    etalonRow += `<td>${etalonVal}</td>`;
+                    userRow += `<td>${userVal || ''}</td>`;
+                    resultRow += `<td>${res.status}</td>`;
+                }
+
+                tableHtml += `</tr>${etalonRow}</tr>${userRow}</tr>${resultRow}</tr></table></div>`;
+                block.innerHTML = tableHtml;
+                container.appendChild(block);
+            });
+
+            document.getElementById('totalCorrect').textContent = totalCorrect;
+            document.getElementById('totalWrong').textContent = totalWrong;
+            document.getElementById('totalUnanswered').textContent = totalUnanswered;
+            document.getElementById('finalScoreText').textContent = `YEKUN BAL: ${totalScore} bal`;
+            
+            const subGroupResult = calculateSubgroup(userGroup, totalScore);
+            document.getElementById('finalStatusText').textContent = subGroupResult.includes('Keçid balını') 
+              ? `Uyğun qrup: ${subGroupResult}` 
+              : `Keçid balını topladı (${subGroupResult})`;
+
+            return { totalCorrect, totalWrong, totalScore, subGroupResult };
+        }
+
         function viewAnswerCard(examId, score, correct, wrong, bbGroup) {
             showScreen("result-screen");
             document.getElementById("res-name").innerText = currentStudentName;
-            document.getElementById("res-total-correct").innerText = correct || 0;
-            document.getElementById("res-total-wrong").innerText = wrong || 0;
-            document.getElementById("res-total-blank").innerText = 100 - ((correct || 0) + (wrong || 0));
-            document.getElementById("res-total-score").innerText = (score || 0) + " bal";
-            document.getElementById("res-bb-group").innerText = "Uyğun qrup: " + (bbGroup || '');
+            renderExamResultTables();
         }
 
         function renderCurrentQuestion() {
@@ -1216,51 +1328,29 @@
             }
         }
 
-        function getBBGroup(score) {
-            if (score >= 80) return "BB1 (İnzibati vəzifələrin 6-cı təsnifatı)";
-            if (score >= 75) return "BB2 (İnzibati vəzifələrin 6-cı təsnifatı)";
-            if (score >= 70) return "BB3 (İnzibati vəzifələrin 7-ci təsnifatı)";
-            if (score >= 65) return "BB4 (İnzibati vəzifələrin 7-ci təsnifatı)";
-            return "Keçid balını toplamadı (< 65)";
-        }
-
         async function finishExam() {
             if (timerInterval) clearInterval(timerInterval);
             examFinished = true;
             clearSessionStorage();
 
-            let totalCorrect = 0, totalWrong = 0, totalBlank = 0;
-
-            allQuestions.forEach(q => {
-                let userAns = userAnswers[q.id];
-                if (userAns === undefined) totalBlank++;
-                else if (userAns === q.correct) totalCorrect++;
-                else totalWrong++;
-            });
-
-            let bbGroup = getBBGroup(totalCorrect);
+            showScreen("result-screen");
+            document.getElementById("res-name").innerText = currentStudentName;
+            
+            const stats = renderExamResultTables();
 
             try {
                 await _supabase.from('exam_results').insert([{
                     name: currentStudentName,
                     fin: currentActiveFin,
                     exam_no: selectedExamId,
-                    correct_count: totalCorrect,
-                    wrong_count: totalWrong,
-                    score: totalCorrect,
-                    bb_group: bbGroup
+                    correct_count: stats.totalCorrect,
+                    wrong_count: stats.totalWrong,
+                    score: stats.totalScore,
+                    bb_group: stats.subGroupResult
                 }]);
             } catch (err) {
                 console.error("Nəticə yazılarkən xəta:", err);
             }
-
-            showScreen("result-screen");
-            document.getElementById("res-name").innerText = currentStudentName;
-            document.getElementById("res-total-correct").innerText = totalCorrect;
-            document.getElementById("res-total-wrong").innerText = totalWrong;
-            document.getElementById("res-total-blank").innerText = totalBlank;
-            document.getElementById("res-total-score").innerText = totalCorrect + " bal";
-            document.getElementById("res-bb-group").innerText = "Uyğun qrup: " + bbGroup;
         }
 
         function backToReviewQuestions() {
@@ -1289,15 +1379,33 @@
         async function allowStudent() {
             let name = document.getElementById("adm-student-name").value.trim();
             let fin = document.getElementById("adm-student-fin").value.trim().toUpperCase();
+            let examNo = document.getElementById("adm-exam-no").value.trim();
             let msg = document.getElementById("adm-student-msg");
 
-            if (!name || !fin) { 
+            const selectedCategories = [];
+            document.querySelectorAll("#mod-idare .cat-btn.active").forEach(btn => {
+                selectedCategories.push(btn.getAttribute("data-cat"));
+            });
+
+            if (!name || !fin || !examNo) { 
                 msg.style.color = "red"; 
-                msg.innerText = "Xanaları doldurun!"; 
+                msg.innerText = "Ad Soyad, FİN kod və Sınaq № daxil edin!"; 
                 return; 
             }
 
-            const { error } = await _supabase.from('allowed_students').insert([{ name, fin }]);
+            if (selectedCategories.length === 0) {
+                msg.style.color = "red"; 
+                msg.innerText = "Ən azı 1 kateqoriya seçməlisiniz!"; 
+                return;
+            }
+
+            const { error } = await _supabase.from('allowed_students').insert([{ 
+                name, 
+                fin, 
+                exam_no: examNo, 
+                categories: selectedCategories 
+            }]);
+
             if (error) { 
                 msg.style.color = "red"; 
                 msg.innerText = "Xəta: " + error.message; 
@@ -1306,6 +1414,7 @@
                 msg.innerText = "Tələbəyə icazə verildi!"; 
                 document.getElementById("adm-student-name").value = "";
                 document.getElementById("adm-student-fin").value = "";
+                document.querySelectorAll("#mod-idare .cat-btn").forEach(btn => btn.classList.remove("active"));
                 loadAllowedStudents(); 
             }
         }
@@ -1322,15 +1431,24 @@
             const { data, error } = await _supabase.from('allowed_students').select('*');
             let tbody = document.getElementById("allowed-students-table-body");
             if (error || !data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3">İcazə verilmiş tələbə yoxdur</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5">İcazə verilmiş tələbə yoxdur</td></tr>`;
                 return;
             }
             let html = "";
             data.forEach(s => {
+                let catBadges = "";
+                if (Array.isArray(s.categories)) {
+                    catBadges = s.categories.map(c => `<span class="badge-cat">${c}</span>`).join(" ");
+                } else {
+                    catBadges = `<span class="badge-cat">${s.categories || 'BA'}</span>`;
+                }
+
                 html += `
                     <tr>
                         <td>${s.name || '-'}</td>
                         <td><b>${s.fin}</b></td>
+                        <td>Sınaq ${s.exam_no || 1}</td>
+                        <td>${catBadges}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="removeStudentPermission('${s.fin}')">Deaktiv Et / Sil</button></td>
                     </tr>
                 `;
