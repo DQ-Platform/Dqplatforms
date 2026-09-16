@@ -293,18 +293,15 @@
             <p id="error-msg" class="error-msg mt-2"></p>
         </div>
 
-        <!-- SINAQ SEÇİM EKRANI -->
+        <!-- SINAQ SEÇİM EKRANI (DİNAMİK KARTLAR İLƏ YENİLƏNMİŞ) -->
         <div id="exam-select-screen" class="screen text-center">
-            <h2>📝 Sınaq Seçimi</h2>
-            <p class="mt-2 mb-3">Zəhmət olmasa işləmək istədiyiniz sınağı seçin:</p>
-            <select id="exam-selector" class="select-control">
-                <option value="1">Sınaq 1</option>
-                <option value="2">Sınaq 2</option>
-                <option value="3">Sınaq 3</option>
-                <option value="4">Sınaq 4</option>
-                <option value="5">Sınaq 5</option>
-            </select>
-            <button class="btn" onclick="startExamSession()">İmtahana Başla</button>
+            <h2>Qeydiyyatdan keçdiyim imtahanlar</h2>
+            <p class="mt-2 mb-3" style="color: #64748b; font-size: 14px;">Mövcud və keçmiş imtahanlarınızın siyahısı:</p>
+            
+            <div id="registered-exams-list" style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin: 0 auto 20px auto;">
+                <p>Yüklənir...</p>
+            </div>
+
             <div class="mt-4">
                 <button class="btn btn-secondary btn-sm" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
             </div>
@@ -490,7 +487,6 @@
                         <textarea class="form-control" id="questionText" rows="3" placeholder="Sualın mətnini daxil edin..."></textarea>
                     </div>
 
-                    <!-- SUALA AİD ŞƏKİL YÜKLƏMƏ BÖLMƏSİ -->
                     <div class="form-group">
                         <label>🖼️ Sual Şəkli Yüklə (Seçimdədir):</label>
                         <input type="file" id="questionImageInput" accept="image/*" class="form-control img-input-btn" onchange="handleQuestionImageUpload(this)">
@@ -828,7 +824,7 @@
         let timeLeft = testDuration;
         let examFinished = false;
         let currentQuestionImageData = null;
-        let totalExamsCount = 2;
+        let totalExamsCount = 5;
 
         document.addEventListener("DOMContentLoaded", restoreSession);
 
@@ -934,27 +930,60 @@
                 currentActiveFin = finInput;
 
                 showScreen("exam-select-screen");
+                await renderRegisteredExams();
             } catch (err) {
                 errorMsg.style.color = "var(--danger-red)";
                 errorMsg.innerText = "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.";
             }
         }
 
-        async function startExamSession() {
-            selectedExamId = document.getElementById("exam-selector").value;
+        async function renderRegisteredExams() {
+            const container = document.getElementById("registered-exams-list");
+            container.innerHTML = "<p>Sınaqlar yüklənir...</p>";
+
+            const { data: results } = await _supabase
+                .from('exam_results')
+                .select('*')
+                .eq('fin', currentActiveFin);
+
+            const resultMap = {};
+            if (results) {
+                results.forEach(r => {
+                    resultMap[String(r.exam_no)] = r;
+                });
+            }
+
+            let html = "";
+            for (let i = 1; i <= totalExamsCount; i++) {
+                const examNum = String(i);
+                const hasTaken = resultMap[examNum];
+
+                html += `
+                    <div style="background: #ffffff; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
+                        <div style="text-align: left;">
+                            <div style="font-weight: bold; font-size: 16px; color: var(--primary-dark);">Sınaq ${examNum}</div>
+                            ${hasTaken 
+                                ? `<div style="font-size: 13px; color: var(--success-green); font-weight: 600; margin-top: 4px;">Nəticə: ${hasTaken.score} Bal</div>`
+                                : `<div style="font-size: 13px; color: #64748b; margin-top: 4px;">İştirak edilməyib</div>`
+                            }
+                        </div>
+                        <div>
+                            ${hasTaken 
+                                ? `<button class="btn btn-primary btn-sm" onclick="viewAnswerCard('${examNum}', ${hasTaken.score}, ${hasTaken.correct_count}, ${hasTaken.wrong_count}, '${hasTaken.bb_group}')">📄 Cavab Kartını Gör</button>`
+                                : `<button class="btn btn-success btn-sm" onclick="startExamSession('${examNum}')">▶️ Başla</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function startExamSession(examId) {
+            selectedExamId = examId;
 
             try {
-                const { data: existingResults } = await _supabase
-                    .from('exam_results')
-                    .select('*')
-                    .eq('fin', currentActiveFin)
-                    .eq('exam_no', selectedExamId);
-
-                if (existingResults && existingResults.length > 0) {
-                    alert(`Siz artıq Sınaq ${selectedExamId} üzrə imtahanda iştirak etmisiniz! Hər bir sınaqda yalnız 1 dəfə iştirak etmək mümkündür.`);
-                    return;
-                }
-
                 const { data, error } = await _supabase
                     .from('exam_questions')
                     .select('*')
@@ -991,6 +1020,16 @@
             } catch (err) {
                 alert("İmtahan yüklənərkən xəta baş verdi: " + err.message);
             }
+        }
+
+        function viewAnswerCard(examId, score, correct, wrong, bbGroup) {
+            showScreen("result-screen");
+            document.getElementById("res-name").innerText = currentStudentName;
+            document.getElementById("res-total-correct").innerText = correct || 0;
+            document.getElementById("res-total-wrong").innerText = wrong || 0;
+            document.getElementById("res-total-blank").innerText = 100 - ((correct || 0) + (wrong || 0));
+            document.getElementById("res-total-score").innerText = (score || 0) + " bal";
+            document.getElementById("res-bb-group").innerText = "Uyğun qrup: " + (bbGroup || '');
         }
 
         function renderCurrentQuestion() {
@@ -1302,15 +1341,6 @@
                 <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
             `;
             grid.appendChild(card);
-
-            // Tələbə sınaq seçimi drop-down menyusuna da əlavə edirik
-            const selector = document.getElementById('exam-selector');
-            if(selector) {
-                const opt = document.createElement('option');
-                opt.value = totalExamsCount;
-                opt.innerText = examTitle;
-                selector.appendChild(opt);
-            }
         }
 
         function selectExam(exam) {
@@ -1381,7 +1411,6 @@
             }
         }
 
-        /* ŞƏKİL İDARƏETMƏ FUNKSİYALARI */
         function handleQuestionImageUpload(input) {
             const file = input.files[0];
             if (file) {
