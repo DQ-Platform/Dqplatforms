@@ -287,6 +287,43 @@
         /* MULTI-CATEGORY CHECKBOX CONTROLS */
         .target-category-selector { display: flex; gap: 12px; align-items: center; background: #f1f5f9; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 10px; flex-wrap: wrap; }
         .target-category-selector label { font-size: 13px; font-weight: bold; color: var(--primary-dark); cursor: pointer; display: flex; align-items: center; gap: 5px; }
+
+        /* DYNAMIC EXAM CATEGORY ROW STYLES */
+        .exam-item-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-gold);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+        .exam-item-header {
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 8px;
+        }
+        .cat-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: var(--radius-sm);
+            margin-top: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .cat-action-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--primary-dark);
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -307,7 +344,7 @@
             <h2>Qeydiyyatdan keçdiyim imtahanlar</h2>
             <p class="mt-2 mb-3" style="color: #64748b; font-size: 14px;">Mövcud və keçmiş imtahanlarınızın siyahısı:</p>
             
-            <div id="registered-exams-list" style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin: 0 auto 20px auto;">
+            <div id="registered-exams-list" style="display: flex; flex-direction: column; gap: 15px; max-width: 650px; margin: 0 auto 20px auto;">
                 <p>Yüklənir...</p>
             </div>
 
@@ -1078,7 +1115,7 @@
                 currentStudentName = "ADMIN REDAKTOR";
                 currentActiveFin = LIVE_EDIT_ADMIN_PASS;
                 document.getElementById("live-edit-panel").style.display = "block";
-                await startExamSession("1");
+                await startExamSession("1", "BA");
                 return;
             }
 
@@ -1118,6 +1155,13 @@
             const container = document.getElementById("registered-exams-list");
             container.innerHTML = "<p>Sınaqlar yüklənir...</p>";
 
+            // 1. Tələbənin icazəli olduğu sınaqları və kateqoriyaları gətiririk
+            const { data: allowedData } = await _supabase
+                .from('allowed_students')
+                .select('*')
+                .eq('fin', currentActiveFin);
+
+            // 2. Tamamlanmış imtahan nəticələrini gətiririk
             const { data: results } = await _supabase
                 .from('exam_results')
                 .select('*')
@@ -1126,104 +1170,110 @@
             const resultMap = {};
             if (results) {
                 results.forEach(r => {
-                    const key = String(r.exam_no);
-                    if (!resultMap[key]) resultMap[key] = [];
-                    resultMap[key].push(r);
+                    const key = `${r.exam_no}_${(r.category || 'BA').toUpperCase()}`;
+                    resultMap[key] = r;
+                });
+            }
+
+            // Mümkün bütün kateqoriyaların siyahısı
+            const allAvailableCategories = ['BA', 'BB', 'AC'];
+
+            // Tələbənin icazə verdiyi sınaqlar xəritəsi
+            const allowedExamsMap = {};
+            if (allowedData) {
+                allowedData.forEach(item => {
+                    const examNo = String(item.exam_no || 1);
+                    if (!allowedExamsMap[examNo]) allowedExamsMap[examNo] = new Set();
+
+                    if (Array.isArray(item.categories)) {
+                        item.categories.forEach(c => allowedExamsMap[examNo].add(c.toUpperCase()));
+                    } else if (item.categories) {
+                        allowedExamsMap[examNo].add(item.categories.toUpperCase());
+                    } else {
+                        allowedExamsMap[examNo].add('BA');
+                    }
                 });
             }
 
             let html = "";
             for (let i = 1; i <= totalExamsCount; i++) {
                 const examNum = String(i);
-                const examResults = resultMap[examNum] || [];
-
-                let statusHtml = "";
-                let actionHtml = "";
-                let titleBadge = "";
-
-                if (examResults.length === 0) {
-                    statusHtml = `<div style="font-size: 13px; color: #64748b; margin-top: 4px;">İştirak edilməyib</div>`;
-                    actionHtml = `<button class="btn btn-success btn-sm" onclick="startExamSession('${examNum}')">▶️ Başla</button>`;
-                } 
-                else if (examResults.length === 1) {
-                    const res = examResults[0];
-                    const catName = res.category || 'BA';
-                    
-                    titleBadge = ` <span style="font-size: 13px; color: var(--accent-blue); font-weight: normal;">(${catName})</span>`;
-                    statusHtml = `<div style="font-size: 13px; color: var(--success-green); font-weight: 600; margin-top: 4px;">Nəticə: ${res.score} Bal</div>`;
-                    actionHtml = `<button class="btn btn-primary btn-sm" onclick="viewAnswerCard('${examNum}', ${res.score}, ${res.correct_count}, ${res.wrong_count}, '${res.bb_group}')">📄 Cavab Kartını Gör</button>`;
-                } 
-                else {
-                    titleBadge = ` <span style="font-size: 13px; color: #d97706; font-weight: normal;">(${examResults.length} Kateqoriya)</span>`;
-                    
-                    let selectOptions = examResults.map((res, index) => {
-                        const catName = res.category || `Kateqoriya ${index + 1}`;
-                        return `<option value="${index}">${catName} (${res.score} Bal)</option>`;
-                    }).join('');
-
-                    statusHtml = `
-                        <div style="margin-top: 6px;">
-                            <label style="font-size: 12px; color: #64748b; display: block; margin-bottom: 2px;">Baxılacaq kateqoriyanı seçin:</label>
-                            <select id="select-cat-exam-${examNum}" class="form-control" style="padding: 4px 8px; font-size: 12px; width: 100%;">
-                                ${selectOptions}
-                            </select>
-                        </div>
-                    `;
-
-                    actionHtml = `<button class="btn btn-primary btn-sm" onclick="viewSelectedCategoryResult('${examNum}')">📄 Cavab Kartını Gör</button>`;
-                }
+                const allowedCatsSet = allowedExamsMap[examNum];
 
                 html += `
-                    <div style="background: #ffffff; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-gold); padding: 15px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); gap: 10px;">
-                        <div style="text-align: left; flex: 1;">
-                            <div style="font-weight: bold; font-size: 16px; color: var(--primary-dark);">Sınaq ${examNum}${titleBadge}</div>
-                            ${statusHtml}
+                    <div class="exam-item-card">
+                        <div class="exam-item-header">
+                            <span>Sınaq ${examNum}</span>
+                            ${!allowedCatsSet ? '<span style="font-size:12px; color:#ef4444; font-weight:normal;">(İcazə verilməyib)</span>' : ''}
                         </div>
-                        <div>
-                            ${actionHtml}
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                `;
+
+                allAvailableCategories.forEach(cat => {
+                    const resultKey = `${examNum}_${cat}`;
+                    const res = resultMap[resultKey];
+
+                    let catStatusHtml = "";
+
+                    if (res) {
+                        // Tamamlanıb -> Cavab Kartını Gör
+                        catStatusHtml = `
+                            <div class="cat-action-row">
+                                <span class="cat-action-title">${cat} Kateqoriyası <span style="color:var(--success-green); font-size:12px;">(Tamamlandı: ${res.score} Bal)</span></span>
+                                <button class="btn btn-primary btn-sm" onclick="viewAnswerCard('${examNum}', ${res.score}, ${res.correct_count}, ${res.wrong_count}, '${res.bb_group || ''}')">📄 Cavab kartını gör</button>
+                            </div>
+                        `;
+                    } else if (allowedCatsSet && allowedCatsSet.has(cat)) {
+                        // İcazəsi var, daxil olmayıb -> İştirak et
+                        catStatusHtml = `
+                            <div class="cat-action-row">
+                                <span class="cat-action-title">${cat} Kateqoriyası</span>
+                                <button class="btn btn-success btn-sm" onclick="startExamSession('${examNum}', '${cat}')">▶️ İştirak et</button>
+                            </div>
+                        `;
+                    } else {
+                        // Qeydiyyatı yoxdur -> WhatsApp Keçidi
+                        const whatsappMsg = encodeURIComponent(`Mən Sınaq ${examNum} - ${cat} kateqoriyası üçün qeydiyyatdan keçmək istəyirəm. Ad: ${currentStudentName}, FIN: ${currentActiveFin}`);
+                        const whatsappLink = `https://wa.me/994504305162?text=${whatsappMsg}`;
+
+                        catStatusHtml = `
+                            <div class="cat-action-row" style="opacity: 0.85; background: #fff5f5;">
+                                <span class="cat-action-title" style="color:#64748b;">${cat} Kateqoriyası</span>
+                                <a href="${whatsappLink}" target="_blank" class="btn btn-secondary btn-sm" style="background-color: #25D366; color: white; border: none;">💬 Qeydiyyatdan keçmək üçün</a>
+                            </div>
+                        `;
+                    }
+
+                    html += catStatusHtml;
+                });
+
+                html += `
                         </div>
                     </div>
                 `;
             }
 
             container.innerHTML = html;
-            window.currentExamResultsMap = resultMap;
         }
 
-        function viewSelectedCategoryResult(examNum) {
-            const selectEl = document.getElementById(`select-cat-exam-${examNum}`);
-            if (!selectEl) return;
-            
-            const selectedIndex = parseInt(selectEl.value);
-            const examResults = window.currentExamResultsMap[examNum];
-            
-            if (examResults && examResults[selectedIndex]) {
-                const res = examResults[selectedIndex];
-                viewAnswerCard(examNum, res.score, res.correct_count, res.wrong_count, res.bb_group);
-            }
-        }
-
-        async function startExamSession(examId) {
+        async function startExamSession(examId, category = "BA") {
             selectedExamId = examId;
+            userGroup = category;
 
             try {
                 let query = _supabase
                     .from('exam_questions')
                     .select('*')
-                    .eq('exam_id', selectedExamId);
-
-                if (isLiveEditMode) {
-                    query = query.eq('category', userGroup);
-                }
+                    .eq('exam_id', selectedExamId)
+                    .eq('category', userGroup);
 
                 const { data, error } = await query.order('q_number', { ascending: true });
 
                 if (error || !data || data.length === 0) {
                     if(!isLiveEditMode) {
-                        alert("Bu sınaq üçün hələ sual əlavə edilməyib!");
+                        alert(`Sınaq ${selectedExamId} (${userGroup} kateqoriyası) üçün hələ suallar baza sisteminə əlavə edilməyib!`);
                         return;
                     } else {
-                        // Əgər həmin kateqoriyada sual yoxdursa təzə boş siyahı yaradaq
                         allQuestions = Array.from({length: 100}, (_, i) => ({
                             id: i + 1,
                             subject: getSubjectByNumber(i + 1),
@@ -1253,7 +1303,7 @@
                 localStorage.removeItem("dq_exam_end_time");
 
                 showScreen("exam-screen");
-                document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId} ${isLiveEditMode ? '(' + userGroup + ' Redaktə Rejimi)' : ''}`;
+                document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Sınaq ${selectedExamId} (${userGroup} Kateqoriyası)`;
 
                 if(!isLiveEditMode) saveSessionState();
                 loadNavGrid();
@@ -1447,7 +1497,6 @@
             container.innerHTML = html;
             updateNavActiveState();
 
-            // Əgər redaktə form açıqdırsa avtomatik məlumatları yenilə
             if(isLiveEditMode && document.getElementById("live-edit-form").style.display === "block") {
                 populateLiveEditForm();
             }
@@ -1456,7 +1505,7 @@
         /* CANLI İMTAHAN REDAKTƏ FUNKSİYALARI */
         function changeLiveCategory(cat) {
             userGroup = cat;
-            startExamSession(selectedExamId);
+            startExamSession(selectedExamId, userGroup);
         }
 
         function toggleLiveEditForm() {
@@ -1515,7 +1564,6 @@
                 });
             }
 
-            // Cari kateqoriyanı avtomatik seçili et
             document.querySelectorAll('.live-target-cat-chk').forEach(chk => {
                 chk.checked = (chk.value === userGroup);
             });
@@ -1553,14 +1601,13 @@
                 }
             });
 
-            // Seçilmiş hədəf kateqoriyaları topla
             let targetCategories = [];
             document.querySelectorAll('.live-target-cat-chk:checked').forEach(chk => {
                 targetCategories.push(chk.value);
             });
 
             if (targetCategories.length === 0) {
-                targetCategories = [userGroup]; // susmaya görə cari kateqoriya
+                targetCategories = [userGroup];
             }
 
             let successCategories = [];
@@ -1612,7 +1659,6 @@
             if (successCategories.length === 0) {
                 alert("Sual bazaya vurularkən xəta baş verdi!");
             } else {
-                // Lokal obyektləri yenilə
                 q.question = text;
                 q.image_url = liveEditImageData;
                 q.options = options;
@@ -1719,6 +1765,7 @@
                         name: currentStudentName,
                         fin: currentActiveFin,
                         exam_no: selectedExamId,
+                        category: userGroup,
                         correct_count: stats.totalCorrect,
                         wrong_count: stats.totalWrong,
                         score: stats.totalScore,
@@ -1846,8 +1893,8 @@
                 let partHtml = "";
                 results.forEach(r => {
                     sumScore += (r.score || 0);
-                    html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score}</b></td></tr>`;
-                    partHtml += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no}</td><td>Tamamlandı</td></tr>`;
+                    html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no} (${r.category || 'BA'})</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score}</b></td></tr>`;
+                    partHtml += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no} (${r.category || 'BA'})</td><td>Tamamlandı</td></tr>`;
                 });
                 tbody.innerHTML = html;
                 if(partBody) partBody.innerHTML = partHtml;
@@ -2069,14 +2116,13 @@
                 }
             }
 
-            // Seçilmiş hədəf kateqoriyalarını götürək
             let targetCategories = [];
             document.querySelectorAll('.editor-target-cat-chk:checked').forEach(chk => {
                 targetCategories.push(chk.value);
             });
 
             if (targetCategories.length === 0) {
-                targetCategories = [currentCategoryRedaktor]; // cari kateqoriya
+                targetCategories = [currentCategoryRedaktor];
             }
 
             let successCategories = [];
@@ -2174,7 +2220,6 @@
                 for (let i = 0; i < 4; i++) addDynamicOption();
             }
 
-            // Cari kateqoriyanı avtomatik aktiv et
             document.querySelectorAll('.editor-target-cat-chk').forEach(chk => {
                 chk.checked = (chk.value === currentCategoryRedaktor);
             });
@@ -2263,102 +2308,85 @@
         async function copyQuestionToCategory(questionDbId) {
             const targetSelect = document.getElementById(`target-cat-${questionDbId}`);
             if (!targetSelect) return;
-            
-            const targetVal = targetSelect.value;
 
-            const { data: qData, error: fetchErr } = await _supabase
+            const selectedVal = targetSelect.value;
+
+            const { data: sourceQ, error: srcErr } = await _supabase
                 .from('exam_questions')
                 .select('*')
                 .eq('id', questionDbId)
                 .single();
 
-            if (fetchErr || !qData) {
-                alert("Sual məlumatı tapılmadı: " + (fetchErr ? fetchErr.message : ''));
+            if (srcErr || !sourceQ) {
+                alert("Sual tapılmadı!");
                 return;
             }
 
-            let categoriesToApply = [];
-            if (targetVal === 'ALL') {
-                categoriesToApply = ['BA', 'BB', 'AC'];
+            let targetCats = [];
+            if (selectedVal === "ALL") {
+                targetCats = ['BA', 'BB', 'AC'];
             } else {
-                categoriesToApply = [targetVal];
+                targetCats = [selectedVal];
             }
 
-            let successList = [];
+            let copiedCount = 0;
 
-            for (const cat of categoriesToApply) {
+            for (let cat of targetCats) {
                 const { data: existingQ } = await _supabase
                     .from('exam_questions')
                     .select('id')
-                    .eq('exam_id', qData.exam_id)
+                    .eq('exam_id', sourceQ.exam_id)
                     .eq('category', cat)
-                    .eq('q_number', qData.q_number)
+                    .eq('q_number', sourceQ.q_number)
                     .maybeSingle();
 
-                let resultError = null;
-
                 if (existingQ) {
-                    const { error } = await _supabase
+                    await _supabase
                         .from('exam_questions')
                         .update({
-                            subject: qData.subject,
-                            question: qData.question,
-                            image_url: qData.image_url,
-                            options: qData.options,
-                            correct: qData.correct
+                            subject: sourceQ.subject,
+                            question: sourceQ.question,
+                            image_url: sourceQ.image_url,
+                            options: sourceQ.options,
+                            correct: sourceQ.correct
                         })
                         .eq('id', existingQ.id);
-
-                    resultError = error;
                 } else {
-                    const { error } = await _supabase
+                    await _supabase
                         .from('exam_questions')
                         .insert([{
-                            exam_id: qData.exam_id,
+                            exam_id: sourceQ.exam_id,
                             category: cat,
-                            q_number: qData.q_number,
-                            subject: qData.subject,
-                            question: qData.question,
-                            image_url: qData.image_url,
-                            options: qData.options,
-                            correct: qData.correct
+                            q_number: sourceQ.q_number,
+                            subject: sourceQ.subject,
+                            question: sourceQ.question,
+                            image_url: sourceQ.image_url,
+                            options: sourceQ.options,
+                            correct: sourceQ.correct
                         }]);
-
-                    resultError = error;
                 }
-
-                if (!resultError) {
-                    successList.push(cat);
-                }
+                copiedCount++;
             }
 
-            if (successList.length > 0) {
-                alert(`Sual ${qData.q_number} uğurla [${successList.join(', ')}] kateqoriyalarına vuruldu!`);
-                fetchAndListQuestionsForEdit();
-            } else {
-                alert("Əməliyyat zamanı xəta baş verdi.");
+            alert(`Sual uğurla hədəf kateqoriyaya (${copiedCount} ədəd) köçürüldü!`);
+            fetchAndListQuestionsForEdit();
+        }
+
+        async function deleteQuestionByDbId(id) {
+            if (confirm("Bu sualı bazadan silməyə əminsiniz?")) {
+                const { error } = await _supabase.from('exam_questions').delete().eq('id', id);
+                if (error) alert("Silinərkən xəta baş verdi: " + error.message);
+                else fetchAndListQuestionsForEdit();
             }
         }
 
         function quickEditQuestion(examId, category, subject, qNum) {
             switchAdminTab('suallar');
-            selectExam('Sınaq ' + examId);
-            selectCategory(category || 'BA');
-            openEditor(subject || 'Qanunvericilik');
+            selectExam(`Sınaq ${examId}`);
+            selectCategory(category);
+            openEditor(subject || 'Ümumi');
             document.getElementById('questionNumber').value = qNum;
             loadQuestionData(qNum);
-        }
-
-        async function deleteQuestionByDbId(id) {
-            if (confirm("Bu sualı bazadan həmişəlik silmək istədiyinizə əminsiniz?")) {
-                const { error } = await _supabase.from('exam_questions').delete().eq('id', id);
-                if (error) {
-                    alert("Silinərkən xəta baş verdi: " + error.message);
-                } else {
-                    alert("Sual silindi!");
-                    fetchAndListQuestionsForEdit();
-                }
-            }
         }
     </script>
 </body>
