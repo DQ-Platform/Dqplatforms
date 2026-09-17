@@ -239,6 +239,7 @@
         th { background: var(--primary-dark); color: white; }
 
         .review-mode-banner { background: #fef3c7; color: #92400e; padding: 10px; text-align: center; font-weight: bold; border-radius: var(--radius-md); margin-bottom: 15px; }
+        .live-edit-banner { background: #dbeafe; color: #1e40af; padding: 12px; border-radius: var(--radius-md); margin-bottom: 15px; border: 1px solid #93c5fd; }
 
         .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: var(--radius-md); font-size: 14px; margin-bottom: 20px; box-shadow: var(--shadow-sm); border: 1px solid #e2e8f0; }
         .breadcrumb-nav span { color: var(--accent-blue); cursor: pointer; font-weight: 600; }
@@ -280,7 +281,6 @@
         .table-wrapper { overflow-x: auto; margin-bottom: 15px; }
         .subject-title { font-weight: bold; background: #e2e8f0; padding: 8px; border-radius: var(--radius-sm); margin-top: 15px; text-align: left; color: var(--primary-dark); }
         
-        /* OCR & PDF Upload UI Components */
         .pdf-drop-zone { border: 2px dashed #a5b4fc; background: #f5f3ff; border-radius: var(--radius-lg); padding: 30px; text-align: center; cursor: pointer; transition: background 0.2s; }
         .pdf-drop-zone:hover { background: #ede9fe; }
     </style>
@@ -312,11 +312,54 @@
             </div>
         </div>
 
-        <!-- SINAQ HİSSƏSİ -->
+        <!-- SINAQ HİSSƏSİ (CANLI REDAKTƏ REJİMİ İLƏ) -->
         <div id="exam-screen" class="screen">
             <div id="review-banner" class="review-mode-banner" style="display: none;">
                 🔍 Cavablara Baxış Rejimi (Düzəliş etmək mümkün deyil)
             </div>
+
+            <!-- LIVE EDIT CONTROL PANEL -->
+            <div id="live-edit-panel" class="live-edit-banner" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <strong>✏️ Canlı Sual Redaktoru Aktivdir</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="font-size: 13px; font-weight: bold;">Kateqoriya:</label>
+                        <select id="live-edit-category" class="form-control" style="width: auto; padding: 4px 10px; font-size: 13px;" onchange="changeLiveCategory(this.value)">
+                            <option value="BA">BA Kateqoriyası</option>
+                            <option value="BB">BB Kateqoriyası</option>
+                            <option value="AC">AC Kateqoriyası</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="toggleLiveEditForm()">📝 Sualı Redaktə Et</button>
+                    </div>
+                </div>
+
+                <!-- LIVE EDIT INPUT FORM -->
+                <div id="live-edit-form" style="display: none; margin-top: 15px; background: #fff; padding: 15px; border-radius: var(--radius-md); border: 1px solid #cbd5e1; color: #000;">
+                    <div class="form-group">
+                        <label>Sual Mətni:</label>
+                        <textarea id="live-q-text" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🖼️ Sual Şəkli (İstəyə görə):</label>
+                        <input type="file" id="live-q-img-input" accept="image/*" class="form-control img-input-btn" onchange="handleLiveImageUpload(this)">
+                        <img id="live-q-img-preview" class="preview-img" style="display: none;">
+                    </div>
+
+                    <div id="live-options-container">
+                        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Variantlar və Düzgün Cavab:</label>
+                        <div id="live-options-list"></div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                        <button class="btn btn-secondary btn-sm" onclick="toggleLiveEditForm()">Ləğv Et</button>
+                        <button class="btn btn-success" onclick="saveLiveEditedQuestion()">💾 Bazaya Vur Və Növbəti Suala Keç ➡️</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="exam-header">
                 <span id="active-exam-title">Dövlət Qulluğu Vəzifələri Üzrə Sınaq</span>
                 <span class="timer" id="timer">03:00:00</span>
@@ -871,6 +914,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const ADMIN_PASS = "6675157";
+        const LIVE_EDIT_ADMIN_PASS = "6677667"; // Xüsusi Giriş Kodu
         const testDuration = 3 * 3600;
 
         let currentStudentName = "";
@@ -885,7 +929,9 @@
         let timeLeft = testDuration;
         let examFinished = false;
         let currentQuestionImageData = null;
+        let liveEditImageData = null;
         let totalExamsCount = 5;
+        let isLiveEditMode = false;
 
         const openQuestionIds = [13, 14, 15, 48, 49, 50, 51, 52, 53, 54, 55, 68, 69, 70, 95, 96, 97, 98, 99, 100];
         const examStructure = [
@@ -909,6 +955,7 @@
             document.getElementById("user-name").value = "";
             document.getElementById("user-fin").value = "";
             document.getElementById("error-msg").innerText = "";
+            isLiveEditMode = false;
         }
 
         function clearSessionStorage() {
@@ -999,6 +1046,16 @@
             const nameInput = document.getElementById("user-name").value.trim();
             const finInput = document.getElementById("user-fin").value.trim().toUpperCase();
             const errorMsg = document.getElementById("error-msg");
+
+            // CANLI İMTAHAN REDAKTƏ REJİMİ GİRİŞİ (admin / 6677667)
+            if (nameInput.toLowerCase() === "admin" && finInput === LIVE_EDIT_ADMIN_PASS) {
+                isLiveEditMode = true;
+                currentStudentName = "ADMIN REDAKTOR";
+                currentActiveFin = LIVE_EDIT_ADMIN_PASS;
+                document.getElementById("live-edit-panel").style.display = "block";
+                await startExamSession("1");
+                return;
+            }
 
             if (!nameInput || finInput.length < 5) {
                 errorMsg.style.color = "var(--danger-red)";
@@ -1125,25 +1182,42 @@
             selectedExamId = examId;
 
             try {
-                const { data, error } = await _supabase
+                let query = _supabase
                     .from('exam_questions')
                     .select('*')
-                    .eq('exam_id', selectedExamId)
-                    .order('q_number', { ascending: true });
+                    .eq('exam_id', selectedExamId);
 
-                if (error || !data || data.length === 0) {
-                    alert("Bu sınaq üçün hələ sual əlavə edilməyib!");
-                    return;
+                if (isLiveEditMode) {
+                    query = query.eq('category', userGroup);
                 }
 
-                allQuestions = data.map(q => ({
-                    id: q.q_number,
-                    subject: q.subject,
-                    question: q.question,
-                    image_url: q.image_url || null,
-                    options: q.options,
-                    correct: q.correct
-                }));
+                const { data, error } = await query.order('q_number', { ascending: true });
+
+                if (error || !data || data.length === 0) {
+                    if(!isLiveEditMode) {
+                        alert("Bu sınaq üçün hələ sual əlavə edilməyib!");
+                        return;
+                    } else {
+                        // Əgər həmin kateqoriyada sual yoxdursa təzə boş siyahı yaradaq
+                        allQuestions = Array.from({length: 100}, (_, i) => ({
+                            id: i + 1,
+                            subject: getSubjectByNumber(i + 1),
+                            question: "Yeni sual mətni...",
+                            image_url: null,
+                            options: ["A variantı", "B variantı", "C variantı", "D variantı"],
+                            correct: 0
+                        }));
+                    }
+                } else {
+                    allQuestions = data.map(q => ({
+                        id: q.q_number,
+                        subject: q.subject,
+                        question: q.question,
+                        image_url: q.image_url || null,
+                        options: q.options,
+                        correct: q.correct
+                    }));
+                }
 
                 userAnswers = {};
                 flaggedQuestions = {};
@@ -1154,15 +1228,22 @@
                 localStorage.removeItem("dq_exam_end_time");
 
                 showScreen("exam-screen");
-                document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId}`;
+                document.getElementById("active-exam-title").innerText = `Dövlət Qulluğu Vəzifələri Üzrə Sınaq ${selectedExamId} ${isLiveEditMode ? '(' + userGroup + ' Redaktə Rejimi)' : ''}`;
 
-                saveSessionState();
+                if(!isLiveEditMode) saveSessionState();
                 loadNavGrid();
                 renderCurrentQuestion();
                 startTimer(timeLeft);
             } catch (err) {
                 alert("İmtahan yüklənərkən xəta baş verdi: " + err.message);
             }
+        }
+
+        function getSubjectByNumber(num) {
+            for (let sec of examStructure) {
+                if (num >= sec.start && num <= sec.end) return sec.title;
+            }
+            return "Ümumi";
         }
 
         function evaluateAnswer(userAns, etalonAns, isOpen) {
@@ -1340,6 +1421,147 @@
             html += `</div></div>`;
             container.innerHTML = html;
             updateNavActiveState();
+
+            // Əgər redaktə form açıqdırsa avtomatik məlumatları yenilə
+            if(isLiveEditMode && document.getElementById("live-edit-form").style.display === "block") {
+                populateLiveEditForm();
+            }
+        }
+
+        /* CANLI İMTAHAN REDAKTƏ FUNKSİYALARI */
+        function changeLiveCategory(cat) {
+            userGroup = cat;
+            startExamSession(selectedExamId);
+        }
+
+        function toggleLiveEditForm() {
+            const form = document.getElementById("live-edit-form");
+            if(form.style.display === "none") {
+                form.style.display = "block";
+                populateLiveEditForm();
+            } else {
+                form.style.display = "none";
+            }
+        }
+
+        function populateLiveEditForm() {
+            const q = allQuestions[currentQuestionIndex];
+            document.getElementById("live-q-text").value = q.question || "";
+            
+            const imgPreview = document.getElementById("live-q-img-preview");
+            if (q.image_url) {
+                liveEditImageData = q.image_url;
+                imgPreview.src = q.image_url;
+                imgPreview.style.display = "block";
+            } else {
+                liveEditImageData = null;
+                imgPreview.style.display = "none";
+            }
+
+            const list = document.getElementById("live-options-list");
+            list.innerHTML = "";
+            const letters = ["A", "B", "C", "D", "E", "F"];
+
+            if (Array.isArray(q.options)) {
+                q.options.forEach((opt, idx) => {
+                    let optText = typeof opt === 'object' ? opt.text : opt;
+                    let isChecked = idx === q.correct ? "checked" : "";
+
+                    let div = document.createElement("div");
+                    div.className = "option-row";
+                    div.innerHTML = `
+                        <span class="option-label">${letters[idx] || (idx+1)})</span>
+                        <input type="text" class="form-control live-opt-input" value="${optText}">
+                        <label class="correct-radio"><input type="radio" name="live_ans" ${isChecked}> Düzgün</label>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        }
+
+        function handleLiveImageUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    liveEditImageData = e.target.result;
+                    const imgPreview = document.getElementById('live-q-img-preview');
+                    imgPreview.src = liveEditImageData;
+                    imgPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function saveLiveEditedQuestion() {
+            const q = allQuestions[currentQuestionIndex];
+            const text = document.getElementById("live-q-text").value.trim();
+
+            const optInputs = document.querySelectorAll("#live-options-list .live-opt-input");
+            const optRadios = document.querySelectorAll("#live-options-list input[name='live_ans']");
+
+            let options = [];
+            let correctIdx = 0;
+
+            optInputs.forEach((input, idx) => {
+                options.push({ text: input.value.trim(), image: null });
+                if (optRadios[idx] && optRadios[idx].checked) {
+                    correctIdx = idx;
+                }
+            });
+
+            // Bazaya vur (Supabase Update/Insert)
+            const { data: existingQ } = await _supabase
+                .from('exam_questions')
+                .select('id')
+                .eq('exam_id', selectedExamId)
+                .eq('category', userGroup)
+                .eq('q_number', q.id)
+                .maybeSingle();
+
+            let resultErr = null;
+
+            if (existingQ) {
+                const { error } = await _supabase
+                    .from('exam_questions')
+                    .update({
+                        question: text,
+                        image_url: liveEditImageData,
+                        options: options,
+                        correct: correctIdx,
+                        subject: q.subject || getSubjectByNumber(q.id)
+                    })
+                    .eq('id', existingQ.id);
+                resultErr = error;
+            } else {
+                const { error } = await _supabase
+                    .from('exam_questions')
+                    .insert([{
+                        exam_id: selectedExamId,
+                        category: userGroup,
+                        q_number: q.id,
+                        subject: q.subject || getSubjectByNumber(q.id),
+                        question: text,
+                        image_url: liveEditImageData,
+                        options: options,
+                        correct: correctIdx
+                    }]);
+                resultErr = error;
+            }
+
+            if (resultErr) {
+                alert("Bazaya vurularkən xəta baş verdi: " + resultErr.message);
+            } else {
+                // Lokal obyektləri yenilə
+                q.question = text;
+                q.image_url = liveEditImageData;
+                q.options = options;
+                q.correct = correctIdx;
+
+                alert(`Sual ${q.id} [${userGroup}] bazaya vuruldu! Növbəti suala keçilir.`);
+                renderCurrentQuestion();
+                nextQuestionExam();
+            }
         }
 
         function loadNavGrid() {
@@ -1431,18 +1653,20 @@
             
             const stats = renderExamResultTables();
 
-            try {
-                await _supabase.from('exam_results').insert([{
-                    name: currentStudentName,
-                    fin: currentActiveFin,
-                    exam_no: selectedExamId,
-                    correct_count: stats.totalCorrect,
-                    wrong_count: stats.totalWrong,
-                    score: stats.totalScore,
-                    bb_group: stats.subGroupResult
-                }]);
-            } catch (err) {
-                console.error("Nəticə yazılarkən xəta:", err);
+            if (!isLiveEditMode) {
+                try {
+                    await _supabase.from('exam_results').insert([{
+                        name: currentStudentName,
+                        fin: currentActiveFin,
+                        exam_no: selectedExamId,
+                        correct_count: stats.totalCorrect,
+                        wrong_count: stats.totalWrong,
+                        score: stats.totalScore,
+                        bb_group: stats.subGroupResult
+                    }]);
+                } catch (err) {
+                    console.error("Nəticə yazılarkən xəta:", err);
+                }
             }
         }
 
@@ -1893,7 +2117,6 @@
             }
         }
 
-        // Bütün Suallara Baxış Cədvəli (Kopyalama seçimi əlavə olunub)
         async function fetchAndListQuestionsForEdit() {
             const listArea = document.getElementById('edit-questions-list-area');
             const tbody = document.getElementById('edit-questions-tbody');
@@ -1950,7 +2173,6 @@
             tbody.innerHTML = html;
         }
 
-        // Sualı Seçilmiş Kateqoriyaya Kopyalama / Əlavə Etmə Funksiyası
         async function copyQuestionToCategory(questionDbId) {
             const targetSelect = document.getElementById(`target-cat-${questionDbId}`);
             if (!targetSelect) return;
