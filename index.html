@@ -39,7 +39,7 @@
         }
 
         .container { 
-            max-width: 1150px; 
+            max-width: 1200px; 
             margin: 0 auto; 
             background: #ffffff; 
             padding: 25px; 
@@ -54,14 +54,8 @@
         .screen.active { display: block; }
 
         .text-center { text-align: center; }
-        .mt-1 { margin-top: 5px; }
-        .mt-2 { margin-top: 10px; }
-        .mt-3 { margin-top: 15px; }
-        .mt-4 { margin-top: 20px; }
-        .mb-1 { margin-bottom: 5px; }
-        .mb-2 { margin-bottom: 10px; }
-        .mb-3 { margin-bottom: 15px; }
-        .mb-4 { margin-bottom: 20px; }
+        .mt-1 { margin-top: 5px; } .mt-2 { margin-top: 10px; } .mt-3 { margin-top: 15px; } .mt-4 { margin-top: 20px; }
+        .mb-1 { margin-bottom: 5px; } .mb-2 { margin-bottom: 10px; } .mb-3 { margin-bottom: 15px; } .mb-4 { margin-bottom: 20px; }
 
         .code-input, .select-control, .form-control {
             padding: 12px;
@@ -110,7 +104,6 @@
         .btn-secondary:hover { background-color: #475569; }
         .btn-success { background-color: var(--success-green); color: white; }
         .btn-success:hover { background-color: #059669; }
-        .btn-dark { background-color: #1d3557; color: white; }
         .btn-primary { background-color: var(--accent-blue); color: white; }
         .btn-primary:hover { background-color: #2563eb; }
         .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); }
@@ -286,6 +279,10 @@
         .img-input-btn { font-size: 12px; }
         .table-wrapper { overflow-x: auto; margin-bottom: 15px; }
         .subject-title { font-weight: bold; background: #e2e8f0; padding: 8px; border-radius: var(--radius-sm); margin-top: 15px; text-align: left; color: var(--primary-dark); }
+        
+        /* OCR & PDF Upload UI Components */
+        .pdf-drop-zone { border: 2px dashed #a5b4fc; background: #f5f3ff; border-radius: var(--radius-lg); padding: 30px; text-align: center; cursor: pointer; transition: background 0.2s; }
+        .pdf-drop-zone:hover { background: #ede9fe; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -384,6 +381,9 @@
             <!-- ADMİN NAVİQASİYASI -->
             <div class="admin-nav-grid">
                 <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('sualbanki')"><span class="icon">📄</span> Sual Bankı (PDF)</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('sualbankiv2')"><span class="icon">🧩</span> Sual Bankı V2</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('sablonlar')"><span class="icon">📋</span> Şablonlar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('kabinet')"><span class="icon">👤</span> Şəxsi Kabinet</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('kod')"><span class="icon">🔑</span> Kod Yaratma</div>
@@ -392,8 +392,8 @@
                 <div class="admin-nav-card" onclick="switchAdminTab('siyahi')"><span class="icon">📋</span> İştirakçılar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('statistika')"><span class="icon">📊</span> Statistika</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('cavablar')"><span class="icon">📑</span> Cavablar</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('modul')"><span class="icon">📦</span> Modul (Fayllar)</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Modulu</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('modul')"><span class="icon">📦</span> Modul Mərkəzi</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Mərkəzi</div>
             </div>
 
             <!-- MODUL 1: SUALLAR MODULU -->
@@ -552,6 +552,93 @@
                 </div>
             </div>
 
+            <!-- MODUL 1.1: SUAL BANKI (PDF ilə yükləmə & OCR) -->
+            <div id="mod-sualbanki" class="admin-module-block">
+                <h4>📄 Sual Bankı (PDF ilə yükləmə & OCR)</h4>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Sənədləri sürətli oxuyun və ya JSON formatında xaric edin.</p>
+                
+                <div class="pdf-drop-zone mb-3">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 32px; color: #6366f1;"></i>
+                    <p class="mt-2" style="font-weight: bold;">İmtahan PDF Faylını Yükləyin</p>
+                    <span style="font-size: 12px; color: #64748b;">Faylı bura sürükləyin və ya seçin (OCR Avto-Oxuma)</span>
+                </div>
+
+                <div style="background: #f8fafc; padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <h5 class="mb-2">Sual Detalları Redaktoru</h5>
+                    <div class="form-group">
+                        <textarea class="form-control" rows="3" placeholder="PDF-dən oxunan sual mətni bura düşəcək..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="mb-3">
+                        <input type="text" class="form-control" placeholder="Variant A">
+                        <input type="text" class="form-control" placeholder="Variant B">
+                        <input type="text" class="form-control" placeholder="Variant C">
+                        <input type="text" class="form-control" placeholder="Variant D">
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;">+ Suala Düzəliş Et və Siyahıya Sal</button>
+                </div>
+            </div>
+
+            <!-- MODUL 1.2: SUAL BANKI V2 (Məntiq Crop) -->
+            <div id="mod-sualbankiv2" class="admin-module-block">
+                <h4>🧩 Məntiq Sual Bankı (PDF Crop V2)</h4>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Qrafik və fiqur əsaslı məntiq testlərini kəsərək bazaya daxil edin.</p>
+                
+                <div class="pdf-drop-zone mb-3" style="border-color: #3b82f6; background: #eff6ff;">
+                    <i class="fa-solid fa-crop-simple" style="font-size: 32px; color: #3b82f6;"></i>
+                    <p class="mt-2" style="font-weight: bold;">PDF Fiqur və Şəkil Kəsici</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Mövcud Variant Sayı:</label>
+                    <select class="form-control">
+                        <option>4 Variant (A, B, C, D)</option>
+                        <option>5 Variant (A, B, C, D, E)</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" style="width: 100%;">+ Şəkilli Məntiq Sualını Bazaya Əlavə Et</button>
+            </div>
+
+            <!-- MODUL 1.3: İMTAHAN ŞABLONLARI -->
+            <div id="mod-sablonlar" class="admin-module-block">
+                <h4>📋 Yaradılmış İmtahan Şablolnarı</h4>
+                <div class="mt-3" style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Şablon Adı</th>
+                                <th>Təsnifat</th>
+                                <th>Sual Sayı</th>
+                                <th>Yaradılma Tarixi</th>
+                                <th>Əməliyyat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>İnformatika Qızıl Baza</td>
+                                <td><span class="badge-cat">BDU</span></td>
+                                <td>10 sual</td>
+                                <td>2026-08-15</td>
+                                <td><button class="btn btn-primary btn-sm">👁️ Bax</button></td>
+                            </tr>
+                            <tr>
+                                <td>Hüququn Əsasları Block</td>
+                                <td><span class="badge-cat">BA</span></td>
+                                <td>20 sual</td>
+                                <td>2026-08-16</td>
+                                <td><button class="btn btn-primary btn-sm">👁️ Bax</button></td>
+                            </tr>
+                            <tr>
+                                <td>Məntiq Fiqur Testləri</td>
+                                <td><span class="badge-cat">BB</span></td>
+                                <td>30 sual</td>
+                                <td>2026-08-22</td>
+                                <td><button class="btn btn-primary btn-sm">👁️ Bax</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- MODUL 2: İDARƏ VƏ İCAZƏLƏR MODULU -->
             <div id="mod-idare" class="admin-module-block">
                 <h4>⚙️ İştirakçı İcazələri və Sistem Ayarları</h4>
@@ -698,7 +785,7 @@
                 </div>
             </div>
 
-            <!-- MODUL 10: MODUL.HTML -->
+            <!-- MODUL 10: MODUL MƏRKƏZİ -->
             <div id="mod-modul" class="admin-module-block">
                 <h4>📦 Modul Mərkəzi</h4>
                 <p class="mt-1" style="color: #64748b;">Mərkəzi İdarəetmə Paneli – Bütün alt-sistem və modul konfiqurasiyaları.</p>
@@ -706,7 +793,7 @@
                     <div class="stats-grid mb-3">
                         <div class="stat-card">
                             <h5>Daxili Modullar</h5>
-                            <div class="value" style="color: var(--accent-blue);">11 Modul</div>
+                            <div class="value" style="color: var(--accent-blue);">14 Modul</div>
                         </div>
                         <div class="stat-card">
                             <h5>Fayl İntegrasiyası</h5>
@@ -751,15 +838,16 @@
                             <thead>
                                 <tr>
                                     <th>Sınaq №</th>
-                                    <th>Kateqoriya</th>
+                                    <th>Cari Kat.</th>
                                     <th>Sual №</th>
                                     <th>Fənn</th>
                                     <th>Sual Mətni</th>
+                                    <th>Digər Kateqoriyaya Sal</th>
                                     <th>Əməliyyat</th>
                                 </tr>
                             </thead>
                             <tbody id="edit-questions-tbody">
-                                <tr><td colspan="6">Yüklənir...</td></tr>
+                                <tr><td colspan="7">Yüklənir...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1805,12 +1893,13 @@
             }
         }
 
+        // Bütün Suallara Baxış Cədvəli (Kopyalama seçimi əlavə olunub)
         async function fetchAndListQuestionsForEdit() {
             const listArea = document.getElementById('edit-questions-list-area');
             const tbody = document.getElementById('edit-questions-tbody');
             listArea.style.display = 'block';
             listArea.scrollIntoView({ behavior: 'smooth' });
-            tbody.innerHTML = '<tr><td colspan="6">Yüklənir...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Yüklənir...</td></tr>';
 
             const { data, error } = await _supabase
                 .from('exam_questions')
@@ -1820,29 +1909,115 @@
                 .order('q_number', { ascending: true });
 
             if (error || !data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">Bazada heç bir sual tapılmadı.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">Bazada heç bir sual tapılmadı.</td></tr>';
                 return;
             }
 
             let html = '';
             data.forEach(q => {
                 let qTextDisplay = q.question || "(Şəkilli Sual)";
-                let shortText = qTextDisplay.length > 50 ? qTextDisplay.substring(0, 50) + "..." : qTextDisplay;
+                let shortText = qTextDisplay.length > 40 ? qTextDisplay.substring(0, 40) + "..." : qTextDisplay;
+                let currentCat = q.category || 'BA';
+
+                let categories = ['BA', 'BB', 'AC'];
+                let optionsHtml = categories
+                    .filter(c => c !== currentCat)
+                    .map(c => `<option value="${c}">${c}</option>`)
+                    .join('');
+
                 html += `
                     <tr>
                         <td><b>Sınaq ${q.exam_id}</b></td>
-                        <td><span style="color:#1976d2; font-weight:bold;">${q.category || 'BA'}</span></td>
+                        <td><span style="color:#1976d2; font-weight:bold;">${currentCat}</span></td>
                         <td>Sual ${q.q_number}</td>
                         <td>${q.subject || '-'}</td>
                         <td style="text-align: left;">${shortText} ${q.image_url ? '🖼️' : ''}</td>
                         <td>
-                            <button class="btn btn-primary btn-sm" onclick="quickEditQuestion('${q.exam_id}', '${q.category || 'BA'}', '${q.subject}', ${q.q_number})">✏️ Redaktə Et</button>
+                            <div style="display: flex; gap: 4px; align-items: center; justify-content: center;">
+                                <select id="target-cat-${q.id}" class="form-control" style="padding: 3px 6px; font-size: 11px; width: auto;">
+                                    ${optionsHtml}
+                                </select>
+                                <button class="btn btn-success btn-sm" style="padding: 4px 8px; font-size: 11px;" onclick="copyQuestionToCategory(${q.id})">➕ Bazaya vur</button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="quickEditQuestion('${q.exam_id}', '${currentCat}', '${q.subject}', ${q.q_number})">✏️ Redaktə</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteQuestionByDbId(${q.id})">🗑️ Sil</button>
                         </td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
+        }
+
+        // Sualı Seçilmiş Kateqoriyaya Kopyalama / Əlavə Etmə Funksiyası
+        async function copyQuestionToCategory(questionDbId) {
+            const targetSelect = document.getElementById(`target-cat-${questionDbId}`);
+            if (!targetSelect) return;
+            
+            const targetCategory = targetSelect.value;
+
+            const { data: qData, error: fetchErr } = await _supabase
+                .from('exam_questions')
+                .select('*')
+                .eq('id', questionDbId)
+                .single();
+
+            if (fetchErr || !qData) {
+                alert("Sual məlumatı tapılmadı: " + (fetchErr ? fetchErr.message : ''));
+                return;
+            }
+
+            const { data: existingQ } = await _supabase
+                .from('exam_questions')
+                .select('id')
+                .eq('exam_id', qData.exam_id)
+                .eq('category', targetCategory)
+                .eq('q_number', qData.q_number)
+                .maybeSingle();
+
+            let resultError = null;
+
+            if (existingQ) {
+                if (!confirm(`Sınaq ${qData.exam_id} [${targetCategory}] üçün Sual ${qData.q_number} artıq mövcuddur. Yenilənsin?`)) {
+                    return;
+                }
+
+                const { error } = await _supabase
+                    .from('exam_questions')
+                    .update({
+                        subject: qData.subject,
+                        question: qData.question,
+                        image_url: qData.image_url,
+                        options: qData.options,
+                        correct: qData.correct
+                    })
+                    .eq('id', existingQ.id);
+
+                resultError = error;
+            } else {
+                const { error } = await _supabase
+                    .from('exam_questions')
+                    .insert([{
+                        exam_id: qData.exam_id,
+                        category: targetCategory,
+                        q_number: qData.q_number,
+                        subject: qData.subject,
+                        question: qData.question,
+                        image_url: qData.image_url,
+                        options: qData.options,
+                        correct: qData.correct
+                    }]);
+
+                resultError = error;
+            }
+
+            if (resultError) {
+                alert("Bazaya vurularkən xəta baş verdi: " + resultError.message);
+            } else {
+                alert(`Sual ${qData.q_number} uğurla [${targetCategory}] kateqoriyasına əlavə olundu!`);
+                fetchAndListQuestionsForEdit();
+            }
         }
 
         function quickEditQuestion(examId, category, subject, qNum) {
