@@ -283,6 +283,10 @@
         
         .pdf-drop-zone { border: 2px dashed #a5b4fc; background: #f5f3ff; border-radius: var(--radius-lg); padding: 30px; text-align: center; cursor: pointer; transition: background 0.2s; }
         .pdf-drop-zone:hover { background: #ede9fe; }
+
+        /* MULTI-CATEGORY CHECKBOX CONTROLS */
+        .target-category-selector { display: flex; gap: 12px; align-items: center; background: #f1f5f9; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 10px; flex-wrap: wrap; }
+        .target-category-selector label { font-size: 13px; font-weight: bold; color: var(--primary-dark); cursor: pointer; display: flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -351,6 +355,16 @@
                     <div id="live-options-container">
                         <label style="font-weight: bold; display: block; margin-bottom: 5px;">Variantlar və Düzgün Cavab:</label>
                         <div id="live-options-list"></div>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label style="font-size: 13px;">➕ Digər kateqoriyalara da eyni anda əlavə et / yenilə:</label>
+                        <div class="target-category-selector">
+                            <label><input type="checkbox" id="live-target-all" onchange="toggleAllLiveCategories(this)"> 🌐 Bütün Kateqoriyalara (BA, BB, AC)</label>
+                            <label><input type="checkbox" class="live-target-cat-chk" value="BA"> BA</label>
+                            <label><input type="checkbox" class="live-target-cat-chk" value="BB"> BB</label>
+                            <label><input type="checkbox" class="live-target-cat-chk" value="AC"> AC</label>
+                        </div>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; margin-top: 15px;">
@@ -582,6 +596,17 @@
                                 <input type="checkbox" id="num6" value="6" class="num-checkbox">
                                 <label for="num6" class="num-label">6</label>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- HƏMİN ƏRAZİDƏ DİGƏR KATEQORİYALARA HƏMİN ANDA VURMA PARAMIETRİ -->
+                    <div class="form-group mt-3">
+                        <label style="font-size: 13px;">➕ Sualı Saxlayarkən Eyni Anında Digər Kateqoriyalara da Vur:</label>
+                        <div class="target-category-selector">
+                            <label><input type="checkbox" id="editor-target-all" onchange="toggleAllEditorCategories(this)"> 🌐 Bütün Kateqoriyalara (BA, BB, AC)</label>
+                            <label><input type="checkbox" class="editor-target-cat-chk" value="BA"> BA</label>
+                            <label><input type="checkbox" class="editor-target-cat-chk" value="BB"> BB</label>
+                            <label><input type="checkbox" class="editor-target-cat-chk" value="AC"> AC</label>
                         </div>
                     </div>
 
@@ -1444,6 +1469,18 @@
             }
         }
 
+        function toggleAllLiveCategories(master) {
+            document.querySelectorAll('.live-target-cat-chk').forEach(chk => {
+                chk.checked = master.checked;
+            });
+        }
+
+        function toggleAllEditorCategories(master) {
+            document.querySelectorAll('.editor-target-cat-chk').forEach(chk => {
+                chk.checked = master.checked;
+            });
+        }
+
         function populateLiveEditForm() {
             const q = allQuestions[currentQuestionIndex];
             document.getElementById("live-q-text").value = q.question || "";
@@ -1477,6 +1514,12 @@
                     list.appendChild(div);
                 });
             }
+
+            // Cari kateqoriyanı avtomatik seçili et
+            document.querySelectorAll('.live-target-cat-chk').forEach(chk => {
+                chk.checked = (chk.value === userGroup);
+            });
+            document.getElementById('live-target-all').checked = false;
         }
 
         function handleLiveImageUpload(input) {
@@ -1510,47 +1553,64 @@
                 }
             });
 
-            // Bazaya vur (Supabase Update/Insert)
-            const { data: existingQ } = await _supabase
-                .from('exam_questions')
-                .select('id')
-                .eq('exam_id', selectedExamId)
-                .eq('category', userGroup)
-                .eq('q_number', q.id)
-                .maybeSingle();
+            // Seçilmiş hədəf kateqoriyaları topla
+            let targetCategories = [];
+            document.querySelectorAll('.live-target-cat-chk:checked').forEach(chk => {
+                targetCategories.push(chk.value);
+            });
 
-            let resultErr = null;
-
-            if (existingQ) {
-                const { error } = await _supabase
-                    .from('exam_questions')
-                    .update({
-                        question: text,
-                        image_url: liveEditImageData,
-                        options: options,
-                        correct: correctIdx,
-                        subject: q.subject || getSubjectByNumber(q.id)
-                    })
-                    .eq('id', existingQ.id);
-                resultErr = error;
-            } else {
-                const { error } = await _supabase
-                    .from('exam_questions')
-                    .insert([{
-                        exam_id: selectedExamId,
-                        category: userGroup,
-                        q_number: q.id,
-                        subject: q.subject || getSubjectByNumber(q.id),
-                        question: text,
-                        image_url: liveEditImageData,
-                        options: options,
-                        correct: correctIdx
-                    }]);
-                resultErr = error;
+            if (targetCategories.length === 0) {
+                targetCategories = [userGroup]; // susmaya görə cari kateqoriya
             }
 
-            if (resultErr) {
-                alert("Bazaya vurularkən xəta baş verdi: " + resultErr.message);
+            let successCategories = [];
+
+            for (const cat of targetCategories) {
+                const { data: existingQ } = await _supabase
+                    .from('exam_questions')
+                    .select('id')
+                    .eq('exam_id', selectedExamId)
+                    .eq('category', cat)
+                    .eq('q_number', q.id)
+                    .maybeSingle();
+
+                let resultErr = null;
+
+                if (existingQ) {
+                    const { error } = await _supabase
+                        .from('exam_questions')
+                        .update({
+                            question: text,
+                            image_url: liveEditImageData,
+                            options: options,
+                            correct: correctIdx,
+                            subject: q.subject || getSubjectByNumber(q.id)
+                        })
+                        .eq('id', existingQ.id);
+                    resultErr = error;
+                } else {
+                    const { error } = await _supabase
+                        .from('exam_questions')
+                        .insert([{
+                            exam_id: selectedExamId,
+                            category: cat,
+                            q_number: q.id,
+                            subject: q.subject || getSubjectByNumber(q.id),
+                            question: text,
+                            image_url: liveEditImageData,
+                            options: options,
+                            correct: correctIdx
+                        }]);
+                    resultErr = error;
+                }
+
+                if (!resultErr) {
+                    successCategories.push(cat);
+                }
+            }
+
+            if (successCategories.length === 0) {
+                alert("Sual bazaya vurularkən xəta baş verdi!");
             } else {
                 // Lokal obyektləri yenilə
                 q.question = text;
@@ -1558,7 +1618,7 @@
                 q.options = options;
                 q.correct = correctIdx;
 
-                alert(`Sual ${q.id} [${userGroup}] bazaya vuruldu! Növbəti suala keçilir.`);
+                alert(`Sual ${q.id} uğurla [${successCategories.join(', ')}] kateqoriyalarına vuruldu! Növbəti suala keçilir.`);
                 renderCurrentQuestion();
                 nextQuestionExam();
             }
@@ -2009,49 +2069,67 @@
                 }
             }
 
-            const { data: existingQ } = await _supabase
-                .from('exam_questions')
-                .select('id')
-                .eq('exam_id', currentExamRedaktor)
-                .eq('category', currentCategoryRedaktor)
-                .eq('q_number', qNum)
-                .maybeSingle();
+            // Seçilmiş hədəf kateqoriyalarını götürək
+            let targetCategories = [];
+            document.querySelectorAll('.editor-target-cat-chk:checked').forEach(chk => {
+                targetCategories.push(chk.value);
+            });
 
-            let resultError = null;
-
-            if (existingQ) {
-                const { error } = await _supabase
-                    .from('exam_questions')
-                    .update({
-                        category: currentCategoryRedaktor,
-                        subject: subject,
-                        question: text,
-                        image_url: currentQuestionImageData,
-                        options: options,
-                        correct: correctIndex
-                    })
-                    .eq('id', existingQ.id);
-                resultError = error;
-            } else {
-                const { error } = await _supabase
-                    .from('exam_questions')
-                    .insert([{
-                        exam_id: currentExamRedaktor,
-                        category: currentCategoryRedaktor,
-                        q_number: qNum,
-                        subject: subject,
-                        question: text,
-                        image_url: currentQuestionImageData,
-                        options: options,
-                        correct: correctIndex
-                    }]);
-                resultError = error;
+            if (targetCategories.length === 0) {
+                targetCategories = [currentCategoryRedaktor]; // cari kateqoriya
             }
 
-            if (resultError) {
-                alert("Xəta baş verdi: " + resultError.message);
+            let successCategories = [];
+
+            for (const cat of targetCategories) {
+                const { data: existingQ } = await _supabase
+                    .from('exam_questions')
+                    .select('id')
+                    .eq('exam_id', currentExamRedaktor)
+                    .eq('category', cat)
+                    .eq('q_number', qNum)
+                    .maybeSingle();
+
+                let resultError = null;
+
+                if (existingQ) {
+                    const { error } = await _supabase
+                        .from('exam_questions')
+                        .update({
+                            category: cat,
+                            subject: subject,
+                            question: text,
+                            image_url: currentQuestionImageData,
+                            options: options,
+                            correct: correctIndex
+                        })
+                        .eq('id', existingQ.id);
+                    resultError = error;
+                } else {
+                    const { error } = await _supabase
+                        .from('exam_questions')
+                        .insert([{
+                            exam_id: currentExamRedaktor,
+                            category: cat,
+                            q_number: qNum,
+                            subject: subject,
+                            question: text,
+                            image_url: currentQuestionImageData,
+                            options: options,
+                            correct: correctIndex
+                        }]);
+                    resultError = error;
+                }
+
+                if (!resultError) {
+                    successCategories.push(cat);
+                }
+            }
+
+            if (successCategories.length === 0) {
+                alert("Xəta baş verdi: Bazaya vurulmadı!");
             } else {
-                alert(`Sınaq ${currentExamRedaktor} [${currentCategoryRedaktor}] - Sual ${qNum} Uğurla Yadda Saxlanıldı!`);
+                alert(`Sınaq ${currentExamRedaktor} - Sual ${qNum} Uğurla [${successCategories.join(', ')}] kateqoriyalarına Yadda Saxlanıldı!`);
             }
         }
 
@@ -2095,6 +2173,12 @@
                 toggleQuestionType();
                 for (let i = 0; i < 4; i++) addDynamicOption();
             }
+
+            // Cari kateqoriyanı avtomatik aktiv et
+            document.querySelectorAll('.editor-target-cat-chk').forEach(chk => {
+                chk.checked = (chk.value === currentCategoryRedaktor);
+            });
+            document.getElementById('editor-target-all').checked = false;
         }
 
         function nextQuestionEditor() {
@@ -2143,10 +2227,13 @@
                 let currentCat = q.category || 'BA';
 
                 let categories = ['BA', 'BB', 'AC'];
-                let optionsHtml = categories
-                    .filter(c => c !== currentCat)
-                    .map(c => `<option value="${c}">${c}</option>`)
+                let remainingCategories = categories.filter(c => c !== currentCat);
+                
+                let optionsHtml = remainingCategories
+                    .map(c => `<option value="${c}">${c} Kateqoriyası</option>`)
                     .join('');
+
+                optionsHtml += `<option value="ALL">🌐 Bütün Kateqoriyalara (BA, BB, AC)</option>`;
 
                 html += `
                     <tr>
@@ -2177,7 +2264,7 @@
             const targetSelect = document.getElementById(`target-cat-${questionDbId}`);
             if (!targetSelect) return;
             
-            const targetCategory = targetSelect.value;
+            const targetVal = targetSelect.value;
 
             const { data: qData, error: fetchErr } = await _supabase
                 .from('exam_questions')
@@ -2190,55 +2277,66 @@
                 return;
             }
 
-            const { data: existingQ } = await _supabase
-                .from('exam_questions')
-                .select('id')
-                .eq('exam_id', qData.exam_id)
-                .eq('category', targetCategory)
-                .eq('q_number', qData.q_number)
-                .maybeSingle();
-
-            let resultError = null;
-
-            if (existingQ) {
-                if (!confirm(`Sınaq ${qData.exam_id} [${targetCategory}] üçün Sual ${qData.q_number} artıq mövcuddur. Yenilənsin?`)) {
-                    return;
-                }
-
-                const { error } = await _supabase
-                    .from('exam_questions')
-                    .update({
-                        subject: qData.subject,
-                        question: qData.question,
-                        image_url: qData.image_url,
-                        options: qData.options,
-                        correct: qData.correct
-                    })
-                    .eq('id', existingQ.id);
-
-                resultError = error;
+            let categoriesToApply = [];
+            if (targetVal === 'ALL') {
+                categoriesToApply = ['BA', 'BB', 'AC'];
             } else {
-                const { error } = await _supabase
-                    .from('exam_questions')
-                    .insert([{
-                        exam_id: qData.exam_id,
-                        category: targetCategory,
-                        q_number: qData.q_number,
-                        subject: qData.subject,
-                        question: qData.question,
-                        image_url: qData.image_url,
-                        options: qData.options,
-                        correct: qData.correct
-                    }]);
-
-                resultError = error;
+                categoriesToApply = [targetVal];
             }
 
-            if (resultError) {
-                alert("Bazaya vurularkən xəta baş verdi: " + resultError.message);
-            } else {
-                alert(`Sual ${qData.q_number} uğurla [${targetCategory}] kateqoriyasına əlavə olundu!`);
+            let successList = [];
+
+            for (const cat of categoriesToApply) {
+                const { data: existingQ } = await _supabase
+                    .from('exam_questions')
+                    .select('id')
+                    .eq('exam_id', qData.exam_id)
+                    .eq('category', cat)
+                    .eq('q_number', qData.q_number)
+                    .maybeSingle();
+
+                let resultError = null;
+
+                if (existingQ) {
+                    const { error } = await _supabase
+                        .from('exam_questions')
+                        .update({
+                            subject: qData.subject,
+                            question: qData.question,
+                            image_url: qData.image_url,
+                            options: qData.options,
+                            correct: qData.correct
+                        })
+                        .eq('id', existingQ.id);
+
+                    resultError = error;
+                } else {
+                    const { error } = await _supabase
+                        .from('exam_questions')
+                        .insert([{
+                            exam_id: qData.exam_id,
+                            category: cat,
+                            q_number: qData.q_number,
+                            subject: qData.subject,
+                            question: qData.question,
+                            image_url: qData.image_url,
+                            options: qData.options,
+                            correct: qData.correct
+                        }]);
+
+                    resultError = error;
+                }
+
+                if (!resultError) {
+                    successList.push(cat);
+                }
+            }
+
+            if (successList.length > 0) {
+                alert(`Sual ${qData.q_number} uğurla [${successList.join(', ')}] kateqoriyalarına vuruldu!`);
                 fetchAndListQuestionsForEdit();
+            } else {
+                alert("Əməliyyat zamanı xəta baş verdi.");
             }
         }
 
