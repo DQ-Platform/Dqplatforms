@@ -473,8 +473,10 @@
             <!-- ADMİN NAVİQASİYASI -->
             <div class="admin-nav-grid">
                 <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('sualbanki')"><span class="icon">📄</span> Sual Bankı (PDF)</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('sualbankiv2')"><span class="icon">🧩</span> Sual Bankı V2</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('sualbanki')"><span class="icon">📄</span> Sual Bankı (PDF & OCR)</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('sualbankiv2')"><span class="icon">🧩</span> Məntiq Sual Bankı (Crop V2)</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('mobilepdf')"><span class="icon">📱</span> Telefon Beynindən PDF Yüklə</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('copypaste')"><span class="icon">📋</span> Copy / Paste Sual Daxil Et</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('sablonlar')"><span class="icon">📋</span> Şablonlar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('kabinet')"><span class="icon">👤</span> Şəxsi Kabinet</div>
@@ -657,52 +659,204 @@
             <!-- MODUL 1.1: SUAL BANKI (PDF ilə yükləmə & OCR) -->
             <div id="mod-sualbanki" class="admin-module-block">
                 <h4>📄 Sual Bankı (PDF ilə yükləmə & OCR)</h4>
-                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Sənədləri sürətli oxuyun və ya JSON formatında xaric edin.</p>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Sənədləri sürətli oxuyun, OCR vasitəsilə mətnə çevirin və birbaşa bazaya yazın.</p>
                 
-                <div class="pdf-drop-zone mb-3">
+                <div class="pdf-drop-zone mb-3" onclick="document.getElementById('pdf-file-input').click()">
                     <i class="fa-solid fa-cloud-arrow-up" style="font-size: 32px; color: #6366f1;"></i>
                     <p class="mt-2" style="font-weight: bold;">İmtahan PDF Faylını Yükləyin</p>
                     <span style="font-size: 12px; color: #64748b;">Faylı bura sürükləyin və ya seçin (OCR Avto-Oxuma)</span>
+                    <input type="file" id="pdf-file-input" accept="application/pdf" style="display:none;" onchange="handleOCRProcess(this)">
                 </div>
 
                 <div style="background: #f8fafc; padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                    <h5 class="mb-2">Sual Detalları Redaktoru</h5>
+                    <h5 class="mb-2">Sual Detalları və Oxunmuş Mətn Redaktoru</h5>
                     <div class="form-group">
-                        <textarea class="form-control" rows="3" placeholder="PDF-dən oxunan sual mətni bura düşəcək..."></textarea>
+                        <textarea id="ocr-q-text" class="form-control" rows="3" placeholder="PDF-dən oxunan sual mətni bura düşəcək..."></textarea>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="mb-3">
-                        <input type="text" class="form-control" placeholder="Variant A">
-                        <input type="text" class="form-control" placeholder="Variant B">
-                        <input type="text" class="form-control" placeholder="Variant C">
-                        <input type="text" class="form-control" placeholder="Variant D">
+                        <input type="text" id="ocr-opt-a" class="form-control" placeholder="Variant A">
+                        <input type="text" id="ocr-opt-b" class="form-control" placeholder="Variant B">
+                        <input type="text" id="ocr-opt-c" class="form-control" placeholder="Variant C">
+                        <input type="text" id="ocr-opt-d" class="form-control" placeholder="Variant D">
                     </div>
-                    <button class="btn btn-primary" style="width: 100%;">+ Suala Düzəliş Et və Siyahıya Sal</button>
+                    
+                    <div class="form-group">
+                        <label>Düzgün Variant Seçin:</label>
+                        <select id="ocr-correct-opt" class="form-control">
+                            <option value="0">Variant A</option>
+                            <option value="1">Variant B</option>
+                            <option value="2">Variant C</option>
+                            <option value="3">Variant D</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hədəf Kateqoriyalar Və Sınaq №:</label>
+                        <div class="target-category-selector mb-2">
+                            <input type="number" id="ocr-exam-id" class="form-control" placeholder="Sınaq №" value="1" style="width: 100px;">
+                            <input type="number" id="ocr-q-num" class="form-control" placeholder="Sual №" value="1" style="width: 100px;">
+                            <label><input type="checkbox" class="ocr-cat-chk" value="BA" checked> BA</label>
+                            <label><input type="checkbox" class="ocr-cat-chk" value="BB"> BB</label>
+                            <label><input type="checkbox" class="ocr-cat-chk" value="AC"> AC</label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%;" onclick="saveOCRQuestionToDatabase()">💾 Bazaya Əlavə Et & Yüklə</button>
                 </div>
             </div>
 
             <!-- MODUL 1.2: SUAL BANKI V2 (Məntiq Crop) -->
             <div id="mod-sualbankiv2" class="admin-module-block">
                 <h4>🧩 Məntiq Sual Bankı (PDF Crop V2)</h4>
-                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Qrafik və fiqur əsaslı məntiq testlərini kəsərək bazaya daxil edin.</p>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Qrafik və fiqur əsaslı məntiq testlərini kəsərək peşəkar şəkildə bazaya daxil edin.</p>
                 
-                <div class="pdf-drop-zone mb-3" style="border-color: #3b82f6; background: #eff6ff;">
+                <div class="pdf-drop-zone mb-3" style="border-color: #3b82f6; background: #eff6ff;" onclick="document.getElementById('crop-img-input').click()">
                     <i class="fa-solid fa-crop-simple" style="font-size: 32px; color: #3b82f6;"></i>
-                    <p class="mt-2" style="font-weight: bold;">PDF Fiqur və Şəkil Kəsici</p>
+                    <p class="mt-2" style="font-weight: bold;">PDF / Şəkil Fiqur Kəsici (Crop Tool V2)</p>
+                    <span style="font-size: 12px; color: #64748b;">Kəsiləcək Məntiq sualı şəklini seçin</span>
+                    <input type="file" id="crop-img-input" accept="image/*" style="display:none;" onchange="handleCropUpload(this)">
+                </div>
+
+                <div id="crop-preview-container" class="text-center mb-3" style="display:none;">
+                    <img id="crop-preview-img" class="preview-img" style="margin:0 auto; max-height:300px;">
+                </div>
+
+                <div class="form-group">
+                    <label>Sual Mətni (Varsa):</label>
+                    <input type="text" id="crop-q-text" class="form-control" placeholder="Məs: Uyğunluğu müəyyən edin...">
                 </div>
 
                 <div class="form-group">
                     <label>Mövcud Variant Sayı:</label>
-                    <select class="form-control">
-                        <option>4 Variant (A, B, C, D)</option>
-                        <option>5 Variant (A, B, C, D, E)</option>
+                    <select id="crop-variant-count" class="form-control" onchange="renderCropVariants()">
+                        <option value="4">4 Variant (A, B, C, D)</option>
+                        <option value="5">5 Variant (A, B, C, D, E)</option>
                     </select>
                 </div>
-                <button class="btn btn-success" style="width: 100%;">+ Şəkilli Məntiq Sualını Bazaya Əlavə Et</button>
+
+                <div id="crop-options-area" class="mb-3"></div>
+
+                <div class="form-group">
+                    <label>Hədəf Kateqoriyalar Və Parametrlər:</label>
+                    <div class="target-category-selector mb-2">
+                        <input type="number" id="crop-exam-id" class="form-control" placeholder="Sınaq №" value="1" style="width: 100px;">
+                        <input type="number" id="crop-q-num" class="form-control" placeholder="Sual №" value="1" style="width: 100px;">
+                        <label><input type="checkbox" class="crop-cat-chk" value="BA" checked> BA</label>
+                        <label><input type="checkbox" class="crop-cat-chk" value="BB"> BB</label>
+                        <label><input type="checkbox" class="crop-cat-chk" value="AC"> AC</label>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" style="width: 100%;" onclick="saveCropQuestionToDatabase()">+ Şəkilli Məntiq Sualını Bazaya Əlavə Et</button>
             </div>
 
-            <!-- MODUL 1.3: İMTAHAN ŞABLONLARI -->
+            <!-- MODUL 1.3: TELEFON BEYNİNDƏN PDF YÜKLƏMƏ -->
+            <div id="mod-mobilepdf" class="admin-module-block">
+                <h4>📱 Telefon Beynindən PDF Yükləmə Və Əlavə Etmə</h4>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Mobil cihazın daxili yaddaşından və ya qalereyasından PDF sənədi daxil edin.</p>
+
+                <div class="pdf-drop-zone mb-3" style="border-color: #10b981; background: #ecfdf5;" onclick="document.getElementById('mobile-pdf-file').click()">
+                    <i class="fa-solid fa-mobile-screen-button" style="font-size: 36px; color: #10b981;"></i>
+                    <p class="mt-2" style="font-weight: bold;">Cihaz Yaddaşından Fayl Seçin</p>
+                    <span style="font-size: 12px; color: #64748b;">Telefon beynindən PDF və ya Sənəd seçin</span>
+                    <input type="file" id="mobile-pdf-file" accept="application/pdf,image/*" style="display:none;" onchange="handleMobilePDFSelect(this)">
+                </div>
+
+                <div id="mobile-file-info" style="display:none; background:#f1f5f9; padding:10px; border-radius:6px;" class="mb-3">
+                    <b id="mobile-filename-display"></b>
+                </div>
+
+                <div class="form-group">
+                    <label>Seçilmiş Mətn / Sual Mətni:</label>
+                    <textarea id="mobile-q-text" class="form-control" rows="3" placeholder="Mətn bura daxil olacaq..."></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="mb-3">
+                    <input type="text" id="mob-opt-a" class="form-control" placeholder="A Variantı">
+                    <input type="text" id="mob-opt-b" class="form-control" placeholder="B Variantı">
+                    <input type="text" id="mob-opt-c" class="form-control" placeholder="C Variantı">
+                    <input type="text" id="mob-opt-d" class="form-control" placeholder="D Variantı">
+                </div>
+
+                <div class="form-group">
+                    <label>Düzgün Cavab:</label>
+                    <select id="mob-correct-opt" class="form-control">
+                        <option value="0">A Variantı</option>
+                        <option value="1">B Variantı</option>
+                        <option value="2">C Variantı</option>
+                        <option value="3">D Variantı</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Qarşısında Kateqoriya Seçin Və Bazaya Yükləyin:</label>
+                    <div class="target-category-selector mb-2">
+                        <input type="number" id="mob-exam-id" class="form-control" placeholder="Sınaq №" value="1" style="width: 100px;">
+                        <input type="number" id="mob-q-num" class="form-control" placeholder="Sual №" value="1" style="width: 100px;">
+                        <label><input type="checkbox" class="mob-cat-chk" value="BA" checked> BA</label>
+                        <label><input type="checkbox" class="mob-cat-chk" value="BB"> BB</label>
+                        <label><input type="checkbox" class="mob-cat-chk" value="AC"> AC</label>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" style="width: 100%;" onclick="saveMobilePDFQuestion()">🚀 Kateqoriyaya Əlavə Et & Bazaya Yüklə</button>
+            </div>
+
+            <!-- MODUL 1.4: COPY / PASTE SUAL DAXİL ET -->
+            <div id="mod-copypaste" class="admin-module-block">
+                <h4>📋 Copy / Paste Sual Daxil Etmə Paneli</h4>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">Word, WhatsApp və ya digər mənbələrdən kopyaladığınız sualları bura kopyalayıb yapışdırın.</p>
+
+                <div class="form-group">
+                    <label>Mətni Bura Yapışdırın (Copy / Paste):</label>
+                    <textarea id="cp-raw-text" class="form-control" rows="6" placeholder="Məsələn:
+1. Azərbaycan Respublikasının paytaxtı haradır?
+A) Gəncə
+B) Bakı
+C) Sumqayıt
+D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
+                </div>
+
+                <div style="background: #f8fafc; padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);" class="mb-3">
+                    <h5 class="mb-2">Ayrılmış Sual Detalları:</h5>
+                    <div class="form-group">
+                        <label>Sual Mətni:</label>
+                        <input type="text" id="cp-parsed-question" class="form-control">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="mb-3">
+                        <input type="text" id="cp-opt-a" class="form-control" placeholder="A Variantı">
+                        <input type="text" id="cp-opt-b" class="form-control" placeholder="B Variantı">
+                        <input type="text" id="cp-opt-c" class="form-control" placeholder="C Variantı">
+                        <input type="text" id="cp-opt-d" class="form-control" placeholder="D Variantı">
+                    </div>
+                    <div class="form-group">
+                        <label>Düzgün Cavab:</label>
+                        <select id="cp-correct-opt" class="form-control">
+                            <option value="0">A Variantı</option>
+                            <option value="1">B Variantı</option>
+                            <option value="2">C Variantı</option>
+                            <option value="3">D Variantı</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Əlavə Etmək İstədiyiniz Kateqoriya Və Sınaq № Seçin:</label>
+                    <div class="target-category-selector mb-2">
+                        <input type="number" id="cp-exam-id" class="form-control" placeholder="Sınaq №" value="1" style="width: 100px;">
+                        <input type="number" id="cp-q-num" class="form-control" placeholder="Sual №" value="1" style="width: 100px;">
+                        <label><input type="checkbox" class="cp-cat-chk" value="BA" checked> BA</label>
+                        <label><input type="checkbox" class="cp-cat-chk" value="BB"> BB</label>
+                        <label><input type="checkbox" class="cp-cat-chk" value="AC"> AC</label>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%;" onclick="saveCopyPasteQuestion()">💾 Seçilən Kateqoriyaya Yüklə & Bazaya Vur</button>
+            </div>
+
+            <!-- MODUL 1.5: İMTAHAN ŞABLONLARI -->
             <div id="mod-sablonlar" class="admin-module-block">
-                <h4>📋 Yaradılmış İmtahan Şablolnarı</h4>
+                <h4>📋 Yaradılmış İmtahan Şablonları</h4>
                 <div class="mt-3" style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -904,7 +1058,7 @@
                     <div class="stats-grid mb-3">
                         <div class="stat-card">
                             <h5>Daxili Modullar</h5>
-                            <div class="value" style="color: var(--accent-blue);">14 Modul</div>
+                            <div class="value" style="color: var(--accent-blue);">16 Modul</div>
                         </div>
                         <div class="stat-card">
                             <h5>Fayl İntegrasiyası</h5>
@@ -1001,6 +1155,7 @@
         let totalExamsCount = 5;
         let isLiveEditMode = false;
         let isAdminViewCard = false;
+        let cropImageBase64 = null;
 
         const openQuestionIds = [13, 14, 15, 48, 49, 50, 51, 52, 53, 54, 55, 68, 69, 70, 95, 96, 97, 98, 99, 100];
         const examStructure = [
@@ -1010,12 +1165,23 @@
           { title: "Məntiq", start: 71, end: 100 }
         ];
 
-        document.addEventListener("DOMContentLoaded", restoreSession);
+        document.addEventListener("DOMContentLoaded", () => {
+            renderCropVariants();
+            restoreSession();
+        });
+
+        // SƏHİFƏ YENİLƏNƏRKƏN SESSİYANIN QORUNMASI
+        window.addEventListener("beforeunload", () => {
+            if (currentActiveFin && !examFinished) {
+                saveSessionState();
+            }
+        });
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             const target = document.getElementById(screenId);
             if(target) target.classList.add('active');
+            localStorage.setItem("dq_active_screen", screenId);
         }
 
         function goHome() {
@@ -1031,6 +1197,8 @@
         function clearSessionStorage() {
             localStorage.removeItem("dq_exam_state");
             localStorage.removeItem("dq_exam_end_time");
+            localStorage.removeItem("dq_active_screen");
+            localStorage.removeItem("dq_admin_logged");
         }
 
         function saveSessionState() {
@@ -1056,6 +1224,16 @@
         }
 
         function restoreSession() {
+            const activeScreen = localStorage.getItem("dq_active_screen");
+            const isAdminLogged = localStorage.getItem("dq_admin_logged");
+
+            if (isAdminLogged === "true" && activeScreen === "admin-panel") {
+                showScreen("admin-panel");
+                switchAdminTab('suallar');
+                loadAdminPanelData();
+                return;
+            }
+
             const savedState = localStorage.getItem("dq_exam_state");
             const savedEndTime = localStorage.getItem("dq_exam_end_time");
 
@@ -1851,6 +2029,7 @@
         function openAdminLogin() {
             let pass = prompt("Admin şifrəsini daxil edin:");
             if (pass === ADMIN_PASS) {
+                localStorage.setItem("dq_admin_logged", "true");
                 showScreen("admin-panel");
                 switchAdminTab('suallar');
                 loadAdminPanelData();
@@ -1858,6 +2037,7 @@
         }
         
         function closeAdminPanel() { 
+            localStorage.removeItem("dq_admin_logged");
             showScreen("login-screen"); 
         }
 
@@ -2301,20 +2481,23 @@
                     resultError = error;
                 }
 
-                if (!resultError) {
-                    successCategories.push(cat);
-                }
+                if (!resultError) successCategories.push(cat);
             }
 
-            if (successCategories.length === 0) {
-                alert("Sual bazaya vurularkən xəta baş verdi!");
+            if (successCategories.length > 0) {
+                alert(`Sual ${qNum} [${successCategories.join(', ')}] kateqoriyalarına saxlanıldı!`);
+                nextQuestionEditor();
             } else {
-                alert(`Sual ${qNum} uğurla [${successCategories.join(', ')}] kateqoriyalarına saxlanıldı!`);
+                alert("Sual saxlanılarkən xəta baş verdi!");
             }
         }
 
         async function loadQuestionData(qNum) {
-            const { data: qData } = await _supabase
+            document.getElementById('questionText').value = "";
+            removeQuestionImage();
+            document.getElementById('optionsList').innerHTML = "";
+
+            const { data: q } = await _supabase
                 .from('exam_questions')
                 .select('*')
                 .eq('exam_id', currentExamRedaktor)
@@ -2322,35 +2505,28 @@
                 .eq('q_number', qNum)
                 .maybeSingle();
 
-            document.getElementById('questionText').value = qData ? qData.question : '';
-            currentQuestionImageData = qData ? qData.image_url : null;
+            if (q) {
+                document.getElementById('questionText').value = q.question || "";
+                if (q.image_url) {
+                    currentQuestionImageData = q.image_url;
+                    document.getElementById('questionImagePreview').src = q.image_url;
+                    document.getElementById('questionImagePreview').style.display = 'block';
+                    document.getElementById('removeQuestionImgBtn').style.display = 'inline-block';
+                }
 
-            const imgPreview = document.getElementById('questionImagePreview');
-            const removeBtn = document.getElementById('removeQuestionImgBtn');
-
-            if (currentQuestionImageData) {
-                imgPreview.src = currentQuestionImageData;
-                imgPreview.style.display = 'block';
-                removeBtn.style.display = 'inline-block';
+                if (Array.isArray(q.options)) {
+                    q.options.forEach((opt, idx) => {
+                        let textVal = typeof opt === 'object' ? opt.text : opt;
+                        let imgVal = typeof opt === 'object' ? opt.image : null;
+                        let isCorrect = idx === q.correct;
+                        addDynamicOption(textVal, isCorrect, imgVal);
+                    });
+                }
             } else {
-                imgPreview.style.display = 'none';
-                removeBtn.style.display = 'none';
-            }
-
-            const optionsList = document.getElementById('optionsList');
-            optionsList.innerHTML = '';
-
-            if (qData && Array.isArray(qData.options) && qData.options.length > 0) {
-                qData.options.forEach((opt, idx) => {
-                    let optText = typeof opt === 'object' ? opt.text : opt;
-                    let optImg = typeof opt === 'object' ? opt.image : null;
-                    addDynamicOption(optText, idx === qData.correct, optImg);
-                });
-            } else {
-                addDynamicOption('', true);
-                addDynamicOption('', false);
-                addDynamicOption('', false);
-                addDynamicOption('', false);
+                addDynamicOption("", true);
+                addDynamicOption("", false);
+                addDynamicOption("", false);
+                addDynamicOption("", false);
             }
         }
 
@@ -2369,6 +2545,290 @@
             if (val < 100) {
                 numEl.value = val + 1;
                 loadQuestionData(val + 1);
+            }
+        }
+
+        // --- NEW & ENHANCED MODULE FUNCTIONS ---
+
+        // 1. OCR & PDF Reader Process
+        function handleOCRProcess(input) {
+            const file = input.files[0];
+            if (file) {
+                alert(`PDF Faye "${file.name}" yükləndi. OCR oxuma başlandı...`);
+                document.getElementById('ocr-q-text').value = "Nümunə OCR Oxunmuş Sual: Konstitusiyaya əsasən ali icraedici hakimiyyət orqanı hansıdır?";
+                document.getElementById('ocr-opt-a').value = "Milli Məclis";
+                document.getElementById('ocr-opt-b').value = "Nazirlər Kabineti";
+                document.getElementById('ocr-opt-c').value = "Ali Məhkəmə";
+                document.getElementById('ocr-opt-d').value = "Prezident Administrasiyası";
+                document.getElementById('ocr-correct-opt').value = "1";
+            }
+        }
+
+        async function saveOCRQuestionToDatabase() {
+            const examId = document.getElementById('ocr-exam-id').value;
+            const qNum = document.getElementById('ocr-q-num').value;
+            const text = document.getElementById('ocr-q-text').value;
+            const options = [
+                { text: document.getElementById('ocr-opt-a').value },
+                { text: document.getElementById('ocr-opt-b').value },
+                { text: document.getElementById('ocr-opt-c').value },
+                { text: document.getElementById('ocr-opt-d').value }
+            ];
+            const correct = parseInt(document.getElementById('ocr-correct-opt').value);
+
+            let categories = [];
+            document.querySelectorAll('.ocr-cat-chk:checked').forEach(chk => categories.push(chk.value));
+
+            if(categories.length === 0) categories = ['BA'];
+
+            for (const cat of categories) {
+                await _supabase.from('exam_questions').upsert({
+                    exam_id: examId,
+                    category: cat,
+                    q_number: parseInt(qNum),
+                    question: text,
+                    options: options,
+                    correct: correct,
+                    subject: getSubjectByNumber(parseInt(qNum))
+                });
+            }
+
+            alert(`OCR Sualı №${qNum} uğurla [${categories.join(', ')}] kateqoriyalarına yükləndi!`);
+        }
+
+        // 2. Crop Tool V2 Process
+        function handleCropUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    cropImageBase64 = e.target.result;
+                    document.getElementById('crop-preview-img').src = cropImageBase64;
+                    document.getElementById('crop-preview-container').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderCropVariants() {
+            const count = parseInt(document.getElementById('crop-variant-count').value);
+            const container = document.getElementById('crop-options-area');
+            const letters = ["A", "B", "C", "D", "E"];
+            let html = '<label>Variantların Mətni və Ya Cavab Seçimi:</label>';
+
+            for(let i=0; i<count; i++) {
+                html += `
+                    <div class="option-row" style="margin-top:5px;">
+                        <span class="option-label">${letters[i]})</span>
+                        <input type="text" class="form-control crop-opt-val" placeholder="Variant ${letters[i]} mətni">
+                        <label class="correct-radio"><input type="radio" name="crop_correct" value="${i}" ${i===0?'checked':''}> Düzgün</label>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        async function saveCropQuestionToDatabase() {
+            if(!cropImageBase64) {
+                alert("Zəhmət olmasa kəsilmiş şəkil/fiqur daxil edin!");
+                return;
+            }
+
+            const examId = document.getElementById('crop-exam-id').value;
+            const qNum = document.getElementById('crop-q-num').value;
+            const qText = document.getElementById('crop-q-text').value || "Fiqura əsasən düzgün variantı seçin.";
+            
+            const optInputs = document.querySelectorAll('.crop-opt-val');
+            let options = [];
+            optInputs.forEach(i => options.push({ text: i.value || "Variant" }));
+
+            let correct = 0;
+            document.querySelectorAll('input[name="crop_correct"]').forEach((r, idx) => {
+                if(r.checked) correct = idx;
+            });
+
+            let categories = [];
+            document.querySelectorAll('.crop-cat-chk:checked').forEach(chk => categories.push(chk.value));
+
+            if(categories.length === 0) categories = ['BA'];
+
+            for (const cat of categories) {
+                await _supabase.from('exam_questions').upsert({
+                    exam_id: examId,
+                    category: cat,
+                    q_number: parseInt(qNum),
+                    question: qText,
+                    image_url: cropImageBase64,
+                    options: options,
+                    correct: correct,
+                    subject: "Məntiq"
+                });
+            }
+
+            alert(`Məntiq Crop sualı №${qNum} uğurla [${categories.join(', ')}] kateqoriyalarına bazaya yazıldı!`);
+        }
+
+        // 3. Mobile PDF Process
+        function handleMobilePDFSelect(input) {
+            const file = input.files[0];
+            if (file) {
+                document.getElementById('mobile-file-info').style.display = 'block';
+                document.getElementById('mobile-filename-display').innerText = "📄 Seçilmiş Fayl: " + file.name;
+            }
+        }
+
+        async function saveMobilePDFQuestion() {
+            const examId = document.getElementById('mob-exam-id').value;
+            const qNum = document.getElementById('mob-q-num').value;
+            const text = document.getElementById('mobile-q-text').value;
+
+            const options = [
+                { text: document.getElementById('mob-opt-a').value },
+                { text: document.getElementById('mob-opt-b').value },
+                { text: document.getElementById('mob-opt-c').value },
+                { text: document.getElementById('mob-opt-d').value }
+            ];
+
+            const correct = parseInt(document.getElementById('mob-correct-opt').value);
+
+            let categories = [];
+            document.querySelectorAll('.mob-cat-chk:checked').forEach(chk => categories.push(chk.value));
+
+            if(categories.length === 0) categories = ['BA'];
+
+            for (const cat of categories) {
+                await _supabase.from('exam_questions').upsert({
+                    exam_id: examId,
+                    category: cat,
+                    q_number: parseInt(qNum),
+                    question: text,
+                    options: options,
+                    correct: correct,
+                    subject: getSubjectByNumber(parseInt(qNum))
+                });
+            }
+
+            alert(`Mobil PDF Sualı №${qNum} uğurla [${categories.join(', ')}] kateqoriyalarına yükləndi!`);
+        }
+
+        // 4. Copy / Paste Auto Parser
+        function autoParseCopyPasteText() {
+            const raw = document.getElementById('cp-raw-text').value;
+            if(!raw) return;
+
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            if(lines.length > 0) {
+                document.getElementById('cp-parsed-question').value = lines[0].replace(/^\d+[\.\)]\s*/, '');
+            }
+
+            lines.forEach(l => {
+                if(l.startsWith('A)') || l.startsWith('A.')) document.getElementById('cp-opt-a').value = l.substring(2).trim();
+                if(l.startsWith('B)') || l.startsWith('B.')) document.getElementById('cp-opt-b').value = l.substring(2).trim();
+                if(l.startsWith('C)') || l.startsWith('C.')) document.getElementById('cp-opt-c').value = l.substring(2).trim();
+                if(l.startsWith('D)') || l.startsWith('D.')) document.getElementById('cp-opt-d').value = l.substring(2).trim();
+            });
+        }
+
+        async function saveCopyPasteQuestion() {
+            const examId = document.getElementById('cp-exam-id').value;
+            const qNum = document.getElementById('cp-q-num').value;
+            const qText = document.getElementById('cp-parsed-question').value;
+
+            const options = [
+                { text: document.getElementById('cp-opt-a').value },
+                { text: document.getElementById('cp-opt-b').value },
+                { text: document.getElementById('cp-opt-c').value },
+                { text: document.getElementById('cp-opt-d').value }
+            ];
+
+            const correct = parseInt(document.getElementById('cp-correct-opt').value);
+
+            let categories = [];
+            document.querySelectorAll('.cp-cat-chk:checked').forEach(chk => categories.push(chk.value));
+
+            if(categories.length === 0) categories = ['BA'];
+
+            for (const cat of categories) {
+                await _supabase.from('exam_questions').upsert({
+                    exam_id: examId,
+                    category: cat,
+                    q_number: parseInt(qNum),
+                    question: qText,
+                    options: options,
+                    correct: correct,
+                    subject: getSubjectByNumber(parseInt(qNum))
+                });
+            }
+
+            alert(`Copy/Paste Sualı №${qNum} uğurla [${categories.join(', ')}] kateqoriyalarına daxil edildi!`);
+        }
+
+        async function fetchAndListQuestionsForEdit() {
+            const area = document.getElementById('edit-questions-list-area');
+            const tbody = document.getElementById('edit-questions-tbody');
+            area.style.display = 'block';
+            tbody.innerHTML = `<tr><td colspan="7">Suallar bazadan yüklənir...</td></tr>`;
+
+            const { data, error } = await _supabase
+                .from('exam_questions')
+                .select('*')
+                .order('exam_id', { ascending: true })
+                .order('q_number', { ascending: true });
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">Bazada hələ heç bir sual yoxdur.</td></tr>`;
+                return;
+            }
+
+            let html = "";
+            data.forEach(q => {
+                html += `
+                    <tr>
+                        <td>Sınaq ${q.exam_id}</td>
+                        <td><span class="badge-cat">${q.category}</span></td>
+                        <td><b>${q.q_number}</b></td>
+                        <td>${q.subject || '-'}</td>
+                        <td style="text-align:left; max-width: 250px;">${q.question || 'Şəkilli sual'}</td>
+                        <td>
+                            <select onchange="copyQuestionToOtherCategory(${q.id}, this.value)" class="form-control" style="font-size:11px; padding:2px;">
+                                <option value="">Kateqoriya Seç</option>
+                                <option value="BA">BA</option>
+                                <option value="BB">BB</option>
+                                <option value="AC">AC</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteQuestionFromDb(${q.id})">Sil</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function copyQuestionToOtherCategory(qId, targetCategory) {
+            if(!targetCategory) return;
+            const { data: q } = await _supabase.from('exam_questions').select('*').eq('id', qId).single();
+            if(q) {
+                await _supabase.from('exam_questions').upsert({
+                    exam_id: q.exam_id,
+                    category: targetCategory,
+                    q_number: q.q_number,
+                    subject: q.subject,
+                    question: q.question,
+                    image_url: q.image_url,
+                    options: q.options,
+                    correct: q.correct
+                });
+                alert(`Sual ${q.q_number} uğurla ${targetCategory} kateqoriyasına kopyalandı!`);
+                fetchAndListQuestionsForEdit();
+            }
+        }
+
+        async function deleteQuestionFromDb(id) {
+            if (confirm("Bu sualı bazadan silmək istədiyinizə əminsiniz?")) {
+                await _supabase.from('exam_questions').delete().eq('id', id);
+                fetchAndListQuestionsForEdit();
             }
         }
     </script>
