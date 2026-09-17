@@ -284,11 +284,9 @@
         .pdf-drop-zone { border: 2px dashed #a5b4fc; background: #f5f3ff; border-radius: var(--radius-lg); padding: 30px; text-align: center; cursor: pointer; transition: background 0.2s; }
         .pdf-drop-zone:hover { background: #ede9fe; }
 
-        /* MULTI-CATEGORY CHECKBOX CONTROLS */
         .target-category-selector { display: flex; gap: 12px; align-items: center; background: #f1f5f9; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 10px; flex-wrap: wrap; }
         .target-category-selector label { font-size: 13px; font-weight: bold; color: var(--primary-dark); cursor: pointer; display: flex; align-items: center; gap: 5px; }
 
-        /* DYNAMIC EXAM CATEGORY ROW STYLES */
         .exam-item-card {
             background: #ffffff;
             border: 1px solid var(--border-color);
@@ -636,7 +634,6 @@
                         </div>
                     </div>
 
-                    <!-- HƏMİN ƏRAZİDƏ DİGƏR KATEQORİYALARA HƏMİN ANDA VURMA PARAMIETRİ -->
                     <div class="form-group mt-3">
                         <label style="font-size: 13px;">➕ Sualı Saxlayarkən Eyni Anında Digər Kateqoriyalara da Vur:</label>
                         <div class="target-category-selector">
@@ -985,7 +982,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const ADMIN_PASS = "6675157";
-        const LIVE_EDIT_ADMIN_PASS = "6677667"; // Xüsusi Giriş Kodu
+        const LIVE_EDIT_ADMIN_PASS = "6677667"; 
         const testDuration = 3 * 3600;
 
         let currentStudentName = "";
@@ -1185,10 +1182,16 @@
 
             const allAvailableCategories = ['BA', 'BB', 'AC'];
 
+            let maxAllowedExam = 1;
             const allowedExamsMap = {};
             if (allowedData) {
                 allowedData.forEach(item => {
                     const examNo = String(item.exam_no || 1);
+                    const examNum = parseInt(examNo, 10);
+                    if (!isNaN(examNum) && examNum > maxAllowedExam) {
+                        maxAllowedExam = examNum;
+                    }
+
                     if (!allowedExamsMap[examNo]) allowedExamsMap[examNo] = new Set();
 
                     if (Array.isArray(item.categories)) {
@@ -1201,8 +1204,10 @@
                 });
             }
 
+            let displayCount = Math.max(totalExamsCount, maxAllowedExam);
+
             let html = "";
-            for (let i = 1; i <= totalExamsCount; i++) {
+            for (let i = 1; i <= displayCount; i++) {
                 const examNum = String(i);
                 const allowedCatsSet = allowedExamsMap[examNum];
 
@@ -1263,7 +1268,6 @@
             selectedExamId = examId;
             userGroup = category;
 
-            // 1 DƏFƏ İŞTİRAK YANLIŞLIĞININ QARŞISINI ALMAQ ÜÇÜN
             if (!isLiveEditMode) {
                 const { data: existingRes } = await _supabase
                     .from('exam_results')
@@ -1460,7 +1464,6 @@
             currentActiveFin = fin;
             currentStudentName = name;
 
-            // Bazadan həmin sınağın suallarını və istifadəçinin cavablaşdırılmış nəticəsini çəkirik
             const { data: qData } = await _supabase
                 .from('exam_questions')
                 .select('*')
@@ -1560,7 +1563,6 @@
             }
         }
 
-        /* CANLI İMTAHAN REDAKTƏ FUNKSİYALARI */
         function changeLiveCategory(cat) {
             userGroup = cat;
             startExamSession(selectedExamId, userGroup);
@@ -2305,43 +2307,45 @@
             }
 
             if (successCategories.length === 0) {
-                alert("Xəta baş verdi: Bazaya vurulmadı!");
+                alert("Sual bazaya vurularkən xəta baş verdi!");
             } else {
-                alert(`Sınaq ${currentExamRedaktor} - Sual ${qNum} Uğurla [${successCategories.join(', ')}] kateqoriyalarına Yadda Saxlanıldı!`);
+                alert(`Sual ${qNum} uğurla [${successCategories.join(', ')}] kateqoriyalarına saxlanıldı!`);
             }
         }
 
-        async function loadQuestionData(num) {
-            const subject = document.getElementById('activeSubjectInput').value;
-            
-            const { data } = await _supabase
+        async function loadQuestionData(qNum) {
+            const { data: qData } = await _supabase
                 .from('exam_questions')
                 .select('*')
                 .eq('exam_id', currentExamRedaktor)
                 .eq('category', currentCategoryRedaktor)
-                .eq('q_number', num)
+                .eq('q_number', qNum)
                 .maybeSingle();
 
-            document.getElementById('questionText').value = '';
-            document.getElementById('optionsList').innerHTML = '';
-            removeQuestionImage();
+            document.getElementById('questionText').value = qData ? qData.question : '';
+            currentQuestionImageData = qData ? qData.image_url : null;
 
-            if (data) {
-                document.getElementById('questionText').value = data.question || '';
-                if (data.image_url) {
-                    currentQuestionImageData = data.image_url;
-                    const imgPreview = document.getElementById('questionImagePreview');
-                    imgPreview.src = data.image_url;
-                    imgPreview.style.display = 'block';
-                    document.getElementById('removeQuestionImgBtn').style.display = 'inline-block';
-                }
-                if (Array.isArray(data.options)) {
-                    data.options.forEach((opt, idx) => {
-                        let optText = typeof opt === 'object' ? opt.text : opt;
-                        let optImg = typeof opt === 'object' ? opt.image : null;
-                        addDynamicOption(optText, idx === data.correct, optImg);
-                    });
-                }
+            const imgPreview = document.getElementById('questionImagePreview');
+            const removeBtn = document.getElementById('removeQuestionImgBtn');
+
+            if (currentQuestionImageData) {
+                imgPreview.src = currentQuestionImageData;
+                imgPreview.style.display = 'block';
+                removeBtn.style.display = 'inline-block';
+            } else {
+                imgPreview.style.display = 'none';
+                removeBtn.style.display = 'none';
+            }
+
+            const optionsList = document.getElementById('optionsList');
+            optionsList.innerHTML = '';
+
+            if (qData && Array.isArray(qData.options) && qData.options.length > 0) {
+                qData.options.forEach((opt, idx) => {
+                    let optText = typeof opt === 'object' ? opt.text : opt;
+                    let optImg = typeof opt === 'object' ? opt.image : null;
+                    addDynamicOption(optText, idx === qData.correct, optImg);
+                });
             } else {
                 addDynamicOption('', true);
                 addDynamicOption('', false);
@@ -2351,83 +2355,20 @@
         }
 
         function prevQuestionEditor() {
-            let el = document.getElementById('questionNumber');
-            let val = parseInt(el.value);
+            let numEl = document.getElementById('questionNumber');
+            let val = parseInt(numEl.value);
             if (val > 1) {
-                el.value = val - 1;
+                numEl.value = val - 1;
                 loadQuestionData(val - 1);
             }
         }
 
         function nextQuestionEditor() {
-            let el = document.getElementById('questionNumber');
-            let val = parseInt(el.value);
+            let numEl = document.getElementById('questionNumber');
+            let val = parseInt(numEl.value);
             if (val < 100) {
-                el.value = val + 1;
+                numEl.value = val + 1;
                 loadQuestionData(val + 1);
-            }
-        }
-
-        async function fetchAndListQuestionsForEdit() {
-            const area = document.getElementById("edit-questions-list-area");
-            const tbody = document.getElementById("edit-questions-tbody");
-            area.style.display = "block";
-            tbody.innerHTML = "<tr><td colspan='7'>Yüklənir...</td></tr>";
-
-            const { data, error } = await _supabase
-                .from('exam_questions')
-                .select('*')
-                .eq('exam_id', currentExamRedaktor)
-                .order('q_number', { ascending: true });
-
-            if (error || !data || data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='7'>Sual tapılmadı</td></tr>";
-                return;
-            }
-
-            let html = "";
-            data.forEach(q => {
-                html += `
-                    <tr>
-                        <td>Sınaq ${q.exam_id}</td>
-                        <td><span class="badge-cat">${q.category}</span></td>
-                        <td><b>${q.q_number}</b></td>
-                        <td>${q.subject || '-'}</td>
-                        <td style="text-align:left; max-width:250px;">${q.question ? q.question.substring(0, 50) + "..." : "Şəkilli Sual"}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="copyQuestionToCategory(${q.id}, '${q.category === 'BA' ? 'BB' : 'BA'}')">+ ${q.category === 'BA' ? 'BB' : 'BA'}-yə at</button>
-                        </td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" onclick="deleteQuestionFromDb(${q.id})">Sil</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        async function deleteQuestionFromDb(id) {
-            if (confirm("Bu sualı bazadan silmək istədiyinizə əminsiniz?")) {
-                await _supabase.from('exam_questions').delete().eq('id', id);
-                fetchAndListQuestionsForEdit();
-            }
-        }
-
-        async function copyQuestionToCategory(qId, targetCat) {
-            const { data: q } = await _supabase.from('exam_questions').select('*').eq('id', qId).single();
-            if (q) {
-                await _supabase.from('exam_questions').insert([{
-                    exam_id: q.exam_id,
-                    category: targetCat,
-                    q_number: q.q_number,
-                    subject: q.subject,
-                    question: q.question,
-                    image_url: q.image_url,
-                    options: q.options,
-                    correct: q.correct
-                }]);
-                alert(`Sual uğurla ${targetCat} kateqoriyasına kopyalandı!`);
-                fetchAndListQuestionsForEdit();
             }
         }
     </script>
