@@ -1350,9 +1350,6 @@ D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
             }
         }
 
-        /* -------------------------------------------------------------
-           SİNAQLARIN FİLTRLƏNMƏSİ VƏ İCAZƏSİZ SİNAQLARIN GİZLƏDİLMƏSİ
-        ------------------------------------------------------------- */
         async function renderRegisteredExams() {
             const container = document.getElementById("registered-exams-list");
             container.innerHTML = "<p>Sınaqlar yüklənir...</p>";
@@ -1400,7 +1397,6 @@ D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
                 const examNum = String(i);
                 const allowedCatsSet = allowedExamsMap[examNum];
 
-                // Sınaq 2,3,4,5 admin icazəsi yoxdursa TAM GİZLƏDİLSİN
                 if (i > 1 && !allowedCatsSet) {
                     continue; 
                 }
@@ -2008,9 +2004,6 @@ D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
             }
         }
 
-        /* -------------------------------------------------------------
-           NƏTİCƏNİN YALNIZ 1 DƏFƏ İŞTİRAK ƏSASINDA BAZAYA YÜKLƏNMƏSİ
-        ------------------------------------------------------------- */
         async function finishExam() {
             if (timerInterval) clearInterval(timerInterval);
             examFinished = true;
@@ -2080,7 +2073,7 @@ D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
         }
 
         /* -------------------------------------------------------------
-           ADMİN PANELİ İDARƏETMƏ SİSTEMİ VA MƏLUMATLAR
+           ADMİN PANELİ İDARƏETMƏ SİSTEMİ VƏ MƏLUMATLAR
         ------------------------------------------------------------- */
         function loadAdminPanelData() {
             loadAllowedStudents();
@@ -2188,20 +2181,20 @@ D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
                         <td><span class="badge-cat">${res.category || 'BA'}</span></td>
                         <td style="color:green; font-weight:bold;">${res.correct_count}</td>
                         <td style="color:red; font-weight:bold;">${res.wrong_count}</td>
-                        <td style="font-weight:bold;">${res.score}</td>
+                        <td><b>${res.score}</b></td>
                         <td>${res.bb_group || '-'}</td>
-                        <td><button class="btn btn-primary btn-sm" onclick="viewAnswerCard('${res.exam_no || 1}', '${res.category || 'BA'}', '${res.fin}', '${res.name}')">👁️ Bax</button></td>
+                        <td><button class="btn btn-primary btn-sm" onclick="viewAnswerCard('${res.exam_no}', '${res.category}', '${res.fin}', '${res.name}')">👁️ Bax</button></td>
                     </tr>
                 `;
 
                 html2 += `
                     <tr>
-                        <td><b>${res.name}</b></td>
+                        <td>${res.name}</td>
                         <td>${res.fin}</td>
-                        <td>Sınaq ${res.exam_no || 1} (${res.category || 'BA'})</td>
-                        <td style="color:green; font-weight:bold;">${res.correct_count}</td>
-                        <td style="color:red; font-weight:bold;">${res.wrong_count}</td>
-                        <td style="font-weight:bold;">${res.score}</td>
+                        <td>Sınaq ${res.exam_no || 1}</td>
+                        <td style="color:green;">${res.correct_count}</td>
+                        <td style="color:red;">${res.wrong_count}</td>
+                        <td><b>${res.score}</b></td>
                     </tr>
                 `;
             });
@@ -2212,352 +2205,79 @@ D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
 
         async function loadStatistics() {
             const { data } = await _supabase.from('exam_results').select('score');
-            if (data && data.length > 0) {
+            if (data) {
                 document.getElementById('stat-total-students').innerText = data.length;
-                let sum = data.reduce((acc, curr) => acc + (curr.score || 0), 0);
-                document.getElementById('stat-avg-score').innerText = (sum / data.length).toFixed(1);
+                if (data.length > 0) {
+                    const avg = data.reduce((sum, item) => sum + (item.score || 0), 0) / data.length;
+                    document.getElementById('stat-avg-score').innerText = avg.toFixed(1);
+                } else {
+                    document.getElementById('stat-avg-score').innerText = "0";
+                }
             }
         }
 
         async function resetAllResults() {
-            if (confirm("DİQQƏT! Bütün tələbə nəticələrini bazadan tamamilə silmək istədiyinizə əminsiniz?")) {
+            if (confirm("DİQQƏT: Bütün iştirakçı nəticələrini silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz!")) {
                 await _supabase.from('exam_results').delete().neq('id', 0);
-                alert("Bütün nəticələr sıfırlandı!");
+                alert("Bütün nəticələr sıfırlandı.");
                 loadParticipantsAndResults();
                 loadStatistics();
             }
         }
 
-        /* -------------------------------------------------------------
-           SUALLAR MODULU & BAZA REDAKTORU (ADMIN)
-        ------------------------------------------------------------- */
-        function showStep(step) {
-            document.getElementById("stepExams").style.display = step === 1 ? "block" : "none";
-            document.getElementById("stepCategories").style.display = step === 2 ? "block" : "none";
-            document.getElementById("stepSubjects").style.display = step === 3 ? "block" : "none";
-            document.getElementById("stepEditor").style.display = step === 4 ? "block" : "none";
+        function generateTokenCode() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let code = "DQ-";
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById("generated-code-display").value = code;
         }
 
-        function selectExam(examNum) {
-            editorSelectedExam = String(examNum);
-            document.getElementById("navExam").innerText = `Sınaq ${editorSelectedExam}`;
+        // REDAKTƏ VƏ ƏLAVƏ MODULLAR ÜÇÜN KƏMƏR FUNKSİYALARI
+        function showStep(stepNum) {
+            document.getElementById("stepExams").style.display = stepNum === 1 ? "block" : "none";
+            document.getElementById("stepCategories").style.display = stepNum === 2 ? "block" : "none";
+            document.getElementById("stepSubjects").style.display = stepNum === 3 ? "block" : "none";
+            document.getElementById("stepEditor").style.display = stepNum === 4 ? "block" : "none";
+        }
+
+        function selectExam(examNo) {
+            editorSelectedExam = examNo;
+            document.getElementById("navExam").innerText = `Sınaq ${examNo}`;
             showStep(2);
         }
 
         function selectCategory(cat) {
             editorSelectedCategory = cat;
-            document.getElementById("navCategory").innerText = `${editorSelectedCategory} Kateqoriyası`;
+            document.getElementById("navCategory").innerText = `${cat} Kateqoriyası`;
             showStep(3);
         }
 
         function openEditor(subject) {
             editorSelectedSubject = subject;
-            document.getElementById("navSubject").innerText = editorSelectedSubject;
-            document.getElementById("activeSubjectInput").value = editorSelectedSubject;
-
+            document.getElementById("navSubject").innerText = subject;
+            document.getElementById("activeSubjectInput").value = subject;
             showStep(4);
-            editorCurrentQIndex = 1;
-            document.getElementById("questionNumber").value = editorCurrentQIndex;
-            loadEditorQuestionData(editorCurrentQIndex);
-        }
-
-        async function loadEditorQuestionData(qNum) {
-            editorCurrentQIndex = parseInt(qNum) || 1;
-            
-            const { data: q } = await _supabase
-                .from('exam_questions')
-                .select('*')
-                .eq('exam_id', editorSelectedExam)
-                .eq('category', editorSelectedCategory)
-                .eq('q_number', editorCurrentQIndex)
-                .maybeSingle();
-
-            if (q) {
-                document.getElementById("questionText").value = q.question || "";
-                
-                if (q.image_url) {
-                    editorImageData = q.image_url;
-                    document.getElementById("questionImagePreview").src = q.image_url;
-                    document.getElementById("questionImagePreview").style.display = "block";
-                    document.getElementById("removeQuestionImgBtn").style.display = "inline-block";
-                } else {
-                    editorImageData = null;
-                    document.getElementById("questionImagePreview").style.display = "none";
-                    document.getElementById("removeQuestionImgBtn").style.display = "none";
-                }
-
-                renderEditorOptions(q.options, q.correct);
-            } else {
-                document.getElementById("questionText").value = "";
-                editorImageData = null;
-                document.getElementById("questionImagePreview").style.display = "none";
-                document.getElementById("removeQuestionImgBtn").style.display = "none";
-                renderEditorOptions(["", "", "", ""], 0);
-            }
-
-            document.querySelectorAll('.editor-target-cat-chk').forEach(chk => {
-                chk.checked = (chk.value === editorSelectedCategory);
-            });
-            document.getElementById('editor-target-all').checked = false;
-        }
-
-        function renderEditorOptions(optionsArray, correctIdx) {
-            const list = document.getElementById("optionsList");
-            list.innerHTML = "";
-            const letters = ["A", "B", "C", "D", "E", "F"];
-
-            const opts = (Array.isArray(optionsArray) && optionsArray.length > 0) ? optionsArray : ["", "", "", ""];
-
-            opts.forEach((opt, idx) => {
-                let text = typeof opt === 'object' ? (opt.text || "") : opt;
-                let isChecked = idx === correctIdx ? "checked" : "";
-
-                let div = document.createElement("div");
-                div.className = "option-row";
-                div.innerHTML = `
-                    <span class="option-label">${letters[idx] || (idx+1)})</span>
-                    <input type="text" class="form-control editor-opt-input" value="${text}">
-                    <label class="correct-radio"><input type="radio" name="editor_ans" ${isChecked}> Düzgün</label>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function handleQuestionImageUpload(input) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    editorImageData = e.target.result;
-                    document.getElementById('questionImagePreview').src = editorImageData;
-                    document.getElementById('questionImagePreview').style.display = 'block';
-                    document.getElementById("removeQuestionImgBtn").style.display = "inline-block";
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function removeQuestionImage() {
-            editorImageData = null;
-            document.getElementById("questionImageInput").value = "";
-            document.getElementById('questionImagePreview').style.display = 'none';
-            document.getElementById("removeQuestionImgBtn").style.display = "none";
-        }
-
-        async function saveQuestionToSupabase() {
-            const text = document.getElementById("questionText").value.trim();
-            const qNum = parseInt(document.getElementById("questionNumber").value) || 1;
-
-            const optInputs = document.querySelectorAll("#optionsList .editor-opt-input");
-            const optRadios = document.querySelectorAll("#optionsList input[name='editor_ans']");
-
-            let options = [];
-            let correctIdx = 0;
-
-            optInputs.forEach((input, idx) => {
-                options.push({ text: input.value.trim(), image: null });
-                if (optRadios[idx] && optRadios[idx].checked) {
-                    correctIdx = idx;
-                }
-            });
-
-            let targetCategories = [];
-            document.querySelectorAll('.editor-target-cat-chk:checked').forEach(chk => {
-                targetCategories.push(chk.value);
-            });
-
-            if (targetCategories.length === 0) {
-                targetCategories = [editorSelectedCategory];
-            }
-
-            let successCategories = [];
-
-            for (const cat of targetCategories) {
-                const { data: existingQ } = await _supabase
-                    .from('exam_questions')
-                    .select('id')
-                    .eq('exam_id', editorSelectedExam)
-                    .eq('category', cat)
-                    .eq('q_number', qNum)
-                    .maybeSingle();
-
-                let resultErr = null;
-
-                if (existingQ) {
-                    const { error } = await _supabase
-                        .from('exam_questions')
-                        .update({
-                            question: text,
-                            image_url: editorImageData,
-                            options: options,
-                            correct: correctIdx,
-                            subject: editorSelectedSubject
-                        })
-                        .eq('id', existingQ.id);
-                    resultErr = error;
-                } else {
-                    const { error } = await _supabase
-                        .from('exam_questions')
-                        .insert([{
-                            exam_id: editorSelectedExam,
-                            category: cat,
-                            q_number: qNum,
-                            subject: editorSelectedSubject,
-                            question: text,
-                            image_url: editorImageData,
-                            options: options,
-                            correct: correctIdx
-                        }]);
-                    resultErr = error;
-                }
-
-                if (!resultErr) {
-                    successCategories.push(cat);
-                }
-            }
-
-            if (successCategories.length === 0) {
-                alert("Sual saxlanılarkən xəta baş verdi!");
-            } else {
-                alert(`Sual ${qNum} [${successCategories.join(', ')}] kateqoriyalarına uğurla yazıldı!`);
-                nextQuestionEditor();
-            }
-        }
-
-        function nextQuestionEditor() {
-            editorCurrentQIndex++;
-            document.getElementById("questionNumber").value = editorCurrentQIndex;
-            loadEditorQuestionData(editorCurrentQIndex);
-        }
-
-        function prevQuestionEditor() {
-            if (editorCurrentQIndex > 1) {
-                editorCurrentQIndex--;
-                document.getElementById("questionNumber").value = editorCurrentQIndex;
-                loadEditorQuestionData(editorCurrentQIndex);
-            }
-        }
-
-        function addNewExamFolder() {
-            totalExamsCount++;
-            const grid = document.getElementById("examFolderGrid");
-            const div = document.createElement("div");
-            div.className = "folder-card";
-            div.onclick = () => selectExam(totalExamsCount);
-            div.innerHTML = `
-                <div class="folder-icon">📁</div>
-                <div class="folder-title">Sınaq ${totalExamsCount}</div>
-                <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
-            `;
-            grid.appendChild(div);
-            alert(`Sınaq ${totalExamsCount} uğurla yaradıldı!`);
-        }
-
-        /* -------------------------------------------------------------
-           BÜTÜN SUALLARA BAXIŞ VƏ SİLMƏ (REDAKTƏ MƏRKƏZİ)
-        ------------------------------------------------------------- */
-        async function fetchAndListQuestionsForEdit() {
-            const area = document.getElementById("edit-questions-list-area");
-            const tbody = document.getElementById("edit-questions-tbody");
-            area.style.display = "block";
-            tbody.innerHTML = "<tr><td colspan='6'>Suallar yüklənir...</td></tr>";
-
-            const { data: questions, error } = await _supabase
-                .from('exam_questions')
-                .select('*')
-                .order('exam_id', { ascending: true })
-                .order('q_number', { ascending: true });
-
-            if (error || !questions || questions.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='6'>Bazada sual tapılmadı.</td></tr>";
-                return;
-            }
-
-            let html = "";
-            questions.forEach(q => {
-                html += `
-                    <tr>
-                        <td>Sınaq ${q.exam_id}</td>
-                        <td><span class="badge-cat">${q.category}</span></td>
-                        <td><b>Sual ${q.q_number}</b></td>
-                        <td>${q.subject || '-'}</td>
-                        <td style="text-align:left;">${q.question ? q.question.substring(0, 45) + '...' : 'Şəkilli sual'}</td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" onclick="deleteQuestionFromDb(${q.id})">🗑️ Sil</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        async function deleteQuestionFromDb(id) {
-            if (confirm("Bu sualı bazadan silmək istədiyinizə əminsiniz?")) {
-                await _supabase.from('exam_questions').delete().eq('id', id);
-                fetchAndListQuestionsForEdit();
-            }
-        }
-
-        /* -------------------------------------------------------------
-           OCR, CROP V2, MOBİL PDF, COPY/PASTE MODULLARI
-        ------------------------------------------------------------- */
-        function handleOCRProcess(input) {
-            if (input.files[0]) {
-                alert("PDF seçildi. OCR simulyasiyası ilə mətn oxundu!");
-                document.getElementById("ocr-q-text").value = "Dövlət qulluğu haqqında Qanuna əsasən dövlət qulluqçusunun əsas vəzifələri hansılardır?";
-                document.getElementById("ocr-opt-a").value = "Konstitusiyaya əməl etmək";
-                document.getElementById("ocr-opt-b").value = "Şəxsi tapşırıqları icra etmək";
-                document.getElementById("ocr-opt-c").value = "Sərbəst qərarlar almaq";
-                document.getElementById("ocr-opt-d").value = "İşdən yayınmaq";
-            }
-        }
-
-        async function saveOCRQuestionToDatabase() {
-            const qText = document.getElementById("ocr-q-text").value.trim();
-            const optA = document.getElementById("ocr-opt-a").value.trim();
-            const optB = document.getElementById("ocr-opt-b").value.trim();
-            const optC = document.getElementById("ocr-opt-c").value.trim();
-            const optD = document.getElementById("ocr-opt-d").value.trim();
-            const correctOpt = parseInt(document.getElementById("ocr-correct-opt").value);
-            const examNo = document.getElementById("ocr-exam-id").value;
-            const qNum = parseInt(document.getElementById("ocr-q-num").value);
-
-            const options = [{text: optA}, {text: optB}, {text: optC}, {text: optD}];
-
-            let cats = [];
-            document.querySelectorAll('.ocr-cat-chk:checked').forEach(c => cats.push(c.value));
-            if(cats.length === 0) cats = ["BA"];
-
-            for(const cat of cats) {
-                await _supabase.from('exam_questions').insert([{
-                    exam_id: examNo,
-                    category: cat,
-                    q_number: qNum,
-                    subject: getSubjectByNumber(qNum),
-                    question: qText,
-                    options: options,
-                    correct: correctOpt
-                }]);
-            }
-
-            alert(`OCR Sualı [${cats.join(', ')}] kateqoriyalarına vuruldu!`);
+            loadEditorQuestionData(1);
         }
 
         function renderCropVariants() {
             const count = parseInt(document.getElementById("crop-variant-count").value);
-            const area = document.getElementById("crop-options-area");
+            const container = document.getElementById("crop-options-area");
             const letters = ["A", "B", "C", "D", "E"];
-            let html = "<label style='font-weight:bold;'>Variantlar:</label>";
+            let html = "";
+
             for (let i = 0; i < count; i++) {
                 html += `
-                    <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
-                        <span style="font-weight:bold;">${letters[i]}):</span>
-                        <input type="text" class="form-control crop-opt-val" placeholder="${letters[i]} variantı text/şəkil">
-                        <label><input type="radio" name="crop_correct" ${i===0?'checked':''}> Düzgün</label>
+                    <div class="option-row">
+                        <span class="option-label">${letters[i]})</span>
+                        <input type="text" class="form-control crop-opt-val" placeholder="${letters[i]} variantı mətn və ya keçid...">
+                        <label class="correct-radio"><input type="radio" name="crop_correct" value="${i}" ${i === 0 ? 'checked' : ''}> Düzgün</label>
                     </div>
                 `;
             }
-            area.innerHTML = html;
+            container.innerHTML = html;
         }
 
         function handleCropUpload(input) {
@@ -2573,130 +2293,86 @@ D) Şəki" oninput="autoParseCopyPasteText()"></textarea>
             }
         }
 
-        async function saveCropQuestionToDatabase() {
-            if (!cropImageBase64) { alert("Zəhmət olmasa kəsilmiş şəkli seçin!"); return; }
-
-            const text = document.getElementById("crop-q-text").value.trim() || "Aşağıdakı fiqura əsasən cavabı müəyyən edin:";
-            const examNo = document.getElementById("crop-exam-id").value;
-            const qNum = parseInt(document.getElementById("crop-q-num").value);
-
-            const optInputs = document.querySelectorAll(".crop-opt-val");
-            const optRadios = document.querySelectorAll("input[name='crop_correct']");
-            let options = [];
-            let correctIdx = 0;
-
-            optInputs.forEach((inp, idx) => {
-                options.push({ text: inp.value.trim() || `Variant ${idx+1}`, image: null });
-                if(optRadios[idx] && optRadios[idx].checked) correctIdx = idx;
-            });
-
-            let cats = [];
-            document.querySelectorAll('.crop-cat-chk:checked').forEach(c => cats.push(c.value));
-            if(cats.length === 0) cats = ["BA"];
-
-            for(const cat of cats) {
-                await _supabase.from('exam_questions').insert([{
-                    exam_id: examNo,
-                    category: cat,
-                    q_number: qNum,
-                    subject: getSubjectByNumber(qNum),
-                    question: text,
-                    image_url: cropImageBase64,
-                    options: options,
-                    correct: correctIdx
-                }]);
-            }
-
-            alert(`Məntiq Crop Sualı [${cats.join(', ')}] kateqoriyalarına yazıldı!`);
-        }
-
-        function handleMobilePDFSelect(input) {
-            if (input.files[0]) {
-                document.getElementById("mobile-file-info").style.display = "block";
-                document.getElementById("mobile-filename-display").innerText = "Fayl seçildi: " + input.files[0].name;
-            }
-        }
-
-        async function saveMobilePDFQuestion() {
-            const text = document.getElementById("mobile-q-text").value.trim();
-            const optA = document.getElementById("mob-opt-a").value.trim();
-            const optB = document.getElementById("mob-opt-b").value.trim();
-            const optC = document.getElementById("mob-opt-c").value.trim();
-            const optD = document.getElementById("mob-opt-d").value.trim();
-            const correctOpt = parseInt(document.getElementById("mob-correct-opt").value);
-            const examNo = document.getElementById("mob-exam-id").value;
-            const qNum = parseInt(document.getElementById("mob-q-num").value);
-
-            let cats = [];
-            document.querySelectorAll('.mob-cat-chk:checked').forEach(c => cats.push(c.value));
-            if(cats.length === 0) cats = ["BA"];
-
-            for(const cat of cats) {
-                await _supabase.from('exam_questions').insert([{
-                    exam_id: examNo,
-                    category: cat,
-                    q_number: qNum,
-                    subject: getSubjectByNumber(qNum),
-                    question: text,
-                    options: [{text: optA}, {text: optB}, {text: optC}, {text: optD}],
-                    correct: correctOpt
-                }]);
-            }
-
-            alert(`Mobil PDF Sualı [${cats.join(', ')}] kateqoriyalarına yükləndi!`);
-        }
-
         function autoParseCopyPasteText() {
             const raw = document.getElementById("cp-raw-text").value;
-            const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+            if (!raw) return;
 
+            const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
             if (lines.length > 0) {
-                document.getElementById("cp-parsed-question").value = lines[0].replace(/^\d+[\.\)]\s*/, "");
+                document.getElementById("cp-parsed-question").value = lines[0];
             }
-            lines.forEach(line => {
-                if (/^A[\.\)]/i.test(line)) document.getElementById("cp-opt-a").value = line.replace(/^A[\.\)]\s*/i, "");
-                if (/^B[\.\)]/i.test(line)) document.getElementById("cp-opt-b").value = line.replace(/^B[\.\)]\s*/i, "");
-                if (/^C[\.\)]/i.test(line)) document.getElementById("cp-opt-c").value = line.replace(/^C[\.\)]\s*/i, "");
-                if (/^D[\.\)]/i.test(line)) document.getElementById("cp-opt-d").value = line.replace(/^D[\.\)]\s*/i, "");
+
+            lines.forEach(l => {
+                if (l.startsWith("A)")) document.getElementById("cp-opt-a").value = l.replace("A)", "").trim();
+                if (l.startsWith("B)")) document.getElementById("cp-opt-b").value = l.replace("B)", "").trim();
+                if (l.startsWith("C)")) document.getElementById("cp-opt-c").value = l.replace("C)", "").trim();
+                if (l.startsWith("D)")) document.getElementById("cp-opt-d").value = l.replace("D)", "").trim();
             });
         }
 
         async function saveCopyPasteQuestion() {
-            const text = document.getElementById("cp-parsed-question").value.trim();
+            const qText = document.getElementById("cp-parsed-question").value.trim();
             const optA = document.getElementById("cp-opt-a").value.trim();
             const optB = document.getElementById("cp-opt-b").value.trim();
             const optC = document.getElementById("cp-opt-c").value.trim();
             const optD = document.getElementById("cp-opt-d").value.trim();
             const correctOpt = parseInt(document.getElementById("cp-correct-opt").value);
-            const examNo = document.getElementById("cp-exam-id").value;
+            const examId = document.getElementById("cp-exam-id").value;
             const qNum = parseInt(document.getElementById("cp-q-num").value);
 
-            let cats = [];
-            document.querySelectorAll('.cp-cat-chk:checked').forEach(c => cats.push(c.value));
-            if(cats.length === 0) cats = ["BA"];
+            const options = [optA, optB, optC, optD].map(o => ({ text: o, image: null }));
 
-            for(const cat of cats) {
-                await _supabase.from('exam_questions').insert([{
-                    exam_id: examNo,
+            const categories = [];
+            document.querySelectorAll(".cp-cat-chk:checked").forEach(chk => categories.push(chk.value));
+
+            for (const cat of categories) {
+                await _supabase.from('exam_questions').upsert([{
+                    exam_id: examId,
                     category: cat,
                     q_number: qNum,
                     subject: getSubjectByNumber(qNum),
-                    question: text,
-                    options: [{text: optA}, {text: optB}, {text: optC}, {text: optD}],
+                    question: qText,
+                    options: options,
                     correct: correctOpt
                 }]);
             }
-
-            alert(`Copy/Paste sualı [${cats.join(', ')}] kateqoriyalarına əlavə edildi!`);
+            alert("Copy/Paste sualı bazaya vuruldu!");
         }
 
-        function generateTokenCode() {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            let code = "DQ-";
-            for (let i = 0; i < 6; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
+        async function fetchAndListQuestionsForEdit() {
+            const area = document.getElementById("edit-questions-list-area");
+            const tbody = document.getElementById("edit-questions-tbody");
+            area.style.display = "block";
+            tbody.innerHTML = "<tr><td colspan='6'>Yüklənir...</td></tr>";
+
+            const { data, error } = await _supabase.from('exam_questions').select('*').order('exam_id').order('q_number');
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='6'>Sual tapılmadı.</td></tr>";
+                return;
             }
-            document.getElementById("generated-code-display").value = code;
+
+            let html = "";
+            data.forEach(q => {
+                html += `
+                    <tr>
+                        <td>Sınaq ${q.exam_id}</td>
+                        <td><span class="badge-cat">${q.category}</span></td>
+                        <td><b>${q.q_number}</b></td>
+                        <td>${q.subject || '-'}</td>
+                        <td style="text-align:left;">${q.question ? q.question.substring(0, 40) + '...' : 'Şəkilli sual'}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteQuestionFromDatabase(${q.id})">🗑️ Sil</button></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function deleteQuestionFromDatabase(dbId) {
+            if (confirm("Bu sualı bazadan silməyə eminsiniz?")) {
+                await _supabase.from('exam_questions').delete().eq('id', dbId);
+                fetchAndListQuestionsForEdit();
+            }
         }
     </script>
 </body>
