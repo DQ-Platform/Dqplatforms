@@ -483,7 +483,7 @@
                 <div class="admin-nav-card" onclick="switchAdminTab('kod')"><span class="icon">🔑</span> Kod Yaratma</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('kontrol')"><span class="icon">🛡️</span> Kontrol</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('pult')"><span class="icon">🎮</span> Pult</div>
-                <div class="admin-nav-card" onclick="switchAdminTab('siyahi')"><span class="icon">📋</span> İştirakçılar</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('siyahi')"><span class="icon">📋</span> İştirakçılar & Nəticələr</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('statistika')"><span class="icon">📊</span> Statistika</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('cavablar')"><span class="icon">📑</span> Cavablar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('modul')"><span class="icon">📦</span> Modul Mərkəzi</div>
@@ -833,21 +833,30 @@
                 </div>
             </div>
 
-            <!-- MODUL 7: İŞTİRAKÇILAR MODULU -->
+            <!-- MODUL 7: İŞTİRAKÇILAR VƏ NƏTİCƏLƏR MODULU -->
             <div id="mod-siyahi" class="admin-module-block">
-                <h4>📋 İştirakçılar Siyahısı</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;" class="mb-3">
+                    <h4 style="margin:0;">📋 İştirakçılar və Nəticələr Bölməsi</h4>
+                    <button class="btn btn-danger btn-sm" onclick="resetAllResults()">⚠️ Bütün Nəticələri Sıfırla</button>
+                </div>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">İmtahanda iştirak etmiş bütün tələbələrin ətraflı statistikası və cavab kartları.</p>
                 <div class="mt-3" style="overflow-x: auto;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Ad Soyad</th>
                                 <th>FIN</th>
-                                <th>Sınaq No</th>
-                                <th>Tarix/Status</th>
+                                <th>Sınaq №</th>
+                                <th>Kateqoriya</th>
+                                <th>Doğru</th>
+                                <th>Yanlış</th>
+                                <th>Yekun Bal</th>
+                                <th>Təsnifat</th>
+                                <th>Əməliyyat</th>
                             </tr>
                         </thead>
                         <tbody id="full-participants-list">
-                            <tr><td colspan="4">Yüklənir...</td></tr>
+                            <tr><td colspan="9">Yüklənir...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1880,27 +1889,99 @@
             tbody.innerHTML = html;
         }
 
+        async function deleteSingleResult(resultId) {
+            if (confirm("Bu nəticəni silmək istədiyinizə əminsiniz?")) {
+                const { error } = await _supabase.from('exam_results').delete().eq('id', resultId);
+                if (error) {
+                    alert("Xəta baş verdi: " + error.message);
+                } else {
+                    loadAdminPanelData();
+                }
+            }
+        }
+
+        async function resetAllResults() {
+            const confirm1 = confirm("⚠️ BÜTÜN İŞTİRAKÇILARIN NƏTİCƏLƏRİNİ SIFIRLAMAQ İSTƏDİYİNİZƏ ƏMİNSİNİZ?");
+            if (!confirm1) return;
+
+            const confirm2 = prompt("Təsdiq üçün 'SIFIRLA' yazın:");
+            if (confirm2 !== "SIFIRLA") {
+                alert("Ləğv edildi. Təsdiq mətni yanlışdır.");
+                return;
+            }
+
+            const { error } = await _supabase.from('exam_results').delete().neq('id', 0);
+            if (error) {
+                alert("Nəticələr sıfırlanarkən xəta baş verdi: " + error.message);
+            } else {
+                alert(" Bütün iştirakçı nəticələri uğurla sıfırlandı!");
+                loadAdminPanelData();
+            }
+        }
+
         async function loadAdminPanelData() {
             loadAllowedStudents();
 
-            const { data: results } = await _supabase.from('exam_results').select('*');
-            if(results) {
+            const { data: results, error } = await _supabase.from('exam_results').select('*').order('created_at', { ascending: false });
+            
+            let partBody = document.getElementById("full-participants-list");
+            let tbody = document.getElementById("results-table-body");
+
+            if (error || !results || results.length === 0) {
+                if (partBody) partBody.innerHTML = `<tr><td colspan="9">İştirakçı / Nəticə tapılmadı</td></tr>`;
+                if (tbody) tbody.innerHTML = `<tr><td colspan="6">Nəticə tapılmadı</td></tr>`;
+                if (document.getElementById("stat-total-students")) document.getElementById("stat-total-students").innerText = "0";
+                if (document.getElementById("stat-avg-score")) document.getElementById("stat-avg-score").innerText = "0";
+                return;
+            }
+
+            if(document.getElementById("stat-total-students")) {
                 document.getElementById("stat-total-students").innerText = results.length;
-                let sumScore = 0;
-                let tbody = document.getElementById("results-table-body");
-                let partBody = document.getElementById("full-participants-list");
-                let html = "";
-                let partHtml = "";
-                results.forEach(r => {
-                    sumScore += (r.score || 0);
-                    html += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no} (${r.category || 'BA'})</td><td style="color:green">${r.correct_count}</td><td style="color:red">${r.wrong_count}</td><td><b>${r.score}</b></td></tr>`;
-                    partHtml += `<tr><td>${r.name}</td><td>${r.fin}</td><td>Sınaq ${r.exam_no} (${r.category || 'BA'})</td><td>Tamamlandı</td></tr>`;
-                });
-                tbody.innerHTML = html;
-                if(partBody) partBody.innerHTML = partHtml;
-                if(results.length > 0 && document.getElementById("stat-avg-score")) {
-                    document.getElementById("stat-avg-score").innerText = (sumScore / results.length).toFixed(1);
-                }
+            }
+
+            let sumScore = 0;
+            let htmlResults = "";
+            let htmlParticipants = "";
+
+            results.forEach(r => {
+                let scoreVal = r.score || 0;
+                sumScore += scoreVal;
+                let categoryVal = r.category || 'BA';
+                let bbGroupVal = r.bb_group || '-';
+
+                htmlResults += `
+                    <tr>
+                        <td>${r.name || '-'}</td>
+                        <td>${r.fin || '-'}</td>
+                        <td>Sınaq ${r.exam_no || 1} (${categoryVal})</td>
+                        <td style="color:green; font-weight:bold;">${r.correct_count || 0}</td>
+                        <td style="color:red; font-weight:bold;">${r.wrong_count || 0}</td>
+                        <td><b>${scoreVal}</b></td>
+                    </tr>
+                `;
+
+                htmlParticipants += `
+                    <tr>
+                        <td><b>${r.name || '-'}</b></td>
+                        <td><code>${r.fin || '-'}</code></td>
+                        <td>Sınaq ${r.exam_no || 1}</td>
+                        <td><span class="badge-cat">${categoryVal}</span></td>
+                        <td style="color:green; font-weight:bold;">${r.correct_count || 0}</td>
+                        <td style="color:red; font-weight:bold;">${r.wrong_count || 0}</td>
+                        <td><b style="color:var(--accent-blue);">${scoreVal} bal</b></td>
+                        <td><small>${bbGroupVal}</small></td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSingleResult(${r.id})">🗑️ Sil</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (tbody) tbody.innerHTML = htmlResults;
+            if (partBody) partBody.innerHTML = htmlParticipants;
+            
+            if (results.length > 0 && document.getElementById("stat-avg-score")) {
+                document.getElementById("stat-avg-score").innerText = (sumScore / results.length).toFixed(1);
             }
         }
 
@@ -2292,47 +2373,40 @@
                                 <select id="target-cat-${q.id}" class="form-control" style="padding: 3px 6px; font-size: 11px; width: auto;">
                                     ${optionsHtml}
                                 </select>
-                                <button class="btn btn-success btn-sm" style="padding: 4px 8px; font-size: 11px;" onclick="copyQuestionToCategory(${q.id})">➕ Bazaya vur</button>
+                                <button class="btn btn-success btn-sm" style="padding: 4px 8px; font-size: 11px;" onclick="copyQuestionToCategory(${q.id})">➕ Keçir</button>
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-primary btn-sm" onclick="quickEditQuestion('${q.exam_id}', '${currentCat}', '${q.subject}', ${q.q_number})">✏️ Redaktə</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteQuestionByDbId(${q.id})">🗑️ Sil</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteQuestionFromDb(${q.id})">Sil</button>
                         </td>
                     </tr>
                 `;
             });
+
             tbody.innerHTML = html;
         }
 
-        async function copyQuestionToCategory(questionDbId) {
-            const targetSelect = document.getElementById(`target-cat-${questionDbId}`);
-            if (!targetSelect) return;
+        async function copyQuestionToCategory(qId) {
+            const selectEl = document.getElementById(`target-cat-${qId}`);
+            const targetCat = selectEl.value;
 
-            const selectedVal = targetSelect.value;
-
-            const { data: sourceQ, error: srcErr } = await _supabase
+            const { data: sourceQ, error: fetchErr } = await _supabase
                 .from('exam_questions')
                 .select('*')
-                .eq('id', questionDbId)
+                .eq('id', qId)
                 .single();
 
-            if (srcErr || !sourceQ) {
+            if (fetchErr || !sourceQ) {
                 alert("Sual tapılmadı!");
                 return;
             }
 
-            let targetCats = [];
-            if (selectedVal === "ALL") {
-                targetCats = ['BA', 'BB', 'AC'];
-            } else {
-                targetCats = [selectedVal];
-            }
+            let categoriesToProcess = targetCat === "ALL" ? ['BA', 'BB', 'AC'] : [targetCat];
 
-            let copiedCount = 0;
+            for (const cat of categoriesToProcess) {
+                if (cat === sourceQ.category) continue;
 
-            for (let cat of targetCats) {
-                const { data: existingQ } = await _supabase
+                const { data: existing } = await _supabase
                     .from('exam_questions')
                     .select('id')
                     .eq('exam_id', sourceQ.exam_id)
@@ -2340,7 +2414,7 @@
                     .eq('q_number', sourceQ.q_number)
                     .maybeSingle();
 
-                if (existingQ) {
+                if (existing) {
                     await _supabase
                         .from('exam_questions')
                         .update({
@@ -2350,7 +2424,7 @@
                             options: sourceQ.options,
                             correct: sourceQ.correct
                         })
-                        .eq('id', existingQ.id);
+                        .eq('id', existing.id);
                 } else {
                     await _supabase
                         .from('exam_questions')
@@ -2365,28 +2439,21 @@
                             correct: sourceQ.correct
                         }]);
                 }
-                copiedCount++;
             }
 
-            alert(`Sual uğurla hədəf kateqoriyaya (${copiedCount} ədəd) köçürüldü!`);
+            alert("Sual müvəffəqiyyətlə seçilmiş kateqoriyaya əlavə edildi / yeniləndi!");
             fetchAndListQuestionsForEdit();
         }
 
-        async function deleteQuestionByDbId(id) {
-            if (confirm("Bu sualı bazadan silməyə əminsiniz?")) {
-                const { error } = await _supabase.from('exam_questions').delete().eq('id', id);
-                if (error) alert("Silinərkən xəta baş verdi: " + error.message);
-                else fetchAndListQuestionsForEdit();
+        async function deleteQuestionFromDb(qId) {
+            if (confirm("Bu sualı bazadan həmişəlik silmək istədiyinizə əminsiniz?")) {
+                const { error } = await _supabase.from('exam_questions').delete().eq('id', qId);
+                if (error) {
+                    alert("Silinərkən xəta baş verdi: " + error.message);
+                } else {
+                    fetchAndListQuestionsForEdit();
+                }
             }
-        }
-
-        function quickEditQuestion(examId, category, subject, qNum) {
-            switchAdminTab('suallar');
-            selectExam(`Sınaq ${examId}`);
-            selectCategory(category);
-            openEditor(subject || 'Ümumi');
-            document.getElementById('questionNumber').value = qNum;
-            loadQuestionData(qNum);
         }
     </script>
 </body>
