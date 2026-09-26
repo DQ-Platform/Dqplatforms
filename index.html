@@ -469,16 +469,11 @@
         <!-- GİRİŞ HİSSƏSİ -->
         <div id="login-screen" class="screen text-center active">
             <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
-            <p class="mt-2 mb-4">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
-            <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız">
-            <input type="text" id="user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7">
-            <button class="btn" onclick="proceedToExamSelect()">Davam Et</button>
             <p id="error-msg" class="error-msg mt-2"></p>
         </div>
 
         <!-- SINAQ SEÇİM EKRANI -->
         <div id="exam-select-screen" class="screen text-center">
-            <h2>Qeydiyyatdan keçdiyim imtahanlar</h2>
             <p class="mt-2 mb-3" style="color: #64748b; font-size: 14px;">İcazəniz olan sınaq imtahanlarının siyahısı:</p>
             
             <div id="registered-exams-list" style="display: flex; flex-direction: column; gap: 15px; max-width: 650px; margin: 0 auto 20px auto;">
@@ -1506,8 +1501,6 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         function goHome() {
             clearSessionStorage();
             showScreen("login-screen");
-            document.getElementById("user-name").value = "";
-            document.getElementById("user-fin").value = "";
             document.getElementById("error-msg").innerText = "";
             isLiveEditMode = false;
         }
@@ -1609,22 +1602,13 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         }
 
         async function proceedToExamSelect() {
-            const nameInput = document.getElementById("user-name").value.trim();
-            const finInput = document.getElementById("user-fin").value.trim().toUpperCase();
             const errorMsg = document.getElementById("error-msg");
 
-            if (nameInput.toLowerCase() === "admin" && finInput === LIVE_EDIT_ADMIN_PASS) {
+            if (currentActiveFin === LIVE_EDIT_ADMIN_PASS) {
                 isLiveEditMode = true;
                 currentStudentName = "ADMIN REDAKTOR";
-                currentActiveFin = LIVE_EDIT_ADMIN_PASS;
                 document.getElementById("live-edit-panel").style.display = "block";
                 await startExamSession("1", "BA");
-                return;
-            }
-
-            if (!nameInput || finInput.length < 5) {
-                errorMsg.style.color = "var(--danger-red)";
-                errorMsg.innerText = "Ad və etibarlı FIN kod daxil edin!";
                 return;
             }
 
@@ -1635,16 +1619,13 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 const { data: allowedData, error } = await _supabase
                     .from('allowed_students')
                     .select('*')
-                    .eq('fin', finInput);
+                    .eq('fin', currentActiveFin);
 
                 if (error || !allowedData || allowedData.length === 0) {
                     errorMsg.style.color = "var(--danger-red)";
                     errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
                     return;
                 }
-
-                currentStudentName = nameInput;
-                currentActiveFin = finInput;
 
                 showScreen("exam-select-screen");
                 await renderRegisteredExams();
