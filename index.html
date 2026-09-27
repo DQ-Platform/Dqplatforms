@@ -3452,7 +3452,27 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                     }));
 
                     currentQuestionIndex = 0;
-                    backToReviewQuestions();
+                    examFinished = true;
+
+                    /* YENİLİK: "Cavab kartını gör" düyməsi artıq sual-sual baxış rejiminə deyil,
+                       birbaşa yekun nəticə ekranına (result-screen) yönləndirir — 2ci şəkildəki kimi. */
+                    const correctCount = (res.correct_count !== undefined && res.correct_count !== null) ? res.correct_count : 0;
+                    const wrongCount = (res.wrong_count !== undefined && res.wrong_count !== null) ? res.wrong_count : 0;
+                    const unansweredCount = (res.unanswered_count !== undefined && res.unanswered_count !== null) ? res.unanswered_count : 0;
+                    const totalScore = res.score || 0;
+
+                    document.getElementById("res-name").innerText = `${currentStudentName} (FIN: ${currentActiveFin})`;
+                    document.getElementById("totalCorrect").innerText = correctCount;
+                    document.getElementById("totalWrong").innerText = wrongCount;
+                    document.getElementById("totalUnanswered").innerText = unansweredCount;
+                    document.getElementById("finalScoreText").innerText = `YEKUN BAL: ${totalScore} bal`;
+
+                    const passStatus = buildPassStatusText(userGroup, totalScore);
+                    document.getElementById("finalStatusText").innerText = passStatus;
+
+                    renderDetailedResultTables();
+
+                    showScreen("result-screen");
                 } else {
                     alert("Bu sınağa aid sual məlumatları sistemdən silinib.");
                 }
@@ -3531,7 +3551,9 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             }
 
             const passStatus = buildPassStatusText(cat, score);
-            const etalonHtml = buildEtalonSectionHtml(res, questions || [], cat);
+            /* YENİLİK: Göz ikonu modalında artıq bütün 100 sualın tam etalonu deyil,
+               yalnız iştirakçının SƏHV cavabladığı suallar və onun verdiyi cavab göstərilir. */
+            const etalonHtml = buildWrongAnswersOnlyHtml(res, questions || [], cat);
 
             return `
                 <div class="graphic-donut-wrap">
@@ -3546,7 +3568,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 <div class="graphic-status-box">${passStatus}</div>
                 <div class="graphic-etalon-toggle-row">
                     <button type="button" class="btn btn-secondary btn-sm" id="graphic-etalon-toggle-btn" onclick="toggleGraphicEtalon()">
-                        <i class="fa-solid fa-eye"></i>Etalonu göstər
+                        <i class="fa-solid fa-eye"></i>Səhv cavabları göstər
                     </button>
                 </div>
                 <div id="graphic-etalon-body" style="display:none;">
@@ -3648,9 +3670,91 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             box.style.display = willShow ? "block" : "none";
             if (btn) {
                 btn.innerHTML = willShow
-                    ? '<i class="fa-solid fa-eye-slash"></i>Etalonu gizlə'
-                    : '<i class="fa-solid fa-eye"></i>Etalonu göstər';
+                    ? '<i class="fa-solid fa-eye-slash"></i>Səhv cavabları gizlə'
+                    : '<i class="fa-solid fa-eye"></i>Səhv cavabları göstər';
             }
+        }
+
+        /* YENİLİK: Göz ikonu (qrafik nəticə) modalında yalnız iştirakçının SƏHV cavabladığı
+           sualları və onun verdiyi cavabı göstərən funksiya. Mövcud buildEtalonSectionHtml
+           funksiyası (tam etalon cədvəli) toxunulmadan saxlanılıb, sadəcə bu modalda onun
+           yerinə bu yeni funksiya çağırılır. */
+        function buildWrongAnswersOnlyHtml(res, questions, cat) {
+            if (!questions || questions.length === 0) {
+                return `<p class="text-center" style="color:#94a3b8; font-size:12px; margin-top:4px;">Bu nəticə üçün etalon (sual) məlumatı bazada tapılmadı.</p>`;
+            }
+
+            const userAnswersMap = res.answers || {};
+            const letters = ["A", "B", "C", "D", "E"];
+            const qMap = {};
+            questions.forEach(q => { qMap[q.q_number] = q; });
+
+            // Yalnız SƏHV cavablanmış (cavabsız yox, düzgün yox) sualların nömrələrini toplayırıq
+            const wrongQNums = [];
+            questions.forEach(q => {
+                const n = q.q_number;
+                const userAns = userAnswersMap[n];
+                if (userAns === undefined || userAns === "") return; // cavabsızlar daxil deyil
+                const isOpen = (cat === 'BA') && openQuestionIds.includes(n);
+                let isCorrect;
+                if (isOpen) {
+                    isCorrect = String(userAns).trim().toUpperCase() === String(q.correct).trim().toUpperCase();
+                } else {
+                    isCorrect = parseInt(userAns) === parseInt(q.correct);
+                }
+                if (!isCorrect) wrongQNums.push(n);
+            });
+
+            if (wrongQNums.length === 0) {
+                return `<p class="text-center" style="color:var(--success-green); font-weight:700; font-size:13px; margin-top:4px;">🎉 Səhv cavablanan sual yoxdur — bütün cavablar düzgündür!</p>`;
+            }
+
+            wrongQNums.sort((a, b) => a - b);
+
+            let html = `<h4 style="font-size:14px; margin-bottom:10px;">Səhv Cavablanan Suallar</h4>`;
+
+            examStructure.forEach(sec => {
+                const sectionQNums = wrongQNums
+                    .filter(n => n >= sec.start && n <= sec.end)
+                    .sort((a, b) => a - b);
+
+                if (sectionQNums.length === 0) return;
+
+                html += `<div class="etalon-section">`;
+                html += `<div class="etalon-section-title">${sec.title}</div>`;
+                html += `<div class="table-wrapper"><table class="etalon-table"><tbody>`;
+
+                html += `<tr class="num-row"><td class="row-label">№</td>`;
+                sectionQNums.forEach(n => { html += `<td>${n}</td>`; });
+                html += `</tr>`;
+
+                html += `<tr class="etalon-row"><td class="row-label">Etalon</td>`;
+                sectionQNums.forEach(n => {
+                    const q = qMap[n];
+                    const isOpen = (cat === 'BA') && openQuestionIds.includes(n);
+                    const val = isOpen ? (q.correct || "-") : (letters[parseInt(q.correct)] || "-");
+                    html += `<td>${val}</td>`;
+                });
+                html += `</tr>`;
+
+                html += `<tr class="participant-row"><td class="row-label">İştirakçı</td>`;
+                sectionQNums.forEach(n => {
+                    const q = qMap[n];
+                    const userAns = userAnswersMap[n];
+                    const isOpen = (cat === 'BA') && openQuestionIds.includes(n);
+                    const val = isOpen ? String(userAns).trim().toUpperCase() : (letters[parseInt(userAns)] || "-");
+                    html += `<td>${val}</td>`;
+                });
+                html += `</tr>`;
+
+                html += `<tr class="result-row"><td class="row-label">Nəticə</td>`;
+                sectionQNums.forEach(() => { html += `<td class="wrong">-</td>`; });
+                html += `</tr>`;
+
+                html += `</tbody></table></div></div>`;
+            });
+
+            return html;
         }
 
         function buildDonutSvg(correct, wrong, unanswered, total, score) {
