@@ -424,6 +424,20 @@
         .review-status-badge.status-wrong { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
         .review-status-badge.status-unanswered { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
 
+        /* YENİLİK: Tarixçədən (2-ci dəfə) daxil olunan baxışın qısa məzmunlu siyahısı üçün stillər */
+        .compact-wrong-list { display: flex; flex-direction: column; gap: 10px; }
+        .compact-wrong-item {
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--danger-red);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            background: #f8fafc;
+            text-align: left;
+        }
+        .compact-wrong-qnum { font-weight: 800; color: var(--primary-dark); font-size: 12px; margin-bottom: 4px; }
+        .compact-wrong-title { font-size: 14px; color: var(--text-main); margin-bottom: 6px; font-weight: 600; }
+        .compact-wrong-answer { font-size: 13px; color: #065f46; }
+
         .breadcrumb-nav { background: #fff; padding: 12px 20px; border-radius: var(--radius-md); font-size: 14px; margin-bottom: 20px; box-shadow: var(--shadow-sm); border: 1px solid #e2e8f0; }
         .breadcrumb-nav span { color: var(--accent-blue); cursor: pointer; font-weight: 600; }
         .breadcrumb-nav span:hover { text-decoration: underline; }
@@ -1918,6 +1932,13 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         let cropImageBase64 = null;
         let isReviewMode = false;
 
+        /* YENİLİK: "Suallara Baxış" yalnız SƏHV cavablanan sualları göstərsin deyə əlavə edilən dəyişənlər.
+           reviewFilteredQuestions — cavab kartında baxış zamanı istifadə olunan (yalnız səhv) sual siyahısı.
+           isHistoryReview — false: imtahan bitdikdən dərhal sonrakı baxış (tam sual-sual rejimi);
+                             true: tarixçədən ("Cavab kartını gör") 2-ci dəfə daxil olunan baxış (qısa siyahı rejimi). */
+        let reviewFilteredQuestions = [];
+        let isHistoryReview = false;
+
         // Suallar üzrə naviqasiya və fənn strukturu
         let editorSelectedExam = "1";
         let editorSelectedCategory = "BA";
@@ -2354,6 +2375,14 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             document.getElementById("error-msg").innerText = "";
             isLiveEditMode = false;
             isReviewMode = false;
+            isHistoryReview = false;
+            reviewFilteredQuestions = [];
+
+            // Əvvəlki (tarixçə) baxışdan gizlədilmiş elementləri bərpa edirik
+            const examNavBtnsElHome = document.getElementById("exam-nav-btns");
+            if (examNavBtnsElHome) examNavBtnsElHome.style.display = "flex";
+            const sidebarContainerElHome = document.getElementById("sidebar-container");
+            if (sidebarContainerElHome) sidebarContainerElHome.style.display = "block";
 
             // Qeyd-cızma və kalkulyator vəziyyətini sıfırlayırıq
             isAnnotationMode = false;
@@ -2688,7 +2717,15 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 isAnnotationMode = false;
                 annotationCurrentQNum = null;
                 isReviewMode = false;
-                
+                isHistoryReview = false;
+                reviewFilteredQuestions = [];
+
+                // Əvvəlki (tarixçə) baxışdan gizlədilmiş elementləri normal imtahan üçün bərpa edirik
+                const examNavBtnsEl = document.getElementById("exam-nav-btns");
+                if (examNavBtnsEl) examNavBtnsEl.style.display = "flex";
+                const sidebarContainerEl = document.getElementById("sidebar-container");
+                if (sidebarContainerEl) sidebarContainerEl.style.display = "block";
+
                 localStorage.removeItem("dq_exam_end_time");
 
                 showScreen("exam-screen");
@@ -2710,15 +2747,22 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             return "Ümumi";
         }
 
+        /* YENİLİK: Baxış rejimində (isReviewMode) yalnız səhv cavablanan suallar (reviewFilteredQuestions)
+           üzərində, canlı imtahan zamanı isə bütün suallar (allQuestions) üzərində gəzişmək üçün. */
+        function getActiveReviewQuestions() {
+            return isReviewMode ? reviewFilteredQuestions : allQuestions;
+        }
+
         /* --- SUALIN CAVABLANDIRILMASI VƏ YENİ DİZAYN ELEMENTLƏRİ --- */
         function renderCurrentQuestion() {
             const container = document.getElementById("single-question-container");
-            if (!container || !allQuestions[currentQuestionIndex]) return;
+            const activeQuestionList = getActiveReviewQuestions();
+            if (!container || !activeQuestionList[currentQuestionIndex]) return;
 
             // Suala keçilməzdən / yenidən çəkilməzdən əvvəl aktiv olan qeyd-cızma canvas-ını yadda saxlayırıq
             captureCurrentAnnotation();
 
-            const q = allQuestions[currentQuestionIndex];
+            const q = activeQuestionList[currentQuestionIndex];
             const qNum = q.id || (currentQuestionIndex + 1);
             
             // AÇIQ SUALLAR YALNIZ BA KATEQORİYASINDA VƏ HƏR BİRİ 2 BALDIR
@@ -3094,7 +3138,8 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         }
 
         function nextQuestionExam() {
-            if (currentQuestionIndex < allQuestions.length - 1) {
+            const activeQuestionList = getActiveReviewQuestions();
+            if (currentQuestionIndex < activeQuestionList.length - 1) {
                 currentQuestionIndex++;
                 saveSessionState();
                 renderCurrentQuestion();
@@ -3122,10 +3167,11 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             const container = document.getElementById("grid-nav-container");
             if (!container) return;
 
+            const activeQuestionList = getActiveReviewQuestions();
             let html = "";
 
             examStructure.forEach(sec => {
-                const secQuestions = allQuestions.filter(q => {
+                const secQuestions = activeQuestionList.filter(q => {
                     const qNum = q.id;
                     return qNum >= sec.start && qNum <= sec.end;
                 });
@@ -3148,7 +3194,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
 
                     secQuestions.forEach(q => {
                         const qNum = q.id;
-                        const globalIdx = allQuestions.findIndex(item => item.id === qNum);
+                        const globalIdx = activeQuestionList.findIndex(item => item.id === qNum);
                         const isAnswered = (userAnswers[qNum] !== undefined && userAnswers[qNum] !== "");
                         const isCurrent = (globalIdx === currentQuestionIndex);
                         const isFlagged = !!flaggedQuestions[qNum];
@@ -3207,6 +3253,10 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         async function finishExam() {
             clearInterval(timerInterval);
             examFinished = true;
+
+            /* Bu, imtahan bitdikdən dərhal sonrakı (1-ci dəfə) baxışdır — "Suallara Baxış"
+               düyməsi tam sual-sual rejimində açılmalıdır. */
+            isHistoryReview = false;
 
             let correctCount = 0;
             let wrongCount = 0;
@@ -3408,14 +3458,107 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         function backToReviewQuestions() {
             isReviewMode = true;
             examFinished = true;
+
+            /* YENİLİK: İştirakçı "Suallara Baxış"a daxil olanda YALNIZ öz SƏHV cavabladığı
+               sualları görsün — bütün suallar deyil. Cavabsız qoyulmuş və düzgün cavablanmış
+               suallar bu siyahıya daxil edilmir. */
+            reviewFilteredQuestions = allQuestions.filter(q => {
+                const qNum = q.id;
+                const userAns = userAnswers[qNum];
+                if (userAns === undefined || userAns === "") return false;
+                const isOpen = (userGroup === 'BA') && openQuestionIds.includes(qNum);
+                let isCorrect;
+                if (isOpen) {
+                    isCorrect = String(userAns).trim().toUpperCase() === String(q.correct).trim().toUpperCase();
+                } else {
+                    isCorrect = parseInt(userAns) === parseInt(q.correct);
+                }
+                return !isCorrect;
+            });
+
             showScreen("exam-screen");
             document.getElementById("review-banner").style.display = "block";
             document.getElementById("finish-btn").style.display = "none";
             document.getElementById("clear-selection-btn").style.display = "none";
             document.getElementById("review-home-btn").style.display = "block";
-            
-            renderCurrentQuestion();
-            loadNavGrid();
+
+            currentQuestionIndex = 0;
+
+            if (isHistoryReview) {
+                /* YENİLİK: Tarixçədən ("Cavab kartını gör") 2-ci dəfə daxil olunan baxışda tam
+                   sual-sual rejimi əvəzinə qısa məzmunlu (sual başlığı 2 söz..., doğru cavab
+                   3-4 söz...) siyahı göstərilir. */
+                document.getElementById("exam-nav-btns").style.display = "none";
+                document.getElementById("sidebar-container").style.display = "none";
+                renderCompactWrongSummary();
+            } else {
+                document.getElementById("exam-nav-btns").style.display = "flex";
+                document.getElementById("sidebar-container").style.display = "block";
+
+                if (reviewFilteredQuestions.length === 0) {
+                    document.getElementById("single-question-container").innerHTML =
+                        `<p class="text-center" style="color:var(--success-green); font-weight:700; padding:20px;">🎉 Səhv cavablanan sual yoxdur — bütün cavablar düzgündür!</p>`;
+                    document.getElementById("grid-nav-container").innerHTML = "";
+                } else {
+                    renderCurrentQuestion();
+                    loadNavGrid();
+                }
+            }
+        }
+
+        /* YENİLİK: Tarixçədən (2-ci dəfə) daxil olunan baxış üçün qısa məzmunlu siyahı.
+           Hər səhv sual üçün: başlıq 2 söz + "...." və doğru cavab variantı 3-4 söz + "...." kimi göstərilir. */
+        function renderCompactWrongSummary() {
+            const container = document.getElementById("single-question-container");
+            if (!container) return;
+
+            if (reviewFilteredQuestions.length === 0) {
+                container.innerHTML = `<p class="text-center" style="color:var(--success-green); font-weight:700; padding:20px;">🎉 Səhv cavablanan sual yoxdur — bütün cavablar düzgündür!</p>`;
+                return;
+            }
+
+            const labels = ["A", "B", "C", "D", "E"];
+            let html = `<h4 style="margin-bottom:15px; text-align:left;">Səhv Cavablanan Suallar — Qısa Baxış</h4>`;
+            html += `<div class="compact-wrong-list">`;
+
+            reviewFilteredQuestions.forEach(q => {
+                const qNum = q.id;
+                const isOpen = (userGroup === 'BA') && openQuestionIds.includes(qNum);
+                let correctText;
+
+                if (isOpen) {
+                    correctText = truncateWords(q.correct || "-", 4);
+                } else {
+                    const idx = parseInt(q.correct);
+                    let optText = "";
+                    if (Array.isArray(q.options) && q.options[idx] !== undefined) {
+                        const opt = q.options[idx];
+                        optText = (typeof opt === 'object' && opt !== null) ? (opt.text || "") : opt;
+                    }
+                    correctText = `${labels[idx] || "-"}) ${truncateWords(optText, 4)}`;
+                }
+
+                const titleShort = truncateWords(q.question || "", 2);
+
+                html += `
+                    <div class="compact-wrong-item">
+                        <div class="compact-wrong-qnum">Sual ${qNum}</div>
+                        <div class="compact-wrong-title">${titleShort}</div>
+                        <div class="compact-wrong-answer"><i class="fa-solid fa-check" style="color:var(--success-green);"></i> Doğru cavab: ${correctText}</div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        /* Mətni verilən söz sayına qədər qısaldıb sonuna "...." əlavə edir. */
+        function truncateWords(text, count) {
+            if (!text) return "....";
+            const words = String(text).trim().split(/\s+/);
+            if (words.length <= count) return words.join(" ");
+            return words.slice(0, count).join(" ") + " ....";
         }
 
         async function viewAnswerCard(examNo, category, fin, studentName) {
@@ -3453,6 +3596,10 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
 
                     currentQuestionIndex = 0;
                     examFinished = true;
+
+                    /* YENİLİK: Bu, tarixçədən (2-ci dəfə) daxil olunan baxışdır — "Suallara Baxış"
+                       düyməsi basılanda tam sual rejimi əvəzinə qısa məzmunlu siyahı göstəriləcək. */
+                    isHistoryReview = true;
 
                     /* YENİLİK: "Cavab kartını gör" düyməsi artıq sual-sual baxış rejiminə deyil,
                        birbaşa yekun nəticə ekranına (result-screen) yönləndirir — 2ci şəkildəki kimi. */
