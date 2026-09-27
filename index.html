@@ -13,6 +13,8 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
+    <!-- Tesseract.js — OCR (mətn tanıma) mühərriki: PDF-dən avtomatik sual/variant oxumaq üçün -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
     
     <style>
         :root { 
@@ -687,6 +689,44 @@
         .calc-btn-equals { background: var(--success-green); color: #ffffff; font-weight: 800; }
         .calc-btn-equals:hover { background: #059669; }
         .calc-btn-zero { grid-column: span 2; }
+
+        /* ==================== YENİ MODUL: UNİVERSAL KƏSMƏ ALƏTİ (CROP-GEN) ==================== */
+        .cropgen-toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+        }
+        .cropgen-region-btn {
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border-color);
+            background: #ffffff;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .cropgen-region-btn.done { border-color: var(--success-green); color: var(--success-green); background: #ecfdf5; }
+        .cropgen-region-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+        .cropgen-canvas-wrap { border: 2px dashed #94a3b8; border-radius: var(--radius-md); overflow: auto; background: #f8fafc; max-height: 480px; }
+        .cropgen-canvas-wrap canvas { display: block; cursor: crosshair; max-width: 100%; }
+        .cropgen-thumbs { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+        .cropgen-thumb { border: 1.5px solid var(--border-color); border-radius: var(--radius-sm); padding: 4px; text-align: center; background: #fff; }
+        .cropgen-thumb img { max-width: 90px; max-height: 70px; display: block; object-fit: contain; }
+        .cropgen-thumb .lbl { font-size: 11px; font-weight: 700; color: var(--primary-dark); margin-top: 3px; }
+
+        /* ==================== YENİ MODUL: PDF AVTOMATİK OXUMA (OCR) ==================== */
+        .ocr-progress-bar { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .ocr-progress-fill { height: 100%; background: var(--accent-blue); width: 0%; transition: width .2s; }
+        .pdfauto-review-item { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; margin-bottom: 10px; background: #f8fafc; }
+        .pdfauto-review-item .qnum-badge { display: inline-block; background: var(--primary-dark); color: var(--accent-gold); font-weight: 800; font-size: 12px; padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -867,6 +907,8 @@
                 <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('sualbanki')"><span class="icon">📄</span> Sual Bankı (PDF & OCR)</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('sualbankiv2')"><span class="icon">🧩</span> Məntiq Sual Bankı (Crop V2)</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('cropgen')"><span class="icon">🖼️</span> Universal Kəsmə Alətı</div>
+                <div class="admin-nav-card" onclick="switchAdminTab('pdfauto')"><span class="icon">🤖</span> Fənn üzrə PDF Avto-Yükləmə (OCR)</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('mobilepdf')"><span class="icon">📱</span> Telefon Beynindən PDF Yüklə</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('copypaste')"><span class="icon">📋</span> Copy / Paste Sual Daxil Et</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('sablonlar')"><span class="icon">📋</span> Şablonlar</div>
@@ -1122,6 +1164,116 @@
                 </div>
 
                 <button class="btn btn-success" style="width: 100%;" onclick="saveCropQuestionToDatabase()">+ Şəkilli Məntiq Sualını Bazaya Əlavə Et</button>
+            </div>
+
+            <!-- MODUL 1.6: UNİVERSAL KƏSMƏ ALƏTİ (CROP-GEN) -->
+            <div id="mod-cropgen" class="admin-module-block">
+                <h4>🖼️ Universal Kəsmə Alətı (Sual + Variantlar Şəkil Kimi)</h4>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">
+                    Bir şəkil və ya PDF səhifəsi yükləyin (məsələn Məntiq və ya İnformatika sualı), sonra siçanla sual üçün
+                    bir sahə, hər variant üçün ayrı sahə çəkin — sistem hər sahəni avtomatik ayrı şəkil kimi kəsib hazırlayacaq.
+                    (Qeyd: tam avtomatik "özü tanıyıb ayırsın" texnologiyası dəqiq deyil, ona görə sahələri Siz qısaca seçirsiniz — kəsmə əməliyyatının özü tam avtomatikdir.)
+                </p>
+
+                <div class="pdf-drop-zone mb-3" style="border-color: #10b981; background: #ecfdf5;" onclick="document.getElementById('cropgen-file-input').click()">
+                    <i class="fa-solid fa-images" style="font-size: 32px; color: #10b981;"></i>
+                    <p class="mt-2" style="font-weight: bold;">Şəkil / PDF Səhifəsi Yükləyin</p>
+                    <span style="font-size: 12px; color: #64748b;">Yüklədikdən sonra aşağıda sahələri seçin</span>
+                    <input type="file" id="cropgen-file-input" accept="image/*,application/pdf" style="display:none;" onchange="handleCropGenUpload(this)">
+                </div>
+
+                <div id="cropgen-editor-area" style="display:none;">
+                    <div class="form-group">
+                        <label>Variant Sayı:</label>
+                        <select id="cropgen-variant-count" class="form-control" onchange="renderCropGenToolbar()" style="max-width:220px;">
+                            <option value="4">4 Variant (A, B, C, D)</option>
+                            <option value="5" selected>5 Variant (A, B, C, D, E)</option>
+                        </select>
+                    </div>
+
+                    <div class="cropgen-toolbar" id="cropgen-toolbar"></div>
+
+                    <div class="cropgen-canvas-wrap">
+                        <canvas id="cropgen-canvas"></canvas>
+                    </div>
+
+                    <div class="cropgen-thumbs" id="cropgen-thumbs"></div>
+
+                    <div class="form-group mt-3">
+                        <label>Sual Mətni (İstəyə görə, boş buraxa bilərsiniz):</label>
+                        <input type="text" id="cropgen-q-text" class="form-control" placeholder="Məs: Ardıcıllığı tamamlayın...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Düzgün Variantı Seçin:</label>
+                        <div id="cropgen-correct-select" style="display:flex; gap:14px; flex-wrap:wrap;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hədəf Kateqoriyalar Və Parametrlər:</label>
+                        <div class="target-category-selector mb-2">
+                            <input type="number" id="cropgen-exam-id" class="form-control" placeholder="Sınaq №" value="1" style="width: 100px;">
+                            <input type="number" id="cropgen-q-num" class="form-control" placeholder="Sual №" value="71" style="width: 100px;">
+                            <label><input type="checkbox" class="cropgen-cat-chk" value="BA" checked> BA</label>
+                            <label><input type="checkbox" class="cropgen-cat-chk" value="BB"> BB</label>
+                            <label><input type="checkbox" class="cropgen-cat-chk" value="AC"> AC</label>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" onclick="resetCropGenTool()">🔄 Yeni Şəkillə Başla</button>
+                        <button class="btn btn-success" style="flex:1;" onclick="saveCropGenQuestion()">💾 Kəsilmiş Sualı Bazaya Əlavə Et</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODUL 1.7: FƏNN ÜZRƏ PDF AVTO-YÜKLƏMƏ (OCR) -->
+            <div id="mod-pdfauto" class="admin-module-block">
+                <h4>🤖 Fənn Üzrə PDF Avtomatik Yükləmə (OCR)</h4>
+                <p class="mt-1 mb-3" style="color: #64748b; font-size: 13px;">
+                    Fənni seçin, PDF sənədini yükləyin — sistem OCR (mətn tanıma) vasitəsilə bütün səhifələri oxuyub
+                    sualları və variantları (A, B, C, D, E) ardıcıllıqla ayıracaq. OCR nəticəsi 100% dəqiq olmaya bilər,
+                    ona görə bazaya yükləmədən əvvəl aşağıdakı siyahını mütləq nəzərdən keçirin və lazım gələrsə düzəliş edin.
+                </p>
+
+                <div class="form-group">
+                    <label>Fənn Seçin:</label>
+                    <select id="pdfauto-subject" class="form-control" onchange="onPdfAutoSubjectChange()">
+                        <option value="Azərbaycan dili" data-start="1" data-end="15">Azərbaycan dili (1-15)</option>
+                        <option value="Qanunvericilik" data-start="16" data-end="55">Qanunvericilik (16-55)</option>
+                        <option value="İnformatika" data-start="56" data-end="70">İnformatika (56-70)</option>
+                        <option value="Məntiq" data-start="71" data-end="100">Məntiq (71-100)</option>
+                    </select>
+                </div>
+
+                <div class="target-category-selector mb-3">
+                    <input type="number" id="pdfauto-exam-id" class="form-control" placeholder="Sınaq №" value="1" style="width: 100px;">
+                    <input type="number" id="pdfauto-start-num" class="form-control" placeholder="Başlanğıc Sual №" value="1" style="width: 140px;">
+                    <label><input type="checkbox" class="pdfauto-cat-chk" value="BA" checked> BA</label>
+                    <label><input type="checkbox" class="pdfauto-cat-chk" value="BB"> BB</label>
+                    <label><input type="checkbox" class="pdfauto-cat-chk" value="AC"> AC</label>
+                </div>
+
+                <div class="pdf-drop-zone mb-3" style="border-color:#6366f1; background:#eef2ff;" onclick="document.getElementById('pdfauto-file-input').click()">
+                    <i class="fa-solid fa-file-import" style="font-size: 32px; color: #6366f1;"></i>
+                    <p class="mt-2" style="font-weight: bold;">Fənnə Aid PDF Sənədini Yükləyin</p>
+                    <span style="font-size: 12px; color: #64748b;">Sistem hər səhifəni oxuyub sualları avtomatik ayıracaq</span>
+                    <input type="file" id="pdfauto-file-input" accept="application/pdf" style="display:none;" onchange="handlePdfAutoUpload(this)">
+                </div>
+
+                <div id="pdfauto-progress-area" style="display:none;" class="mb-3">
+                    <p id="pdfauto-progress-text" style="font-size: 13px; font-weight: 600; color: var(--primary-dark);">Hazırlanır...</p>
+                    <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="pdfauto-progress-fill"></div></div>
+                </div>
+
+                <div id="pdfauto-review-area" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;" class="mb-2">
+                        <h5>📋 OCR Nəticəsi — Nəzərdən Keçirin Və Düzəliş Edin</h5>
+                        <span id="pdfauto-count-label" style="font-size:13px; font-weight:700; color:#64748b;"></span>
+                    </div>
+                    <div id="pdfauto-review-list"></div>
+                    <button class="btn btn-success mt-3" style="width:100%;" onclick="saveAllPdfAutoQuestions()">🚀 Bütün Siyahını Bazaya Yüklə</button>
+                </div>
             </div>
 
             <!-- MODUL 1.3: TELEFON BEYNİNDƏN PDF YÜKLƏMƏ -->
@@ -1488,7 +1640,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                     <div class="stats-grid mb-3">
                         <div class="stat-card">
                             <h5>Daxili Modullar</h5>
-                            <div class="value" style="color: var(--accent-blue);">16 Modul</div>
+                            <div class="value" style="color: var(--accent-blue);">18 Modul</div>
                         </div>
                         <div class="stat-card">
                             <h5>Fayl İntegrasiyası</h5>
@@ -4005,6 +4157,540 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             const whatsappUrl = `https://wa.me/994504305162?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
+
+        /* =====================================================================
+           YENİ MODUL 1: UNİVERSAL KƏSMƏ ALƏTİ (CROP-GEN)
+           Sual + variantları bir şəkildən/PDF-dən çəkib ayrı-ayrı şəkil kimi kəsir.
+           ===================================================================== */
+        let cropGenSourceImage = null;   // Image() obyekti (natural ölçüdə)
+        let cropGenCanvas = null;
+        let cropGenCtx = null;
+        let cropGenActiveRegion = null;  // 'question' | 'A' | 'B' | 'C' | 'D' | 'E'
+        let cropGenRegions = {};         // { question: {x,y,w,h,img}, A: {...}, ... }
+        let cropGenIsDragging = false;
+        let cropGenStartPt = { x: 0, y: 0 };
+        let cropGenCurrentRect = null;
+
+        function handleCropGenUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            readUniversalFile(file).then(dataUrl => {
+                const img = new Image();
+                img.onload = () => {
+                    cropGenSourceImage = img;
+                    cropGenRegions = {};
+                    document.getElementById("cropgen-editor-area").style.display = "block";
+                    document.getElementById("cropgen-thumbs").innerHTML = "";
+                    setupCropGenCanvas();
+                    renderCropGenToolbar();
+                };
+                img.src = dataUrl;
+            }).catch(err => {
+                alert("Fayl oxunarkən xəta baş verdi: " + err.message);
+            });
+        }
+
+        function setupCropGenCanvas() {
+            cropGenCanvas = document.getElementById("cropgen-canvas");
+            cropGenCtx = cropGenCanvas.getContext("2d");
+            cropGenCanvas.width = cropGenSourceImage.naturalWidth;
+            cropGenCanvas.height = cropGenSourceImage.naturalHeight;
+            redrawCropGenCanvas();
+            attachCropGenCanvasEvents();
+        }
+
+        function redrawCropGenCanvas() {
+            if (!cropGenCtx || !cropGenSourceImage) return;
+            cropGenCtx.clearRect(0, 0, cropGenCanvas.width, cropGenCanvas.height);
+            cropGenCtx.drawImage(cropGenSourceImage, 0, 0);
+
+            // Əvvəlcədən kəsilmiş sahələri rəngli çərçivə ilə göstər
+            const colors = { question: '#0f172a', A: '#3b82f6', B: '#10b981', C: '#d97706', D: '#ef4444', E: '#8b5cf6' };
+            Object.keys(cropGenRegions).forEach(key => {
+                const r = cropGenRegions[key];
+                if (!r) return;
+                cropGenCtx.strokeStyle = colors[key] || '#0f172a';
+                cropGenCtx.lineWidth = 3;
+                cropGenCtx.strokeRect(r.x, r.y, r.w, r.h);
+                cropGenCtx.fillStyle = colors[key] || '#0f172a';
+                cropGenCtx.font = "bold 18px sans-serif";
+                cropGenCtx.fillText(key === 'question' ? 'SUAL' : key, r.x + 4, r.y + 20);
+            });
+
+            // Hazırda sürüklənən sahə
+            if (cropGenCurrentRect) {
+                cropGenCtx.strokeStyle = '#f59e0b';
+                cropGenCtx.setLineDash([6, 4]);
+                cropGenCtx.lineWidth = 2;
+                cropGenCtx.strokeRect(cropGenCurrentRect.x, cropGenCurrentRect.y, cropGenCurrentRect.w, cropGenCurrentRect.h);
+                cropGenCtx.setLineDash([]);
+            }
+        }
+
+        function attachCropGenCanvasEvents() {
+            function getPos(evt) {
+                const rect = cropGenCanvas.getBoundingClientRect();
+                const scaleX = cropGenCanvas.width / rect.width;
+                const scaleY = cropGenCanvas.height / rect.height;
+                return {
+                    x: (evt.clientX - rect.left) * scaleX,
+                    y: (evt.clientY - rect.top) * scaleY
+                };
+            }
+
+            cropGenCanvas.onpointerdown = (evt) => {
+                if (!cropGenActiveRegion) {
+                    alert("Əvvəlcə yuxarıdan hansı sahəni seçdiyinizi bildirin (Sual, A, B, C...)!");
+                    return;
+                }
+                cropGenIsDragging = true;
+                const p = getPos(evt);
+                cropGenStartPt = p;
+                cropGenCurrentRect = { x: p.x, y: p.y, w: 0, h: 0 };
+            };
+
+            cropGenCanvas.onpointermove = (evt) => {
+                if (!cropGenIsDragging) return;
+                const p = getPos(evt);
+                cropGenCurrentRect = {
+                    x: Math.min(cropGenStartPt.x, p.x),
+                    y: Math.min(cropGenStartPt.y, p.y),
+                    w: Math.abs(p.x - cropGenStartPt.x),
+                    h: Math.abs(p.y - cropGenStartPt.y)
+                };
+                redrawCropGenCanvas();
+            };
+
+            function finishDrag() {
+                if (!cropGenIsDragging) return;
+                cropGenIsDragging = false;
+                if (cropGenCurrentRect && cropGenCurrentRect.w > 6 && cropGenCurrentRect.h > 6) {
+                    captureCropGenRegion(cropGenActiveRegion, cropGenCurrentRect);
+                }
+                cropGenCurrentRect = null;
+                redrawCropGenCanvas();
+            }
+
+            cropGenCanvas.onpointerup = finishDrag;
+            cropGenCanvas.onpointerleave = finishDrag;
+            cropGenCanvas.onpointercancel = finishDrag;
+        }
+
+        function captureCropGenRegion(regionKey, rect) {
+            const tmp = document.createElement('canvas');
+            tmp.width = Math.round(rect.w);
+            tmp.height = Math.round(rect.h);
+            const tctx = tmp.getContext('2d');
+            tctx.drawImage(cropGenSourceImage, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+            const dataUrl = tmp.toDataURL('image/png');
+
+            cropGenRegions[regionKey] = { x: rect.x, y: rect.y, w: rect.w, h: rect.h, img: dataUrl };
+            renderCropGenToolbar();
+            renderCropGenThumbs();
+        }
+
+        function renderCropGenToolbar() {
+            const count = parseInt(document.getElementById("cropgen-variant-count") ? document.getElementById("cropgen-variant-count").value : 5);
+            const labels = ["A", "B", "C", "D", "E"].slice(0, count);
+            const toolbar = document.getElementById("cropgen-toolbar");
+            if (!toolbar) return;
+
+            let html = `<span style="font-size:12px; font-weight:700; color:var(--primary-dark); margin-right:4px;">Sahə seçin, sonra şəkil üzərində sürükləyin:</span>`;
+            html += `<button type="button" class="cropgen-region-btn ${cropGenRegions['question'] ? 'done' : ''} ${cropGenActiveRegion === 'question' ? 'active' : ''}" onclick="setCropGenActiveRegion('question')">📝 Sual</button>`;
+            labels.forEach(l => {
+                html += `<button type="button" class="cropgen-region-btn ${cropGenRegions[l] ? 'done' : ''} ${cropGenActiveRegion === l ? 'active' : ''}" onclick="setCropGenActiveRegion('${l}')">${l} Variantı</button>`;
+            });
+            toolbar.innerHTML = html;
+
+            // Düzgün variant seçimi bölməsini də yeniləyək
+            const correctWrap = document.getElementById("cropgen-correct-select");
+            if (correctWrap) {
+                let ch = "";
+                labels.forEach((l, idx) => {
+                    ch += `<label class="correct-radio"><input type="radio" name="cropgen-correct-opt" value="${idx}" ${idx === 0 ? 'checked' : ''}> ${l} Variantı</label>`;
+                });
+                correctWrap.innerHTML = ch;
+            }
+        }
+
+        function setCropGenActiveRegion(key) {
+            cropGenActiveRegion = key;
+            renderCropGenToolbar();
+        }
+
+        function renderCropGenThumbs() {
+            const wrap = document.getElementById("cropgen-thumbs");
+            if (!wrap) return;
+            let html = "";
+            const order = ['question', 'A', 'B', 'C', 'D', 'E'];
+            order.forEach(key => {
+                const r = cropGenRegions[key];
+                if (!r) return;
+                html += `
+                    <div class="cropgen-thumb">
+                        <img src="${r.img}">
+                        <div class="lbl">${key === 'question' ? 'SUAL' : key}</div>
+                    </div>
+                `;
+            });
+            wrap.innerHTML = html || `<p style="font-size:12px; color:#94a3b8;">Hələ heç bir sahə kəsilməyib.</p>`;
+        }
+
+        function resetCropGenTool() {
+            cropGenSourceImage = null;
+            cropGenRegions = {};
+            cropGenActiveRegion = null;
+            document.getElementById("cropgen-editor-area").style.display = "none";
+            document.getElementById("cropgen-file-input").value = "";
+            document.getElementById("cropgen-q-text").value = "";
+        }
+
+        async function saveCropGenQuestion() {
+            if (!cropGenRegions['question']) {
+                alert("Zəhmət olmasa əvvəlcə 'Sual' sahəsini şəkil üzərində seçib kəsin!");
+                return;
+            }
+
+            const count = parseInt(document.getElementById("cropgen-variant-count").value);
+            const labels = ["A", "B", "C", "D", "E"].slice(0, count);
+            const missing = labels.filter(l => !cropGenRegions[l]);
+            if (missing.length > 0) {
+                if (!confirm(`Bu variantlar hələ kəsilməyib: ${missing.join(', ')}. Yenə də davam edilsin?`)) return;
+            }
+
+            const qText = document.getElementById("cropgen-q-text").value.trim();
+            const examId = document.getElementById("cropgen-exam-id").value;
+            const qNum = parseInt(document.getElementById("cropgen-q-num").value) || 1;
+            const correctRadio = document.querySelector('input[name="cropgen-correct-opt"]:checked');
+            const correctIdx = correctRadio ? parseInt(correctRadio.value) : 0;
+            const subjectName = getSubjectByNumber(qNum);
+
+            const options = labels.map(l => ({
+                text: "",
+                image: cropGenRegions[l] ? cropGenRegions[l].img : null
+            }));
+
+            let selectedCats = [];
+            document.querySelectorAll('.cropgen-cat-chk:checked').forEach(c => selectedCats.push(c.value));
+            if (selectedCats.length === 0) {
+                alert("Ən azı 1 kateqoriya seçin!");
+                return;
+            }
+
+            for (let cat of selectedCats) {
+                const { data: existing } = await _supabase
+                    .from('exam_questions')
+                    .select('id')
+                    .eq('exam_id', examId)
+                    .eq('category', cat)
+                    .eq('q_number', qNum)
+                    .maybeSingle();
+
+                if (existing) {
+                    await _supabase.from('exam_questions').update({
+                        subject: subjectName,
+                        question: qText,
+                        image_url: cropGenRegions['question'].img,
+                        options: options,
+                        correct: correctIdx
+                    }).eq('id', existing.id);
+                } else {
+                    await _supabase.from('exam_questions').insert([{
+                        exam_id: examId,
+                        category: cat,
+                        q_number: qNum,
+                        subject: subjectName,
+                        question: qText,
+                        image_url: cropGenRegions['question'].img,
+                        options: options,
+                        correct: correctIdx
+                    }]);
+                }
+            }
+
+            alert(`Kəsilmiş sual ${qNum} uğurla [${selectedCats.join(', ')}] kateqoriyalarına yükləndi!`);
+            cropGenRegions = {};
+            cropGenActiveRegion = null;
+            document.getElementById("cropgen-q-text").value = "";
+            document.getElementById("cropgen-q-num").value = qNum + 1;
+            redrawCropGenCanvas();
+            renderCropGenToolbar();
+            renderCropGenThumbs();
+        }
+
+        /* =====================================================================
+           YENİ MODUL 2: FƏNN ÜZRƏ PDF AVTOMATİK YÜKLƏMƏ (OCR)
+           Tesseract.js ilə PDF-in bütün səhifələrini oxuyub, mətni sual/variant
+           formatına ayırır. Nəticə mütləq admin tərəfindən yoxlanılmalıdır,
+           çünki OCR 100% dəqiqlik zəmanəti vermir.
+           ===================================================================== */
+        let pdfAutoParsedList = [];   // [{question, options:{A,B,C,D,E}, qNum}]
+
+        function onPdfAutoSubjectChange() {
+            const sel = document.getElementById("pdfauto-subject");
+            const opt = sel.options[sel.selectedIndex];
+            const start = opt.getAttribute('data-start');
+            document.getElementById("pdfauto-start-num").value = start;
+        }
+
+        async function extractAllPdfPagesAsImages(file) {
+            const buffer = await file.arrayBuffer();
+            const typedarray = new Uint8Array(buffer);
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            const images = [];
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d');
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                images.push(canvas.toDataURL('image/png'));
+            }
+            return images;
+        }
+
+        function parsePdfAutoText(fullText) {
+            // Sual başlanğıcını "1." "2." kimi rəqəm+nöqtə/mötərizə ilə tapırıq
+            const startRegex = /(?:^|\n)\s*(\d{1,3})[\.\)]\s+/g;
+            let starts = [];
+            let m;
+            while ((m = startRegex.exec(fullText)) !== null) {
+                starts.push({ num: parseInt(m[1]), index: m.index, matchLen: m[0].length });
+            }
+
+            let blocks = [];
+            if (starts.length === 0) {
+                blocks.push({ srcNum: null, text: fullText });
+            } else {
+                for (let i = 0; i < starts.length; i++) {
+                    const s = starts[i];
+                    const contentStart = s.index + s.matchLen;
+                    const contentEnd = (i + 1 < starts.length) ? starts[i + 1].index : fullText.length;
+                    blocks.push({ srcNum: s.num, text: fullText.substring(contentStart, contentEnd).trim() });
+                }
+            }
+
+            const optRegex = /(?:^|\s|\n)([A-EƏ])[.\)]\s*/gi;
+            const results = [];
+
+            blocks.forEach(block => {
+                const text = block.text;
+                if (!text || text.length < 3) return;
+
+                let matches = [];
+                let om;
+                optRegex.lastIndex = 0;
+                while ((om = optRegex.exec(text)) !== null) {
+                    let lbl = om[1].toUpperCase();
+                    if (lbl === 'Ə') lbl = 'E';
+                    matches.push({ label: lbl, index: om.index, length: om[0].length });
+                }
+
+                let qText = "";
+                let opts = { A: "", B: "", C: "", D: "", E: "" };
+
+                if (matches.length > 0) {
+                    qText = text.substring(0, matches[0].index).trim();
+                    for (let i = 0; i < matches.length; i++) {
+                        const curr = matches[i];
+                        const start = curr.index + curr.length;
+                        const end = (i + 1 < matches.length) ? matches[i + 1].index : text.length;
+                        const val = text.substring(start, end).trim();
+                        if (opts.hasOwnProperty(curr.label)) opts[curr.label] = val;
+                    }
+                } else {
+                    qText = text.trim();
+                }
+
+                if (qText) {
+                    results.push({ srcNum: block.srcNum, question: qText, options: opts });
+                }
+            });
+
+            return results;
+        }
+
+        async function handlePdfAutoUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const progressArea = document.getElementById("pdfauto-progress-area");
+            const progressText = document.getElementById("pdfauto-progress-text");
+            const progressFill = document.getElementById("pdfauto-progress-fill");
+            const reviewArea = document.getElementById("pdfauto-review-area");
+
+            progressArea.style.display = "block";
+            reviewArea.style.display = "none";
+            progressFill.style.width = "0%";
+            progressText.innerText = "PDF səhifələri şəklə çevrilir...";
+
+            try {
+                const pageImages = await extractAllPdfPagesAsImages(file);
+                let fullText = "";
+
+                for (let i = 0; i < pageImages.length; i++) {
+                    progressText.innerText = `OCR ilə oxunur: Səhifə ${i + 1} / ${pageImages.length}...`;
+                    const result = await Tesseract.recognize(pageImages[i], 'aze+eng', {
+                        logger: (info) => {
+                            if (info.status === 'recognizing text') {
+                                const pct = Math.round(((i + info.progress) / pageImages.length) * 100);
+                                progressFill.style.width = pct + "%";
+                            }
+                        }
+                    });
+                    fullText += "\n" + result.data.text;
+                }
+
+                progressText.innerText = "Mətn sual və variantlara ayrılır...";
+                const parsed = parsePdfAutoText(fullText);
+
+                if (parsed.length === 0) {
+                    progressArea.style.display = "none";
+                    alert("Təəssüf ki, sual formatı tanınmadı. Zəhmət olmasa PDF-in mətn keyfiyyətini yoxlayın və ya Copy/Paste modulundan istifadə edin.");
+                    return;
+                }
+
+                const startNum = parseInt(document.getElementById("pdfauto-start-num").value) || 1;
+                pdfAutoParsedList = parsed.map((p, idx) => ({
+                    qNum: startNum + idx,
+                    question: p.question,
+                    options: p.options
+                }));
+
+                progressArea.style.display = "none";
+                renderPdfAutoReviewList();
+                reviewArea.style.display = "block";
+            } catch (err) {
+                progressArea.style.display = "none";
+                alert("OCR zamanı xəta baş verdi: " + err.message);
+            }
+        }
+
+        function renderPdfAutoReviewList() {
+            const listEl = document.getElementById("pdfauto-review-list");
+            const countLabel = document.getElementById("pdfauto-count-label");
+            countLabel.innerText = `${pdfAutoParsedList.length} sual tapıldı`;
+
+            let html = "";
+            pdfAutoParsedList.forEach((item, idx) => {
+                html += `
+                    <div class="pdfauto-review-item">
+                        <span class="qnum-badge">Sual №${item.qNum}</span>
+                        <div class="form-group">
+                            <label>Sual Mətni:</label>
+                            <textarea class="form-control pdfauto-edit-qtext" data-idx="${idx}" rows="2" oninput="pdfAutoUpdateField(${idx}, 'question', this.value)">${item.question}</textarea>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                            <input type="text" class="form-control" placeholder="A" value="${item.options.A || ''}" oninput="pdfAutoUpdateOption(${idx}, 'A', this.value)">
+                            <input type="text" class="form-control" placeholder="B" value="${item.options.B || ''}" oninput="pdfAutoUpdateOption(${idx}, 'B', this.value)">
+                            <input type="text" class="form-control" placeholder="C" value="${item.options.C || ''}" oninput="pdfAutoUpdateOption(${idx}, 'C', this.value)">
+                            <input type="text" class="form-control" placeholder="D" value="${item.options.D || ''}" oninput="pdfAutoUpdateOption(${idx}, 'D', this.value)">
+                            <input type="text" class="form-control" placeholder="E (əgər var)" value="${item.options.E || ''}" oninput="pdfAutoUpdateOption(${idx}, 'E', this.value)">
+                        </div>
+                        <div class="form-group mt-2" style="margin-bottom:0;">
+                            <label>Düzgün Cavab:</label>
+                            <select class="form-control" style="max-width:200px;" onchange="pdfAutoUpdateField(${idx}, 'correct', this.value)">
+                                <option value="0">A</option>
+                                <option value="1">B</option>
+                                <option value="2">C</option>
+                                <option value="3">D</option>
+                                <option value="4">E</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="pdfAutoRemoveItem(${idx})">🗑️ Bu Sualı Siyahıdan Sil</button>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        }
+
+        function pdfAutoUpdateField(idx, field, val) {
+            if (!pdfAutoParsedList[idx]) return;
+            pdfAutoParsedList[idx][field] = (field === 'correct') ? parseInt(val) : val;
+        }
+
+        function pdfAutoUpdateOption(idx, letter, val) {
+            if (!pdfAutoParsedList[idx]) return;
+            pdfAutoParsedList[idx].options[letter] = val;
+        }
+
+        function pdfAutoRemoveItem(idx) {
+            pdfAutoParsedList.splice(idx, 1);
+            renderPdfAutoReviewList();
+        }
+
+        async function saveAllPdfAutoQuestions() {
+            if (pdfAutoParsedList.length === 0) {
+                alert("Yüklənəcək sual yoxdur!");
+                return;
+            }
+
+            const examId = document.getElementById("pdfauto-exam-id").value;
+            const subjectSel = document.getElementById("pdfauto-subject");
+            const subjectName = subjectSel.value;
+
+            let selectedCats = [];
+            document.querySelectorAll('.pdfauto-cat-chk:checked').forEach(c => selectedCats.push(c.value));
+            if (selectedCats.length === 0) {
+                alert("Ən azı 1 kateqoriya seçin!");
+                return;
+            }
+
+            let savedCount = 0;
+
+            for (const item of pdfAutoParsedList) {
+                const qNum = item.qNum;
+                const isQanunvericilik = (subjectName === "Qanunvericilik");
+                const correctIdx = item.correct !== undefined ? item.correct : 0;
+
+                const options = [
+                    { text: item.options.A || "", image: null },
+                    { text: item.options.B || "", image: null },
+                    { text: item.options.C || "", image: null },
+                    { text: item.options.D || "", image: null }
+                ];
+                if (!isQanunvericilik && item.options.E) {
+                    options.push({ text: item.options.E, image: null });
+                }
+
+                for (let cat of selectedCats) {
+                    const { data: existing } = await _supabase
+                        .from('exam_questions')
+                        .select('id')
+                        .eq('exam_id', examId)
+                        .eq('category', cat)
+                        .eq('q_number', qNum)
+                        .maybeSingle();
+
+                    if (existing) {
+                        await _supabase.from('exam_questions').update({
+                            subject: subjectName,
+                            question: item.question,
+                            options: options,
+                            correct: correctIdx
+                        }).eq('id', existing.id);
+                    } else {
+                        await _supabase.from('exam_questions').insert([{
+                            exam_id: examId,
+                            category: cat,
+                            q_number: qNum,
+                            subject: subjectName,
+                            question: item.question,
+                            options: options,
+                            correct: correctIdx
+                        }]);
+                    }
+                }
+                savedCount++;
+            }
+
+            alert(`${savedCount} sual uğurla [${selectedCats.join(', ')}] kateqoriyalarına yükləndi!`);
+            pdfAutoParsedList = [];
+            document.getElementById("pdfauto-review-area").style.display = "none";
+            document.getElementById("pdfauto-file-input").value = "";
+        }
     </script>
 </body>
-</html>
+    </html>
