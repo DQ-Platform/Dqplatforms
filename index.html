@@ -813,6 +813,9 @@
         }
         .graphic-modal-header h4 { text-align: left; margin: 0 0 4px 0; font-size: 16px; }
         .graphic-modal-header .sub { font-size: 12.5px; color: #64748b; font-weight: 600; }
+        .graphic-etalon-toggle-row { text-align: center; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border-color); }
+        .graphic-etalon-toggle-row .btn i { margin-right: 5px; }
+        #graphic-etalon-body .etalon-section:first-child { margin-top: 4px; }
         .graphic-modal-close {
             background: transparent;
             border: none;
@@ -3265,9 +3268,10 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             showScreen("result-screen");
 
             if (!isLiveEditMode) {
-                await _supabase.from('exam_results').insert([{
+                const { error: saveError } = await _supabase.from('exam_results').insert([{
                     student_name: currentStudentName,
                     fin: currentActiveFin,
+                    fin_code: currentActiveFin,
                     exam_no: selectedExamId,
                     category: userGroup,
                     score: totalScore,
@@ -3277,6 +3281,11 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                     answers: userAnswers,
                     subject_stats: subjectStats
                 }]);
+
+                if (saveError) {
+                    console.error("exam_results insert xətası:", saveError);
+                    alert("DİQQƏT: Nəticəniz mərkəzi bazaya yazıla bilmədi!\nSəbəb: " + saveError.message + "\n\nZəhmət olmasa bu şəkli/mesajı administrator ilə paylaşın.");
+                }
             }
 
             clearSessionStorage();
@@ -3473,14 +3482,22 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 return;
             }
 
-            body.innerHTML = buildGraphicResultHtml(res);
+            // Etalon (düzgün cavablar) üçün müvafiq sınaq/kateqoriya suallarını yükləyirik
+            const { data: qData } = await _supabase
+                .from('exam_questions')
+                .select('q_number, correct')
+                .eq('exam_id', examNo)
+                .eq('category', category)
+                .order('q_number', { ascending: true });
+
+            body.innerHTML = buildGraphicResultHtml(res, qData || []);
         }
 
         function closeGraphicResultModal() {
             document.getElementById("graphic-result-modal").classList.remove("active");
         }
 
-        function buildGraphicResultHtml(res) {
+        function buildGraphicResultHtml(res, questions) {
             const correct = res.correct_count || 0;
             const wrong = res.wrong_count || 0;
             const unanswered = res.unanswered_count || 0;
@@ -3513,6 +3530,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             }
 
             const passStatus = buildPassStatusText(cat, score);
+            const etalonHtml = buildEtalonSectionHtml(res, questions || [], cat);
 
             return `
                 <div class="graphic-donut-wrap">
@@ -3525,7 +3543,113 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 </div>
                 <div>${subjectHtml || '<p style="text-align:center; color:#94a3b8; font-size:12px;">Fənn üzrə ətraflı statistika mövcud deyil.</p>'}</div>
                 <div class="graphic-status-box">${passStatus}</div>
+                <div class="graphic-etalon-toggle-row">
+                    <button type="button" class="btn btn-secondary btn-sm" id="graphic-etalon-toggle-btn" onclick="toggleGraphicEtalon()">
+                        <i class="fa-solid fa-eye"></i>Etalonu göstər
+                    </button>
+                </div>
+                <div id="graphic-etalon-body" style="display:none;">
+                    ${etalonHtml}
+                </div>
             `;
+        }
+
+        /* Nəticənin etalonu (düzgün cavab açarı) — göz ikonu modalında göstərilir.
+           Həm iştirakçı ekranındakı, həm də admin panelindəki "Cavab vərəqinin qrafik
+           təsviri" düyməsi eyni bu funksiyanı çağırdığı üçün etalon hər iki yerdə görünür. */
+        function buildEtalonSectionHtml(res, questions, cat) {
+            if (!questions || questions.length === 0) {
+                return `<p class="text-center" style="color:#94a3b8; font-size:12px; margin-top:4px;">Bu nəticə üçün etalon (sual) məlumatı bazada tapılmadı.</p>`;
+            }
+
+            const userAnswers = res.answers || {};
+            const letters = ["A", "B", "C", "D", "E"];
+            const qMap = {};
+            questions.forEach(q => { qMap[q.q_number] = q; });
+
+            let html = `<h4 style="font-size:14px; margin-bottom:10px;">Nəticənin Etalonu (Düzgün Cavab Açarı)</h4>`;
+            let renderedAny = false;
+
+            examStructure.forEach(sec => {
+                const sectionQNums = questions
+                    .map(q => q.q_number)
+                    .filter(n => n >= sec.start && n <= sec.end)
+                    .sort((a, b) => a - b);
+
+                if (sectionQNums.length === 0) return;
+                renderedAny = true;
+
+                html += `<div class="etalon-section">`;
+                html += `<div class="etalon-section-title">${sec.title}</div>`;
+                html += `<div class="table-wrapper"><table class="etalon-table"><tbody>`;
+
+                html += `<tr class="num-row"><td class="row-label">№</td>`;
+                sectionQNums.forEach(n => { html += `<td>${n}</td>`; });
+                html += `</tr>`;
+
+                html += `<tr class="etalon-row"><td class="row-label">Etalon</td>`;
+                sectionQNums.forEach(n => {
+                    const q = qMap[n];
+                    const isOpen = (cat === 'BA') && openQuestionIds.includes(n);
+                    const val = isOpen ? (q.correct || "-") : (letters[parseInt(q.correct)] || "-");
+                    html += `<td>${val}</td>`;
+                });
+                html += `</tr>`;
+
+                html += `<tr class="participant-row"><td class="row-label">İştirakçı</td>`;
+                sectionQNums.forEach(n => {
+                    const userAns = userAnswers[n];
+                    const isOpen = (cat === 'BA') && openQuestionIds.includes(n);
+                    let val = "-";
+                    if (userAns !== undefined && userAns !== "") {
+                        val = isOpen ? String(userAns).trim().toUpperCase() : (letters[parseInt(userAns)] || "-");
+                    }
+                    html += `<td>${val}</td>`;
+                });
+                html += `</tr>`;
+
+                html += `<tr class="result-row"><td class="row-label">Nəticə</td>`;
+                sectionQNums.forEach(n => {
+                    const q = qMap[n];
+                    const userAns = userAnswers[n];
+                    const isOpen = (cat === 'BA') && openQuestionIds.includes(n);
+                    let cellClass = "unanswered";
+                    let symbol = "-";
+                    if (userAns !== undefined && userAns !== "") {
+                        let isCorrect;
+                        if (isOpen) {
+                            isCorrect = String(userAns).trim().toUpperCase() === String(q.correct).trim().toUpperCase();
+                        } else {
+                            isCorrect = parseInt(userAns) === parseInt(q.correct);
+                        }
+                        cellClass = isCorrect ? "correct" : "wrong";
+                        symbol = isCorrect ? "+" : "-";
+                    }
+                    html += `<td class="${cellClass}">${symbol}</td>`;
+                });
+                html += `</tr>`;
+
+                html += `</tbody></table></div></div>`;
+            });
+
+            if (!renderedAny) {
+                return `<p class="text-center" style="color:#94a3b8; font-size:12px; margin-top:4px;">Bu nəticə üçün etalon (sual) məlumatı bazada tapılmadı.</p>`;
+            }
+
+            return html;
+        }
+
+        function toggleGraphicEtalon() {
+            const box = document.getElementById("graphic-etalon-body");
+            const btn = document.getElementById("graphic-etalon-toggle-btn");
+            if (!box) return;
+            const willShow = box.style.display === "none";
+            box.style.display = willShow ? "block" : "none";
+            if (btn) {
+                btn.innerHTML = willShow
+                    ? '<i class="fa-solid fa-eye-slash"></i>Etalonu gizlə'
+                    : '<i class="fa-solid fa-eye"></i>Etalonu göstər';
+            }
         }
 
         function buildDonutSvg(correct, wrong, unanswered, total, score) {
