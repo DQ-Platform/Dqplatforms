@@ -7574,6 +7574,62 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.target.i
   };
 })();
 </script>
+    <script>
+/* ===== Qeydiyyat: Ad Soyad + FIN kod + Gmail/Telefon ===== */
+(function () {
+  YQ.validFin = f => /^[A-Z0-9]{7}$/.test(f);
+
+  YQ.findFin = async function (f) {
+    await V2.probe();
+    if (V2.mode === 'cloud') {
+      const { data } = await _supabase.from('dq_v2_store').select('*')
+        .eq('collection', 'regs').eq('data->>fin', f).limit(1);
+      const r = data && data[0]; return r ? { ...r.data, _id: r.id } : null;
+    }
+    return (await V2.list('regs')).find(x => x.fin === f) || null;
+  };
+
+  YQ.draw = function (tab, body) {
+    const m = YQ.$('yq-m'); if (!m) return;
+    const reg = tab === 'reg';
+    const tb = (t, l) => `<button class="v3-bt ${tab === t ? '' : 'o'}" style="flex:1" onclick="YQ.draw('${t}')">${l}</button>`;
+    m.innerHTML = `<div><div style="display:flex;gap:8px;margin-bottom:12px">${tb('reg', 'Qeydiyyat')}${tb('in', 'Giriş')}</div>` + (body ||
+      `${reg ? `Ad Soyad<input class="v3-in" id="yq-n" placeholder="Ad Soyad" autocomplete="name">
+      FIN kod<input class="v3-in" id="yq-f" placeholder="Məs: 7ABC123" maxlength="7" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:2px">` : ''}
+      ${reg ? 'Telefon nömrəsi və ya Gmail' : 'Gmail, telefon və ya FIN kod'}
+      <input class="v3-in" id="yq-c" placeholder="${reg ? 'mail@gmail.com və ya 050 000 00 00' : 'Gmail, telefon və ya FIN'}">
+      <button class="v3-bt" style="width:100%" onclick="YQ.${reg ? 'register' : 'login'}()">${reg ? 'Qeydiyyatdan keç' : 'Daxil ol'}</button>`) +
+      `<button class="v3-bt o" style="width:100%;margin-top:8px" onclick="this.closest('.v3-md').remove()">Bağla</button></div>`;
+  };
+
+  YQ.register = async function () {
+    const name = YQ.$('yq-n').value.trim().replace(/\s+/g, ' ');
+    const fin = YQ.$('yq-f').value.trim().toUpperCase();
+    const c = YQ.$('yq-c').value.trim();
+    if (name.length < 3) return alert('Ad və soyadınızı tam daxil edin.');
+    if (!YQ.validFin(fin)) return alert('FIN kod 7 simvoldan ibarət olmalıdır (hərf və rəqəm).');
+    if (!YQ.valid(c)) return alert('Düzgün telefon nömrəsi və ya Gmail daxil edin.');
+    await V2.probe();
+    if (V2.mode !== 'cloud') return alert('Baza əlçatan deyil, qeydiyyat hazırda mümkün deyil.');
+    const k = YQ.key(c);
+    const ex = await YQ.find(k); if (ex) return YQ.state(ex);
+    const exF = await YQ.findFin(fin);
+    if (exF) return alert('Bu FIN kodla artıq qeydiyyat mövcuddur. "Giriş" bölməsindən daxil olun.');
+    const r = { name, fin, contact: c, key: k, status: 'pending', ts: new Date().toISOString() };
+    await V2.put('regs', r); YQ.state(r);
+  };
+
+  YQ.login = async function () {
+    const c = YQ.$('yq-c').value.trim().toUpperCase();
+    let r = null;
+    if (!c.includes('@') && /^[A-Z0-9]{7}$/.test(c)) r = await YQ.findFin(c);
+    else if (YQ.valid(c)) r = await YQ.find(YQ.key(c));
+    else return alert('Gmail, telefon və ya FIN kod daxil edin.');
+    if (!r) return YQ.draw('in', '<p style="margin:6px 0 12px">Bu məlumatla qeydiyyat tapılmadı. «Qeydiyyat» bölməsindən keçin.</p>');
+    YQ.state(r);
+  };
+})();
+    </script>
 
 </body>
     </html>
