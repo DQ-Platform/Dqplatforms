@@ -7467,5 +7467,113 @@ var DQ = {
 };
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.target.id === 'user-name' || e.target.id === 'user-fin')) proceedToExamSelect(); });
 </script>
+    <!-- ===== DQ PATCH: Qeydiyyat təsdiqində icazə düymələri (fənn testləri + BA/BB/AC sınaq) =====
+     Bunu index.html-də </body> teqindən dərhal əvvələ yapışdırın. Heç nə silinmir. -->
+<style>
+.pm-wrap{display:flex;flex-direction:column;gap:6px;align-items:flex-start;min-width:190px}
+.pm-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.pm-lbl{font-size:11px;font-weight:700;color:#64748b}
+.pm-chip{border:1.5px solid #cbd5e1;background:#fff;color:#475569;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.pm-chip:hover{border-color:#94a3b8}
+.pm-chip.on{background:#10b981;border-color:#10b981;color:#fff}
+.pm-chip.tests.on{background:#3b82f6;border-color:#3b82f6}
+.pm-ex{width:56px;padding:4px 6px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:12px;text-align:center}
+#yq-regs td{vertical-align:middle}
+</style>
+<script>
+(function () {
+  const CATS = ['BA', 'BB', 'AC'];
+  YQ.draft = {};
+
+  /* Qeydiyyatın cari icazələri (köhnə qeydlərdə perms yoxdursa: hamısı açıq) */
+  YQ.permOf = function (r) {
+    const p = r.perms || {};
+    return { tests: p.tests !== false, cats: Array.isArray(p.cats) ? p.cats.slice() : CATS.slice(), exam: String(p.exam || '1') };
+  };
+  YQ.dr = function (i) { return YQ.draft[i] || (YQ.draft[i] = YQ.permOf(YQ.regs[i])); };
+
+  YQ.tg = function (i, key) {
+    const d = YQ.dr(i);
+    if (key === 'tests') d.tests = !d.tests;
+    else { const k = d.cats.indexOf(key); k > -1 ? d.cats.splice(k, 1) : d.cats.push(key); }
+    YQ.paintRegs();
+  };
+  YQ.setEx = function (i, v) { YQ.dr(i).exam = String(parseInt(v) > 0 ? parseInt(v) : 1); };
+
+  YQ.paintRegs = function () {
+    const e = YQ.e, L = { pending: '⏳ Gözləyir', approved: '✅ Təsdiqli', rejected: '❌ Rədd' };
+    const host = YQ.$('yq-regs'); if (!host) return;
+    const rows = (YQ.regs || []).map((r, i) => {
+      const d = YQ.dr(i);
+      const perm = `<div class="pm-wrap">
+        <div class="pm-row"><span class="pm-lbl">Test:</span>
+          <button type="button" class="pm-chip tests ${d.tests ? 'on' : ''}" onclick="YQ.tg(${i},'tests')">📝 Fənn testləri</button></div>
+        <div class="pm-row"><span class="pm-lbl">Sınaq:</span>
+          ${CATS.map(c => `<button type="button" class="pm-chip ${d.cats.includes(c) ? 'on' : ''}" onclick="YQ.tg(${i},'${c}')">${c}</button>`).join('')}
+          <input type="number" min="1" class="pm-ex" value="${e(d.exam)}" title="Sınaq №" onchange="YQ.setEx(${i},this.value)"></div>
+      </div>`;
+      const act = (r.status !== 'approved' ? `<button class="btn btn-success btn-sm" onclick="YQ.setStatus(${i},'approved')">Təsdiq</button> ` : `<button class="btn btn-primary btn-sm" onclick="YQ.savePerms(${i})">💾 İcazələri saxla</button> `)
+        + (r.status === 'pending' ? `<button class="btn btn-secondary btn-sm" onclick="YQ.setStatus(${i},'rejected')">Rədd</button> ` : '')
+        + `<button class="btn btn-danger btn-sm" onclick="YQ.delReg(${i})">Sil</button>`;
+      return `<tr><td>${e(r.name)}</td><td>${e(r.contact)}</td><td>${e((r.ts || '').slice(0, 10))}</td>
+        <td>${L[r.status] || ''}${r.fin ? '<br><small>' + e(r.fin) + '</small>' : ''}</td>
+        <td>${r.status === 'rejected' ? '—' : perm}</td><td>${act}</td></tr>`;
+    }).join('') || '<tr><td colspan="6">Qeydiyyat yoxdur</td></tr>';
+    host.innerHTML = `<table><thead><tr><th>Ad</th><th>Əlaqə</th><th>Tarix</th><th>Status</th><th>İcazələr</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  };
+
+  YQ.loadRegs = async function () {
+    await V2.probe(); YQ.regs = await V2.list('regs'); YQ.draft = {}; YQ.paintRegs();
+  };
+
+  /* allowed_students cədvəlini seçilmiş icazələrə uyğunlaşdırır */
+  YQ.syncAllowed = async function (r, oldExam) {
+    await _supabase.from('allowed_students').delete().eq('fin', r.fin).eq('exam_no', String(oldExam || r.perms.exam));
+    if (!r.perms.cats.length) return null;
+    const { error } = await _supabase.from('allowed_students').insert([{ student_name: r.name, fin: r.fin, exam_no: r.perms.exam, categories: r.perms.cats }]);
+    return error || null;
+  };
+
+  YQ.setStatus = async function (i, st) {
+    const r = { ...YQ.regs[i] }, d = YQ.dr(i), oldExam = r.perms && r.perms.exam;
+    if (st === 'approved') {
+      if (!d.tests && !d.cats.length) return alert('Ən azı bir icazə seçin (Fənn testləri və ya BA / BB / AC).');
+      r.fin = r.fin || YQ.gen();
+      r.perms = { tests: d.tests, cats: d.cats.slice(), exam: d.exam };
+      const err = await YQ.syncAllowed(r, oldExam);
+      if (err) return alert('Xəta: ' + err.message);
+    }
+    r.status = st; await V2.put('regs', r, r._id);
+    V2.toast(st === 'approved' ? 'Təsdiqləndi, icazələr verildi ✅' : 'Yeniləndi');
+    YQ.loadRegs();
+  };
+
+  /* Artıq təsdiqlənmiş istifadəçinin icazələrini sonradan dəyişmək */
+  YQ.savePerms = async function (i) {
+    const r = { ...YQ.regs[i] }, d = YQ.dr(i), oldExam = r.perms && r.perms.exam;
+    if (!d.tests && !d.cats.length) return alert('Ən azı bir icazə seçin.');
+    r.perms = { tests: d.tests, cats: d.cats.slice(), exam: d.exam };
+    const err = await YQ.syncAllowed(r, oldExam);
+    if (err) return alert('Xəta: ' + err.message);
+    await V2.put('regs', r, r._id); V2.toast('İcazələr yeniləndi ✅'); YQ.loadRegs();
+  };
+
+  /* Fənn testlərinə giriş: yalnız "Fənn testləri" icazəsi silinmiş qeydiyyatlı istifadəçilər bloklanır */
+  const LOCK = '🔒 Fənn testlərinə icazəniz yoxdur. Administrator ilə əlaqə saxlayın.';
+  const _showTests = V3.showTests;
+  V3.showTests = async function () {
+    const k = YQ2.sess();
+    if (k) { const r = await YQ.find(k); if (r && r.perms && r.perms.tests === false) { alert(LOCK); return; } }
+    return _showTests.apply(V3, arguments);
+  };
+  const _go = YQ2.go;
+  YQ2.go = async function (t) {
+    const blocked = t === 'tests' && YQ2.me && YQ2.me.perms && YQ2.me.perms.tests === false;
+    await _go.call(YQ2, t);
+    if (blocked) { const b = YQ2.$('dq-cb'); if (b) b.innerHTML = `<div class="dq-cd">${LOCK}</div>`; }
+  };
+})();
+</script>
+
 </body>
     </html>
