@@ -396,6 +396,18 @@
         .footer { text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         .footer-text { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
         .secret-admin-trigger { cursor: pointer; text-decoration: none; color: inherit; }
+
+        /* Giriş ekranı: elanlar (sol yuxarı) və təəssüratlar (altbilgi, sağ) düymələri */
+        .login-topbar { display: none; justify-content: flex-start; margin-bottom: 14px; }
+        .footer-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+        .footer-bar .footer-text { flex: 1 1 auto; text-align: center; }
+        .footer-bar .feed-btn { display: none; margin-left: auto; }
+        .feed-btn { align-items: center; gap: 7px; border: 0; border-radius: 999px; padding: 9px 16px; font-weight: 800; font-size: 13px; color: #fff; cursor: pointer; font-family: inherit; box-shadow: 0 2px 8px rgba(15, 23, 42, .18); transition: transform .15s ease, box-shadow .15s ease; }
+        .feed-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15, 23, 42, .25); }
+        .feed-btn-news { background: #d97706; display: inline-flex; }
+        .feed-btn-fb { background: #0284c7; }
+        .container:has(#login-screen.active) .login-topbar { display: flex; }
+        .container:has(#login-screen.active) .footer-bar .feed-btn { display: inline-flex; }
         .error-msg { color: var(--danger-red); font-weight: bold; }
 
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; margin-top: 10px; }
@@ -926,6 +938,16 @@
     <div class="container" id="top">
         <!-- GİRİŞ HİSSƏSİ -->
         <div id="login-screen" class="screen text-center active">
+            <!-- Sol yuxarı künc: İmtahan elanları -->
+            <div class="login-topbar">
+                <button type="button" id="btn-open-news" class="feed-btn feed-btn-news" onclick="openFeedModal('news')">
+                    <i class="fa-solid fa-bullhorn"></i> İmtahan elanları (<span id="news-count">0</span>)
+                </button>
+            </div>
+
+            <!-- Əlaqə keçidləri: başlığın üstündə -->
+            <div id="login-links" style="margin:0 0 14px;display:none"></div>
+
             <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
             <p class="mt-2 mb-4">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
             <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız">
@@ -940,7 +962,8 @@
 
             <p id="error-msg" class="error-msg mt-2"></p>
 
-            <div id="login-links" style="margin-top:22px;display:none"></div>
+            <div id="login-links-legacy" style="display:none"></div>
+            <div id="home-feed" style="display:none"></div>
             <div id="login-reviews" style="margin-top:26px;text-align:left;display:none"></div>
         </div>
 
@@ -1127,6 +1150,8 @@
                 <div class="admin-nav-card" onclick="switchAdminTab('cavablar')"><span class="icon">📑</span> Cavablar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('modul')"><span class="icon">📦</span> Modul Mərkəzi</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('redakte')"><span class="icon">✏️</span> Redaktə Mərkəzi</div>
+                <div class="admin-nav-card" onclick="V2.open();V2.go('news')"><span class="icon">📢</span> İmtahan Elanı Paylaş</div>
+                <div class="admin-nav-card" onclick="V2.open();V2.go('res')"><span class="icon">💬</span> Təəssüratlar (Təsdiq)</div>
             </div>
 
             <!-- MODUL 1: SUALLAR MODULU -->
@@ -1995,8 +2020,13 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
 
         <!-- FOOTER -->
         <div class="footer">
-            <div class="footer-text">
-                © 2026 DQ Platform – Developed <span class="secret-admin-trigger" onclick="openAdminLogin()">by</span> Yunis İmanov
+            <div class="footer-bar">
+                <div class="footer-text">
+                    © 2026 DQ Platform – Developed <span class="secret-admin-trigger" onclick="openAdminLogin()">by</span> Yunis İmanov
+                </div>
+                <button type="button" id="btn-open-fb" class="feed-btn feed-btn-fb" onclick="openFeedModal('fb')">
+                    <i class="fa-regular fa-comment-dots"></i> Təəssüratlar (<span id="fb-count">0</span>)
+                </button>
             </div>
         </div>
     </div>
@@ -2074,7 +2104,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         let examFinished = false;
         let isTimerHidden = false;
         let liveEditImageData = null;
-        let totalExamsCount = 5;
+        let totalExamsCount = 2;
         let isLiveEditMode = false;
         let cropImageBase64 = null;
         let isReviewMode = false;
@@ -2583,7 +2613,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
 
             if (isAdminLogged === "true" && activeScreen === "admin-panel") {
                 showScreen("admin-panel");
-                switchAdminTab('suallar');
+                switchAdminTab(localStorage.getItem("dq_admin_tab") || 'suallar');
                 loadAdminPanelData();
                 return;
             }
@@ -2694,6 +2724,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         async function renderRegisteredExams() {
             const container = document.getElementById("registered-exams-list");
             container.innerHTML = "<p>Sınaqlar yüklənir...</p>";
+            await loadExamRegistry();
 
             const { data: allowedData } = await _supabase
                 .from('allowed_students')
@@ -2862,6 +2893,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 currentQuestionIndex = 0;
                 timeLeft = testDuration;
                 examFinished = false;
+                window.__finishing = false;
                 annotationData = {};
                 isAnnotationMode = false;
                 annotationCurrentQNum = null;
@@ -3400,6 +3432,8 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         }
 
         async function finishExam() {
+            if (window.__finishing) return;
+            window.__finishing = true;
             clearInterval(timerInterval);
             examFinished = true;
 
@@ -3470,7 +3504,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             updateReviewButtonVisibility();
 
             if (!isLiveEditMode) {
-                const { error: saveError } = await _supabase.from('exam_results').insert([{
+                const __payload = {
                     student_name: currentStudentName,
                     fin: currentActiveFin,
                     fin_code: currentActiveFin,
@@ -3482,11 +3516,12 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                     unanswered_count: unansweredCount,
                     answers: userAnswers,
                     subject_stats: subjectStats
-                }]);
+                };
+                const saveError = await persistResult(__payload);
 
                 if (saveError) {
                     console.error("exam_results insert xətası:", saveError);
-                    alert("DİQQƏT: Nəticəniz mərkəzi bazaya yazıla bilmədi!\nSəbəb: " + saveError.message + "\n\nZəhmət olmasa bu şəkli/mesajı administrator ilə paylaşın.");
+                    alert("Nəticəniz hesablandı, lakin internet/server problemi səbəbindən hələ mərkəzi bazaya göndərilməyib. Nəticə bu cihazda təhlükəsiz saxlanıldı və əlaqə bərpa olunan kimi AVTOMATİK göndəriləcək. Səhifəni bağlamayın.");
                 }
             }
 
@@ -4986,30 +5021,10 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             startExamSession(selectedExamId, cat);
         }
 
-        function addNewExamFolder() {
-            totalExamsCount++;
-            const grid = document.getElementById("examFolderGrid");
-            const card = document.createElement("div");
-            card.className = "folder-card";
-            card.onclick = () => selectExam(String(totalExamsCount));
-            card.innerHTML = `
-                <div class="folder-icon">📁</div>
-                <div class="folder-title">Sınaq ${totalExamsCount}</div>
-                <div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div>
-            `;
-            grid.appendChild(card);
-            alert(`Sınaq ${totalExamsCount} yaradıldı!`);
-        }
-
         /* --- QEYDİYYAT ÜÇÜN WHATSAPP YÖNLƏNDİRMƏ FUNKSİYASI --- */
         function registerViaWhatsApp() {
-            const message = "Salam mən dövlət qulluğu sınaq imtahanında iştirak etmək istəyirəm";
-            let whatsappUrl = `https://wa.me/994504305162?text=${encodeURIComponent(message)}`;
-            if (window.DQ_SETTINGS && DQ_SETTINGS.wa) {
-                const w = DQ_SETTINGS.wa.trim();
-                whatsappUrl = /^https?:/i.test(w) ? w : `https://wa.me/${w.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-            }
-            window.open(whatsappUrl, '_blank');
+            const message = "Salam mən sınaq imtahanında iştirak etmək üçün qeydiyyatdan keçmək istəyirəm";
+            window.open(`https://wa.me/994504305162?text=${encodeURIComponent(message)}`, '_blank');
         }
 
         /* =====================================================================
@@ -6010,10 +6025,11 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         window.DQ_SETTINGS = {};
         async function loadLoginExtras() {
             try {
-                const st = ((await V2.list('settings'))[0]) || {}; window.DQ_SETTINGS = st;
+                const st = ((await V2.list('settings'))[0]) || {}; Object.keys(st).forEach(k => { if (typeof st[k] === 'string') st[k] = st[k].replace(/[`'"]/g, '').trim(); }); window.DQ_SETTINGS = st;
                 if (st.title) document.title = st.title;
                 const norm = (u, pre) => !u ? '' : (/^(https?:|mailto:|tel:)/i.test(u) ? u : (pre ? pre + u : 'https://' + u));
                 const items = [
+                    st.wach && ['fa-solid fa-bullhorn', 'WhatsApp Kanalı', norm(st.wach), '#25D366'],
                     st.wa && ['fa-brands fa-whatsapp', 'WhatsApp', /^https?:/i.test(st.wa) ? st.wa : 'https://wa.me/' + st.wa.replace(/\D/g, ''), '#25D366'],
                     st.ig && ['fa-brands fa-instagram', 'Instagram', norm(st.ig), '#e1306c'],
                     st.tg && ['fa-brands fa-telegram', 'Telegram', norm(st.tg), '#229ed9'],
@@ -6049,7 +6065,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             if (!fbRating && !text) { msg.style.color = '#dc2626'; msg.innerText = 'Ulduz seçin və ya təəssürat yazın.'; return; }
             const b = document.getElementById('fb-send'); b.disabled = true;
             await V2.put('feedback', { name: currentStudentName, fin: currentActiveFin, category: fbCtx.cat, score: fbCtx.score, rating: fbRating, text, show: false, date: V2.date() });
-            msg.style.color = '#059669'; msg.innerText = 'Təşəkkür edirik! Rəyiniz göndərildi ✅'; b.innerText = 'Göndərildi';
+            msg.style.color = '#059669'; msg.innerText = 'Təşəkkür edirik! Rəyiniz göndərildi ✅ Administrator təsdiq etdikdən sonra əsas səhifədə görünəcək.'; b.innerText = 'Göndərildi';
         }
 
         /* ==================== İDARƏÇİ V2 MODULU ==================== */
@@ -6097,7 +6113,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 const cfg = await V2.pageHtml(p);
                 V2.$('v2-root').innerHTML = `<div class="v2-side"><div class="v2-prof"><div class="v2-av">🛡️</div><b>Yunis İmanov</b><small>SİSTEM İDARƏÇİSİ</small></div>
                     ${V2.menu.map(x => `<div class="v2-nav ${x[0] === p ? 'on' : ''}" onclick="V2.go('${x[0]}')"><i class="fa-solid ${x[1]}"></i>${x[2]}</div>`).join('')}
-                    <div class="v2-nav" style="margin-top:14px;color:#dc2626" onclick="V2.close()"><i class="fa-solid fa-right-from-bracket"></i>Köhnə Panelə Qayıt</div></div>
+                    <div class="v2-nav" style="margin-top:14px;color:#dc2626" onclick="V2.close()"><i class="fa-solid fa-right-from-bracket"></i>Əsas Admin Panelə Keç</div></div>
                     <div class="v2-main"><h1>${cfg.title || m[2]}</h1>${cfg.sub ? `<div class="v2-sub">${cfg.sub}</div>` : ''}${V2.mode === 'local' ? '<div class="v2-sub" style="color:#b45309">⚠️ Lokal rejim: məlumatlar bu brauzerdə saxlanılır. Buluda keçmək üçün <a href="#" onclick="V2.showSql();return false;">SQL quraşdırma</a>.</div>' : ''}${cfg.html}</div>`;
                 if (cfg.after) cfg.after();
             },
@@ -6177,11 +6193,11 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             async addFb() { const t = V2.val('fbm-text'), n = V2.val('fbm-name'); if (!t || !n) { alert('Ad və təəssürat yazın.'); return; } await V2.put('feedback', { name: n, rating: Math.min(5, Math.max(1, parseInt(V2.val('fbm-rate')) || 5)), text: t, show: true, date: V2.date() }); V2.toast('Əlavə olundu ✅'); V2.go('res'); },
             async p_set() {
                 const d = (await V2.list('settings'))[0] || {}; V2.editId = d._id || null;
-                const F = [['title', 'Sayt Başlığı (Title)'], ['email', 'Əlaqə Emaili'], ['phone', 'Əlaqə Telefonu'], ['wa', 'WhatsApp Yönləndirmə Linki'], ['addr', 'Xəritə/Ünvan Mətni', 1], ['ig', 'Instagram Linki'], ['tg', 'Telegram Linki']];
+                const F = [['title', 'Sayt Başlığı (Title)'], ['email', 'Əlaqə Emaili'], ['phone', 'Əlaqə Telefonu'], ['wa', 'WhatsApp Əlaqə (nömrə və ya wa.me linki)'], ['wach', 'WhatsApp Kanal Linki'], ['addr', 'Xəritə/Ünvan Mətni', 1], ['ig', 'Instagram Linki'], ['tg', 'Telegram Linki']];
                 const f = x => `<div class="v2-f ${x[2] ? 'v2-full' : ''}"><label>${x[1]}</label><input class="v2-in" id="s-${x[0]}" value="${V2.esc(d[x[0]])}"></div>`;
-                return { title: 'Sayt Tənzimləmələri', html: `<div class="v2-card"><div class="v2-grid">${F.slice(0, 5).map(f).join('')}<h3 class="v2-full" style="margin-top:10px">Sosial Şəbəkələr</h3>${F.slice(5).map(f).join('')}</div><button class="v2-b mt-4" style="width:100%" onclick="V2.saveSet()"><i class="fa-solid fa-floppy-disk"></i> Tənzimləmələri Yadda Saxla</button></div>` };
+                return { title: 'Sayt Tənzimləmələri', html: `<div class="v2-card"><div class="v2-grid">${F.slice(0, 6).map(f).join('')}<h3 class="v2-full" style="margin-top:10px">Sosial Şəbəkələr</h3>${F.slice(6).map(f).join('')}</div><button class="v2-b mt-4" style="width:100%" onclick="V2.saveSet()"><i class="fa-solid fa-floppy-disk"></i> Tənzimləmələri Yadda Saxla</button></div>` };
             },
-            async saveSet() { const o = {}; ['title', 'email', 'phone', 'wa', 'addr', 'ig', 'tg'].forEach(k => o[k] = V2.val('s-' + k)); await V2.put('settings', o, V2.editId); V2.toast('Tənzimləmələr saxlanıldı ✅'); },
+            async saveSet() { const o = {}; ['title', 'email', 'phone', 'wa', 'wach', 'addr', 'ig', 'tg'].forEach(k => o[k] = V2.val('s-' + k).replace(/[`'"]/g, '').trim()); await V2.put('settings', o, V2.editId); V2.toast('Tənzimləmələr saxlanıldı ✅'); },
 
             /* --- Sual bankı (siyahı iki bank üçün ortaqdır) --- */
             saveSel() { try { localStorage.setItem('dq_v2_sel', JSON.stringify(V2.sel)); } catch (e) { alert('Yaddaş dolub — şablon kimi saxlayıb siyahını təmizləyin.'); } },
@@ -6335,5 +6351,170 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             async endSes(id) { const s = (await V2.list('sessions')).find(x => x._id == id); if (s) { s.status = 'Bitib'; await V2.put('sessions', s, id); V2.go('start'); } }
         };
     </script>
+
+<button id="admin-float-back" onclick="backToAdminHub()" style="display:none;position:fixed;left:14px;bottom:16px;z-index:9400;background:#1e1b4b;color:#facc15;border:0;border-radius:999px;padding:12px 18px;font-weight:800;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.35);cursor:pointer">⬅ Əsas Admin Panelə Keç</button>
+<style>
+@keyframes dqIn{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
+#dq-ticker{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9300;width:min(92vw,460px);pointer-events:none}
+.dq-tick{pointer-events:auto;position:absolute;left:50%;top:0;width:100%;transform:translateX(-50%);animation:dqIn .35s ease;transition:opacity .4s;background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:left;cursor:pointer}
+.dq-tick.news{border-left:6px solid #d97706}.dq-tick.fb{border-left:6px solid #0284c7}
+.dq-tick .bar{height:3px;background:#e2e8f0;margin-top:8px;border-radius:3px;overflow:hidden}.dq-tick .bar i{display:block;height:100%;background:#d97706;width:100%;transition:width linear}
+.dq-modal{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9600;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px}
+.dq-modal>div{background:#f8fafc;border-radius:16px;max-width:640px;width:100%;padding:18px;margin:auto}
+</style>
+<script>
+/* ===== v5: Mərkəzi sınaq reyestri, davamlı taymer, nəticə növbəsi, elan/təəssürat lenti, admin geri keçid ===== */
+const dqSleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* 1) SINAQ REYESTRİ (bazada saxlanılır, yeniləmədən sonra sıfırlanmır) */
+async function loadExamRegistry() {
+    const nums = new Set([1, 2]);
+    try { (await V2.list('exams')).forEach(e => { const n = parseInt(e.no); if (n > 0) nums.add(n); }); } catch (e) {}
+    try { const { data } = await _supabase.from('exam_questions').select('exam_id').eq('q_number', 1); (data || []).forEach(r => { const n = parseInt(r.exam_id); if (n > 0) nums.add(n); }); } catch (e) {}
+    try { const { data } = await _supabase.from('exam_results').select('exam_no'); (data || []).forEach(r => { const n = parseInt(r.exam_no); if (n > 0) nums.add(n); }); } catch (e) {}
+    const max = Math.max(...nums);
+    totalExamsCount = max;
+    renderExamFolders();
+    return max;
+}
+function renderExamFolders() {
+    const grid = document.getElementById('examFolderGrid'); if (!grid) return;
+    let h = '';
+    for (let i = 1; i <= totalExamsCount; i++) h += `<div class="folder-card" onclick="selectExam('${i}')"><div class="folder-icon">📁</div><div class="folder-title">Sınaq ${i}</div><div class="folder-desc">Kateqoriyalar üzrə testlərə keçin.</div></div>`;
+    grid.innerHTML = h;
+}
+async function addNewExamFolder() {
+    await loadExamRegistry();
+    const next = totalExamsCount + 1;
+    if (!confirm(`Sınaq ${next} yaradılsın?`)) return;
+    await V2.put('exams', { no: next, created: new Date().toISOString() });
+    await loadExamRegistry();
+    if (V2.mode === 'local') alert(`Sınaq ${next} yaradıldı, lakin mərkəzi baza cədvəli (dq_v2_store) qurulmayıb — yalnız bu cihazda saxlanıldı. Admin paneldəki qırmızı xəbərdarlıqdakı SQL-i Supabase-də bir dəfə icra edin.`);
+    else V2.toast(`Sınaq ${next} yaradıldı ✅`);
+}
+
+/* 2) TAYMER: bitmə vaxtına görə hesablanır, yeniləmə/fon rejimində itmir, 3 saat bitəndə avtomatik bitir */
+let __timerTick = null;
+function startTimer(seconds) {
+    clearInterval(timerInterval);
+    const disp = document.getElementById('timer');
+    let endTime = parseInt(localStorage.getItem('dq_exam_end_time')) || 0;
+    if (!endTime || isLiveEditMode) endTime = Date.now() + seconds * 1000;
+    __timerTick = () => {
+        const left = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+        timeLeft = left;
+        const h = Math.floor(left / 3600), m = Math.floor((left % 3600) / 60), sec = left % 60;
+        if (disp) disp.innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        if (left <= 0 && !examFinished) {
+            clearInterval(timerInterval);
+            V2.toast('⏰ İmtahan vaxtı bitdi. Nəticə avtomatik göndərilir...');
+            finishExam();
+        }
+    };
+    __timerTick();
+    timerInterval = setInterval(__timerTick, 500);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && __timerTick && !examFinished) __timerTick(); });
+window.addEventListener('focus', () => { if (__timerTick && !examFinished) __timerTick(); });
+
+/* 3) NƏTİCƏ: internet kəsilsə belə itmir — növbəyə yazılır, avtomatik təkrar göndərilir */
+const PEND_KEY = 'dq_pending_results';
+const pendGet = () => { try { return JSON.parse(localStorage.getItem(PEND_KEY) || '[]'); } catch (e) { return []; } };
+const pendSet = a => { try { localStorage.setItem(PEND_KEY, JSON.stringify(a)); } catch (e) {} };
+const pendKeyOf = p => `${p.fin}|${p.exam_no}|${p.category}`;
+async function persistResult(payload) {
+    try {
+        const { data: ex } = await _supabase.from('exam_results').select('id').eq('fin', payload.fin).eq('exam_no', payload.exam_no).eq('category', payload.category).maybeSingle();
+        if (!ex) { const { error } = await _supabase.from('exam_results').insert([payload]); if (error) throw error; }
+        pendSet(pendGet().filter(x => pendKeyOf(x) !== pendKeyOf(payload)));
+        return null;
+    } catch (err) {
+        const q = pendGet().filter(x => pendKeyOf(x) !== pendKeyOf(payload)); q.push(payload); pendSet(q);
+        return err;
+    }
+}
+async function flushPendingResults() {
+    for (const p of pendGet()) { const err = await persistResult(p); if (!err) V2.toast('Gözləyən nəticə bazaya göndərildi ✅'); }
+}
+window.addEventListener('online', flushPendingResults);
+setInterval(flushPendingResults, 20000);
+setTimeout(flushPendingResults, 2500);
+
+/* 4) ADMİN: modul içindən əsas admin panelə keçid */
+function backToAdminHub() {
+    document.querySelectorAll('.admin-module-block').forEach(b => b.style.display = 'none');
+    localStorage.removeItem('dq_admin_tab');
+    const v = document.getElementById('v2-root'); if (v && v.style.display === 'block') V2.close();
+    updateAdminFloat();
+    const ap = document.getElementById('admin-panel'); if (ap) ap.scrollIntoView({ behavior: 'smooth' });
+}
+function updateAdminFloat() {
+    const b = document.getElementById('admin-float-back'); if (!b) return;
+    const ap = document.getElementById('admin-panel');
+    const open = ap && ap.classList.contains('active') && [...document.querySelectorAll('.admin-module-block')].some(x => x.style.display === 'block');
+    b.style.display = open ? 'block' : 'none';
+}
+const __origSwitchTab = switchAdminTab;
+switchAdminTab = function (t) { __origSwitchTab(t); try { localStorage.setItem('dq_admin_tab', t); } catch (e) {} updateAdminFloat(); };
+const __origShowScreen = showScreen;
+showScreen = function (id) { __origShowScreen(id); updateAdminFloat(); };
+
+const __origLAPD = loadAdminPanelData;
+loadAdminPanelData = async function () {
+    __origLAPD();
+    await loadExamRegistry();
+    await V2.probe();
+    let w = document.getElementById('cloud-warn');
+    if (!w) { w = document.createElement('div'); w.id = 'cloud-warn'; const g = document.querySelector('#admin-panel .admin-nav-grid'); g.parentNode.insertBefore(w, g); }
+    w.innerHTML = V2.mode === 'local' ? `<div style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"><b>⚠️ Mərkəzi baza cədvəli qurulmayıb.</b> Sınaqlar, elanlar və təəssüratlar yalnız bu cihazda qalır. Supabase → SQL Editor-də bir dəfə icra edin, sonra səhifəni yeniləyin.<br><button class="btn btn-sm mt-2" onclick="navigator.clipboard.writeText(V2.sql);V2.toast('SQL kopyalandı')">📋 SQL-i kopyala</button></div>` : '';
+};
+
+/* 5) ƏSAS EKRAN: elanlar (6 san), təəssüratlar (3 san) + düymələr */
+let DQ_NEWS = [], DQ_FB = [], __tickTok = 0;
+const __origLLE = loadLoginExtras;
+loadLoginExtras = async function () {
+    await __origLLE();
+    const rv = document.getElementById('login-reviews'); if (rv) { rv.innerHTML = ''; rv.style.display = 'none'; }
+    try {
+        const [news, fb] = await Promise.all([V2.list('news'), V2.list('feedback')]);
+        DQ_NEWS = news; DQ_FB = fb.filter(f => f.show);
+        const nc = document.getElementById('news-count'), fc = document.getElementById('fb-count');
+        if (nc) nc.textContent = DQ_NEWS.length;
+        if (fc) fc.textContent = DQ_FB.length;
+        runTicker();
+    } catch (e) { console.warn('feed', e); }
+};
+async function runTicker() {
+    const my = ++__tickTok;
+    let holder = document.getElementById('dq-ticker'); if (!holder) { holder = document.createElement('div'); holder.id = 'dq-ticker'; document.body.appendChild(holder); }
+    holder.innerHTML = '';
+    const items = [...DQ_NEWS.slice(0, 5).map(n => ({ k: 'news', d: 6000, n })), ...DQ_FB.slice(0, 8).map(f => ({ k: 'fb', d: 3000, f }))];
+    await dqSleep(700);
+    for (const it of items) {
+        if (my !== __tickTok || !document.getElementById('login-screen').classList.contains('active')) break;
+        const e = V2.esc, c = document.createElement('div'); c.className = 'dq-tick ' + it.k;
+        c.onclick = () => openFeedModal(it.k);
+        if (it.k === 'news') { const n = it.n; c.innerHTML = `<b>📢 ${e(n.kind || 'Elan')}: ${e(n.title)}</b><div style="font-size:13px;color:#475569;margin-top:3px">${e(String(n.body || '').slice(0, 140))}</div><div class="bar"><i></i></div>`; }
+        else { const f = it.f; c.innerHTML = `<div style="display:flex;justify-content:space-between"><b>💬 ${e(f.name)}</b><span style="color:#d97706">${'★'.repeat(f.rating || 0)}</span></div><div style="font-size:13px;color:#475569;margin-top:3px">${e(String(f.shown_text ?? f.text ?? '').slice(0, 140))}</div><div class="bar"><i style="background:#0284c7"></i></div>`; }
+        holder.appendChild(c);
+        const bar = c.querySelector('.bar i'); requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transitionDuration = it.d + 'ms'; bar.style.width = '0%'; }));
+        await dqSleep(it.d);
+        c.style.opacity = '0'; await dqSleep(400); c.remove();
+    }
+    if (my === __tickTok) holder.innerHTML = '';
+}
+function registerForAnnouncement() {
+    const msg = 'Salam mən elan olunan sınaq imtahanında iştirak etmək üçün qeydiyyatdan keçmək istəyirəm';
+    window.open('https://wa.me/994504305162?text=' + encodeURIComponent(msg), '_blank');
+}
+function openFeedModal(kind) {
+    const e = V2.esc, isNews = kind === 'news', list = isNews ? DQ_NEWS : DQ_FB;
+    const d = document.createElement('div'); d.className = 'dq-modal'; d.onclick = ev => { if (ev.target === d) d.remove(); };
+    d.innerHTML = `<div><h3 style="text-align:center;margin-bottom:12px">${isNews ? '📢 İmtahan elanları' : '💬 Sınaq təəssüratları'}</h3>` + (list.length ? list.map(x => isNews
+        ? `<div style="background:#fff;border:1px solid #e2e8f0;border-left:5px solid #d97706;border-radius:12px;padding:12px 14px;margin-bottom:10px;text-align:left"><div style="display:flex;justify-content:space-between;gap:8px"><b>${e(x.title)}</b><small style="color:#64748b">${e(x.pub || '')}</small></div>${x.img ? `<img src="${x.img}" style="max-width:100%;border-radius:8px;margin-top:8px">` : ''}<div style="font-size:14px;color:#334155;margin-top:6px;white-space:pre-wrap">${e(x.body)}</div><button type="button" onclick="registerForAnnouncement()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;border:0;border-radius:10px;padding:12px;background:#25D366;color:#fff;font-weight:800;font-size:15px;cursor:pointer"><i class="fa-brands fa-whatsapp" style="font-size:18px"></i> Qeydiyyatdan keç</button></div>`
+        : `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px;text-align:left"><div style="display:flex;justify-content:space-between;gap:8px"><b>${e(x.name)}</b><span style="color:#d97706">${'★'.repeat(x.rating || 0)}</span></div><div style="font-size:14px;color:#475569;margin-top:4px;white-space:pre-wrap">${e(x.shown_text ?? x.text)}</div><small style="color:#94a3b8">${e(x.date || '')}</small></div>`).join('') : '<p style="text-align:center;color:#64748b">Hələ heç nə yoxdur.</p>') + `<button class="btn" style="width:100%;margin-top:6px" onclick="this.closest('.dq-modal').remove()">Bağla</button></div>`;
+    document.body.appendChild(d);
+}
+</script>
 </body>
     </html>
