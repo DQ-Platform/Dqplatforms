@@ -990,6 +990,7 @@
     <div class="container" id="top">
         <!-- GİRİŞ HİSSƏSİ -->
         <div id="login-screen" class="screen text-center active">
+            <div class="dq-toprow"><button type="button" class="dq-back" onclick="DQ.back()"><i class="fa-solid fa-arrow-left"></i> Geri</button></div>
             <!-- Əlaqə keçidləri: ən yuxarıda -->
             <div id="login-links" style="margin:0 0 14px;display:none"></div>
 
@@ -1000,18 +1001,17 @@
                 </button>
             </div>
 
-            <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
-            <p class="mt-2 mb-4">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
-            <input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız">
-            <input type="text" id="user-fin" class="code-input token-field" placeholder="FIN Kod (Məs: 7ABC123)" maxlength="7">
-            <div style="display:flex; gap:10px; justify-content:center; align-items:stretch; max-width:400px; margin:0 auto; flex-wrap:wrap;">
-                <button class="btn" style="flex:1; min-width:140px;" onclick="proceedToExamSelect()">Davam Et</button>
-
-                <button type="button" class="btn" style="flex:1; min-width:140px; background-color:#25D366; color:#ffffff; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="registerViaWhatsApp()">
-                    <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Qeydiyyatdan Keç
-                </button>
+            <h2 class="dq-title">DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
+            <p class="dq-sub">Kabinetə daxil olmaq üçün məlumatlarınızı daxil edin.</p>
+            <div class="dq-form">
+                <label class="dq-field"><span>Ad və soyad</span><input type="text" id="user-name" class="code-input" placeholder="Ad və Soyadınız" autocomplete="name"></label>
+                <label class="dq-field"><span>FIN kod</span><input type="text" id="user-fin" class="code-input token-field" placeholder="Məs: 7ABC123" maxlength="7" autocapitalize="characters"></label>
+                <div class="dq-actions">
+                    <button type="button" class="btn dq-primary" onclick="proceedToExamSelect()"><i class="fa-solid fa-right-to-bracket"></i> Kabinetə daxil ol</button>
+                    <button type="button" class="btn dq-wa" onclick="registerViaWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Qeydiyyatdan Keç</button>
+                </div>
             </div>
-
+            <div class="dq-note"><i class="fa-solid fa-circle-info"></i><span>Fənn testləri kabinetə daxil olan hər kəs üçün açıqdır. Sınaqda iştirak üçün qeydiyyat tələb olunur.</span></div>
             <p id="error-msg" class="error-msg mt-2"></p>
 
             <div id="login-links-legacy" style="display:none"></div>
@@ -1021,15 +1021,18 @@
 
         <!-- SINAQ SEÇİM EKRANI -->
         <div id="exam-select-screen" class="screen text-center">
-            <h2>Qeydiyyatdan keçdiyim imtahanlar</h2>
-            <p class="mt-2 mb-3" style="color: #64748b; font-size: 14px;">İcazəniz olan sınaq imtahanlarının siyahısı:</p>
+            <div class="dq-toprow"><button type="button" class="dq-back" onclick="DQ.home()"><i class="fa-solid fa-arrow-left"></i> Geri</button><button type="button" class="dq-out" onclick="DQ.logout()"><i class="fa-solid fa-right-from-bracket"></i> Çıxış</button></div>
+            <div class="cab-card"><div class="cab-av" id="cab-av">?</div><div class="cab-meta"><b id="cab-name"></b><small id="cab-fin"></small></div><span id="cab-badge" class="cab-badge"></span></div>
+            <div class="cab-tests"><div><b>Fənn testləri</b><small>Kabinetə daxil olan hər kəs üçün açıqdır</small></div><button type="button" class="btn btn-success btn-sm" onclick="V3.showTests()">Testlərə keç</button></div>
+            <h3 class="cab-h">Sınaqlar</h3>
+            <p class="cab-p">Sınaqda iştirak üçün qeydiyyat tələb olunur.</p>
             
             <div id="registered-exams-list" style="display: flex; flex-direction: column; gap: 15px; max-width: 650px; margin: 0 auto 20px auto;">
                 <p>Yüklənir...</p>
             </div>
 
             <div class="mt-4">
-                <button class="btn btn-secondary btn-sm" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
+                <button class="btn btn-secondary btn-sm" onclick="DQ.home()">← Ana səhifəyə qayıt</button>
             </div>
         </div>
 
@@ -2818,21 +2821,55 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                     .select('*')
                     .eq('fin', finInput);
 
-                if (error || !allowedData || allowedData.length === 0) {
+                if (error) {
                     errorMsg.style.color = "var(--danger-red)";
-                    errorMsg.innerText = "Bu FİN kod üçün sınağa icazə verilməyib!";
+                    errorMsg.innerText = "Serverlə əlaqə qurulmadı. Bir az sonra yenidən cəhd edin.";
                     return;
                 }
 
                 currentStudentName = nameInput;
                 currentActiveFin = finInput;
+                DQ.saveCabinet({ name: nameInput, fin: finInput });
+                errorMsg.innerText = "";
 
-                showScreen("exam-select-screen");
-                await renderRegisteredExams();
+                if (DQ.pending === 'tests') { DQ.pending = null; V3.showTests(); return; }
+                DQ.openCabinet();
             } catch (err) {
                 errorMsg.style.color = "var(--danger-red)";
                 errorMsg.innerText = "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.";
             }
+        }
+
+        // Ad+FIN üzrə admin panelində verilmiş icazəni SƏRT (tam) uyğunluqla yoxlayır.
+        // Yalnız FIN üst-üstə düşmür — Ad da admin-in "allowed_students" cədvəlində yazdığı kimi tam eyni olmalıdır.
+        function dqNormName(s) {
+            return String(s || "").trim().replace(/\s+/g, " ");
+        }
+        function dqNameMatches(enteredName, storedName) {
+            return dqNormName(enteredName) === dqNormName(storedName);
+        }
+        // Cari istifadəçinin FIN-i üzrə bütün icazə qeydlərini gətirir, sonra Ad üzrə sərt filtr edir.
+        async function dqFetchNameMatchedPermissions() {
+            const { data: allowedData, error } = await _supabase
+                .from('allowed_students')
+                .select('*')
+                .eq('fin', currentActiveFin);
+
+            if (error || !allowedData) return { matched: [], anyForFin: false };
+
+            const matched = allowedData.filter(item => dqNameMatches(currentStudentName, item.student_name));
+            return { matched, anyForFin: allowedData.length > 0 };
+        }
+        // examId + category üçün cari istifadəçiyə (Ad+FIN tam uyğunluqla) icazə verilib-verilmədiyini yoxlayır.
+        async function dqIsAllowedForExam(examId, category) {
+            const { matched } = await dqFetchNameMatchedPermissions();
+            const cat = String(category || "").toUpperCase();
+            return matched.some(item => {
+                if (String(item.exam_no || 1) !== String(examId)) return false;
+                const cats = Array.isArray(item.categories) ? item.categories.map(c => String(c).toUpperCase())
+                    : item.categories ? [String(item.categories).toUpperCase()] : ['BA'];
+                return cats.includes(cat);
+            });
         }
 
         async function renderRegisteredExams() {
@@ -2840,10 +2877,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             container.innerHTML = "<p>Sınaqlar yüklənir...</p>";
             await loadExamRegistry();
 
-            const { data: allowedData } = await _supabase
-                .from('allowed_students')
-                .select('*')
-                .eq('fin', currentActiveFin);
+            const { matched: allowedData, anyForFin } = await dqFetchNameMatchedPermissions();
 
             const { data: results } = await _supabase
                 .from('exam_results')
@@ -2876,7 +2910,12 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 });
             }
 
-            let html = "";
+            const hasReg = !!(allowedData && allowedData.length);
+            DQ.setReg(hasReg);
+            // Fin bazada var, amma ad tam uyğun gəlmirsə (FIN başqasına aiddir), ayrıca xəbərdarlıq göstəririk.
+            let html = hasReg ? "" : anyForFin
+                ? `<div class="dq-warn"><i class="fa-solid fa-triangle-exclamation"></i><div><b>Ad və FIN uyğun gəlmir</b><span>Bu FIN kodu üçün qeydiyyatda olan ad fərqlidir. Zəhmət olmasa adınızı admin tərəfindən qeyd olunduğu kimi (böyük/kiçik hərflərə diqqət edərək) tam dəqiq daxil edin. Fənn testlərindən yenə sərbəst istifadə edə bilərsiniz.</span></div></div>`
+                : `<div class="dq-warn"><i class="fa-solid fa-lock"></i><div><b>Sınaqlar üçün qeydiyyat lazımdır</b><span>Fənn testlərindən sərbəst istifadə edə bilərsiniz. Sınaqda iştirak üçün aşağıdakı düymələrlə qeydiyyat sorğusu göndərin.</span></div></div>`;
             let visibleExamsCount = 0;
 
             for (let i = 1; i <= totalExamsCount; i++) {
@@ -2953,6 +2992,15 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             userGroup = category;
 
             if (!isLiveEditMode) {
+                // Təhlükəsizlik: siyahıda düymə göstərilsə belə, faktiki icazəni Ad+FIN üzrə sərt yoxlayırıq
+                // ki, kimsə brauzer konsolundan birbaşa çağırışla icazəsiz sınağa girə bilməsin.
+                const allowed = await dqIsAllowedForExam(examId, category);
+                if (!allowed) {
+                    alert(`Bu sınağa (Sınaq ${examId}, ${category}) iştirak icazəniz yoxdur. Admin tərəfindən ad, FIN və kateqoriyanız təsdiqlənməyib.`);
+                    renderRegisteredExams();
+                    return;
+                }
+
                 const { data: existingRes } = await _supabase
                     .from('exam_results')
                     .select('id')
@@ -6904,7 +6952,7 @@ const V3 = {
   go(id) {
     const it = V3.D.items[id]; if (!it) return; const a = it.a || 'none';
     if (/^https?:/.test(a)) return void window.open(a, '_blank');
-    ({ exam: () => showScreen('login-screen'), reg: () => registerViaWhatsApp(), tests: () => V3.showTests(), news: () => openFeedModal('news'), home: () => { showScreen('v3-home'); scrollTo(0, 0); }, out: () => goHome() })[a]?.();
+    ({ exam: () => DQ.openCabinet(), reg: () => registerViaWhatsApp(), tests: () => V3.showTests(), news: () => openFeedModal('news'), home: () => { showScreen('v3-home'); scrollTo(0, 0); }, out: () => DQ.logout() })[a]?.();
   },
   render() {
     const D = V3.D, T = D.txt, e = V3.esc, g = k => (D.groups[k] || []).map(id => [id, D.items[id]]).filter(x => x[1] && !x[1].h);
@@ -6919,18 +6967,15 @@ const V3 = {
       <div class="v3-sv"><h2>${e(T.svcT)}</h2><div class="v3-cards">${g('svc').map(x => `<div class="v3-cd" onclick="V3.go('${x[0]}')"><b>${e(x[1].t)}</b><small>${e(x[1].s || '')}</small></div>`).join('')}</div></div>
       <div class="v3-ft">${e(T.foot1).replace(/Developed/, 'Developed <span onclick="openAdminLogin()">by</span>')} ${e(T.foot2)}<div style="margin-top:16px;font-size:14px"><a style="color:#22c55e;cursor:pointer" onclick="V3.info('terms')">İstifadə Şərtləri</a> &nbsp;|&nbsp; <a style="color:#22c55e;cursor:pointer" onclick="V3.info('priv')">Məxfilik Siyasəti</a></div></div>`;
   },
-  info(k) {
-    const T = { terms: ['İstifadə Şərtləri', 'Bu istifadə şərtləri platformadan istifadə edən şəxslər üçün keçərlidir.'], priv: ['Məxfilik Siyasəti', 'İstifadəçilərin şəxsi məlumatlarının qorunması prinsiplərini müəyyən edir.'] }[k];
-    const m = document.createElement('div'); m.className = 'v3-md'; m.onclick = ev => { if (ev.target === m) m.remove(); };
-    m.innerHTML = `<div><h3 style="text-align:left">${T[0]}</h3><p style="margin:10px 0 14px">${T[1]}</p><button class="v3-bt o" onclick="this.closest('.v3-md').remove()">Bağla</button></div>`; document.body.appendChild(m);
-  },
+  info(k) { DQ.doc(k); },
   /* ---------- Testlər (istifadəçi) ---------- */
   async loadTests() { V3.tests = await V2.list('v3tests'); },
   async showTests() {
+    if (!DQ.cabinet()) { DQ.pending = 'tests'; showScreen('login-screen'); DQ.msg('Fənn testlərində iştirak üçün əvvəlcə kabinetə daxil olun.'); return; }
     showScreen('v3-tests'); const el = V3.$('v3-tests'); el.innerHTML = '<div class="v3-t">Yüklənir...</div>'; await V3.loadTests();
     const by = {}; V3.tests.forEach((t, i) => (by[t.subject] = by[t.subject] || []).push([t, i]));
     el.innerHTML = `<div class="v3-t"><h2>Fənn Testləri</h2>${Object.keys(by).length ? Object.keys(by).map(s => `<h3 style="text-align:left;margin:18px 0 8px">${V3.esc(s)}</h3><div class="v3-cards">${by[s].map(([t, i]) => `<div class="v3-cd" onclick="V3.openTest(${i})"><b>${V3.esc(t.title)}</b><small>${t.ans.length} sual</small></div>`).join('')}</div>`).join('') : '<p style="margin:20px 0">Hələ test əlavə edilməyib.</p>'}
-      <div class="v3-row"><a class="v3-b v3-d" onclick="showScreen('v3-home')">Ana səhifəyə qayıt</a></div></div>`;
+      <div class="v3-row"><a class="v3-b v3-g" onclick="DQ.openCabinet()">← Kabinetə qayıt</a><a class="v3-b v3-d" onclick="showScreen('v3-home')">Ana səhifə</a></div></div>`;
   },
   openTest(i) {
     const t = V3.tests[i]; V3.cur = { t, a: [] };
@@ -7045,7 +7090,7 @@ const V3 = {
 /* qoşulma */
 (function () {
   const os = showScreen;
-  showScreen = function (id) { os(id); document.body.classList.toggle('v3on', id.startsWith('v3-')); if (id.startsWith('v3-')) localStorage.removeItem('dq_active_screen'); };
+  showScreen = function (id) { if (typeof DQ !== 'undefined') DQ.track(id); os(id); document.body.classList.toggle('v3on', id.startsWith('v3-')); if (id.startsWith('v3-')) localStorage.removeItem('dq_active_screen'); };
   const og = goHome; goHome = function () { og(); showScreen('v3-home'); };
   V3.load().then(() => setTimeout(() => { const sv = localStorage.getItem('dq_active_screen'); if (!sv || ['login-screen', 'exam-select-screen'].includes(sv) || sv.startsWith('v3-')) showScreen('v3-home'); }, 250));
 })();
@@ -7314,6 +7359,113 @@ const YQ2 = {
   const oc = YQ.state; YQ.state = function (r) { if (r.status === 'approved') localStorage.setItem(YQ2.SK, r.key); return oc.call(YQ, r); };
   if (V3.D) V3.render();
 })();
+</script>
+
+<style>
+/* ===== DQ v10: giriş, kabinet, sənəd pəncərəsi ===== */
+.dq-toprow{display:flex;justify-content:space-between;align-items:center;margin:0 0 14px}
+.dq-back,.dq-out{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1.5px solid #cbd5e1;background:#fff;color:#0f172a;font:600 14px inherit;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.dq-back:hover{background:#f1f5f9;border-color:#94a3b8}
+.dq-out{color:#b91c1c;border-color:#fecaca}.dq-out:hover{background:#fef2f2}
+.dq-back:focus-visible,.dq-out:focus-visible{outline:3px solid #00c853;outline-offset:2px}
+.dq-title{font-size:clamp(20px,4.6vw,26px);margin:10px 0 6px;line-height:1.3}
+.dq-sub{color:#64748b;font-size:15px;margin:0 0 20px}
+.dq-form{max-width:440px;margin:0 auto;text-align:left}
+.dq-field{display:block;margin-bottom:14px}
+.dq-field>span{display:block;font-size:13px;font-weight:600;color:#334155;margin:0 0 6px 2px}
+.dq-form .code-input{width:100%;box-sizing:border-box;text-align:left;margin:0;padding:13px 14px;border:1.5px solid #cbd5e1;border-radius:12px;background:#f8fafc;font-size:16px}
+.dq-form .code-input:focus{outline:none;border-color:#00c853;background:#fff;box-shadow:0 0 0 4px rgba(0,200,83,.15)}
+.dq-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.dq-actions .btn{flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 14px;border-radius:12px}
+.dq-actions .dq-primary{background:#0f172a;color:#fff}
+.dq-actions .dq-wa{background:#25D366;color:#fff}
+.dq-note{display:flex;gap:10px;align-items:flex-start;max-width:440px;margin:18px auto 0;padding:12px 14px;border-radius:12px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:13.5px;text-align:left;line-height:1.5}
+.dq-note i{margin-top:2px}
+.cab-card{display:flex;align-items:center;gap:14px;text-align:left;padding:16px;border-radius:16px;background:#0f172a;color:#fff;margin:0 auto 14px;max-width:650px}
+.cab-av{width:46px;height:46px;border-radius:50%;background:#00c853;display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
+.cab-meta{flex:1;min-width:0}.cab-meta b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cab-meta small{color:#94a3b8;font-size:13px}
+.cab-badge{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:#334155;color:#e2e8f0;white-space:nowrap}
+.cab-badge.ok{background:#00c853;color:#052e16}
+.cab-tests{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;text-align:left;max-width:650px;margin:0 auto 18px;padding:14px 16px;border:1.5px solid #e2e8f0;border-radius:16px;background:#fff}
+.cab-tests b{display:block;font-size:16px;color:#0f172a}.cab-tests small{color:#64748b;font-size:13px}
+.cab-h{margin:8px 0 4px}.cab-p{color:#64748b;font-size:14px;margin:0 0 14px}
+.dq-warn{display:flex;gap:12px;text-align:left;padding:14px 16px;border-radius:14px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:14px;line-height:1.5}
+.dq-warn b{display:block;margin-bottom:2px}.dq-warn i{margin-top:3px}
+.dq-mdl{position:fixed;inset:0;z-index:100001;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:14px}
+.dq-doc{background:#fff;border-radius:18px;width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.dq-doc header{padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dq-doc header h3{margin:0;text-align:left;font-size:19px}
+.dq-doc header small{color:#64748b;font-size:12.5px;display:block;margin-top:2px}
+.dq-doc .x{border:0;background:#f1f5f9;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer}
+.dq-doc .bd{padding:6px 22px 18px;overflow:auto;text-align:left;font-size:14.5px;line-height:1.65;color:#334155}
+.dq-doc .bd h4{text-align:left;margin:18px 0 4px;font-size:15.5px;color:#0f172a}
+.dq-doc .bd p{margin:0 0 6px}.dq-doc .bd ul{margin:4px 0 6px 18px;padding:0}
+.dq-doc footer{padding:12px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end}
+.dq-doc footer button{background:#0f172a;color:#fff;border:0;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer}
+</style>
+
+<script>
+/* ===== DQ v10: kabinet sessiyası, naviqasiya, hüquqi sənədlər ===== */
+var DQ = {
+  hist: [], cur: null, pending: null, skip: false,
+  cabinet() { try { return JSON.parse(localStorage.getItem('dq_cabinet') || 'null'); } catch (e) { return null; } },
+  saveCabinet(c) { try { localStorage.setItem('dq_cabinet', JSON.stringify(c)); } catch (e) {} },
+  msg(t, ok) { const m = document.getElementById('error-msg'); if (m) { m.style.color = ok ? '#0284c7' : '#ef4444'; m.innerText = t; } },
+  track(id) {
+    if (DQ.skip) { DQ.cur = id; return; }
+    if (id === 'v3-home') DQ.hist = [];
+    else if (DQ.cur && DQ.cur !== id) DQ.hist = DQ.hist.concat(DQ.cur).slice(-15);
+    DQ.cur = id;
+  },
+  back() {
+    let p; const bad = ['login-screen', 'exam-screen', 'result-screen', 'admin-panel'];
+    do { p = DQ.hist.pop(); } while (p && bad.includes(p));
+    DQ.skip = true; showScreen(p || 'v3-home'); DQ.skip = false; scrollTo(0, 0);
+  },
+  home() { showScreen('v3-home'); scrollTo(0, 0); },
+  openCabinet() {
+    const c = DQ.cabinet();
+    if (!c) { DQ.pending = null; showScreen('login-screen'); return; }
+    currentStudentName = c.name; currentActiveFin = c.fin;
+    const n = document.getElementById('cab-name'), f = document.getElementById('cab-fin'), a = document.getElementById('cab-av');
+    n.textContent = c.name; f.textContent = 'FIN: ' + c.fin; a.textContent = (c.name.trim()[0] || '?').toUpperCase();
+    DQ.setReg(null); showScreen('exam-select-screen'); scrollTo(0, 0); renderRegisteredExams();
+  },
+  setReg(v) {
+    const b = document.getElementById('cab-badge'); if (!b) return;
+    b.className = 'cab-badge' + (v ? ' ok' : ''); b.textContent = v === null ? 'Yoxlanılır…' : v ? 'Qeydiyyatlı' : 'Qeydiyyat yoxdur';
+  },
+  logout() {
+    try { localStorage.removeItem('dq_cabinet'); } catch (e) {}
+    DQ.pending = null; goHome();
+  },
+  doc(k) {
+    const T = (V3.D && V3.D.txt) || {}, mail = V3.esc(T.email || 'Ys.imanoff@gmail.com'), tel = V3.esc(T.phone || '+994 50 667 15 57');
+    const D = {
+      terms: ['İstifadə Şərtləri', `
+        <h4>1. Ümumi müddəalar</h4><p>DQ Platform Dövlət Qulluğuna hazırlaşan şəxslər üçün sınaq imtahanları, fənn testləri və PDF materiallar təqdim edən onlayn hazırlıq platformasıdır. Platformadan istifadə bu şərtlərlə razılaşmaq deməkdir.</p>
+        <h4>2. Kabinet və qeydiyyat</h4><ul><li>Kabinetə ad, soyad və FIN kod ilə daxil olunur.</li><li>Fənn testləri kabinetə daxil olan bütün istifadəçilər üçün açıqdır.</li><li>Sınaq imtahanlarında iştirak üçün qeydiyyat tələb olunur. Qeydiyyat WhatsApp vasitəsilə sorğu göndərməklə həyata keçirilir və administrator tərəfindən təsdiqlənir.</li><li>Sınağa icazə imtahan nömrəsi və kateqoriya (BA, BB, AC) üzrə verilir.</li></ul>
+        <h4>3. Sınaqların keçirilməsi</h4><ul><li>Hər sınaq kateqoriyasında bir dəfə iştirak etmək mümkündür.</li><li>İmtahan müəyyən vaxt ərzində keçirilir, vaxt bitdikdə cavablar avtomatik təqdim olunur.</li><li>Nəticələr hazırlıq xarakteri daşıyır və rəsmi imtahanda eyni nəticəni zəmanət etmir.</li></ul>
+        <h4>4. İstifadəçinin öhdəlikləri</h4><ul><li>Yalnız özünüzə aid, düzgün ad və FIN kod məlumatlarını daxil edin.</li><li>Başqasının adından daxil olmaq və ya imtahanı başqasına həll etdirmək qadağandır.</li><li>Sual, test və materialların surətinin çıxarılması, yayılması və ticari məqsədlə istifadəsi icazəsiz qadağandır.</li><li>Platformanın işinə müdaxilə etmək və təhlükəsizlik tədbirlərini keçməyə çalışmaq qadağandır.</li></ul>
+        <h4>5. Əqli mülkiyyət</h4><p>Platformanın dizaynı, sualları, testləri və materialları DQ Platform-a məxsusdur və müəllif hüquqları ilə qorunur.</p>
+        <h4>6. Məsuliyyətin məhdudlaşdırılması</h4><p>DQ Platform müstəqil hazırlıq xidmətidir və dövlət qurumu deyil. Texniki nasazlıq, internet bağlantısı problemi və ya üçüncü tərəf xidmətlərindəki fasilələr nəticəsində yarana biləcək çətinliklərə görə məsuliyyət daşımır. Platformanı və bu şərtləri əvvəlcədən xəbərdarlıq etmədən yeniləmək hüququnu saxlayır.</p>
+        <h4>7. Əlaqə</h4><p>Suallar üçün: ${mail} · ${tel}</p>`],
+      priv: ['Məxfilik Siyasəti', `
+        <h4>1. Hansı məlumatları toplayırıq</h4><ul><li>Ad, soyad və FIN kod.</li><li>Sınaqlarda verdiyiniz cavablar, topladığınız bal və imtahan tarixi.</li><li>Fənn testlərində işlətdiyiniz cavablar yalnız cihazınızda yoxlanılır.</li><li>Könüllü olaraq yazdığınız rəy və təəssüratlar.</li></ul>
+        <h4>2. Məlumatlardan necə istifadə olunur</h4><ul><li>Kabinetə girişi və sınağa icazəni yoxlamaq üçün.</li><li>Nəticələri hesablamaq, cavab kartını və qrafik təhlili göstərmək üçün.</li><li>Platformanın işini və sınaq suallarının keyfiyyətini yaxşılaşdırmaq üçün.</li></ul>
+        <h4>3. Saxlanma və təhlükəsizlik</h4><p>Qeydiyyat və nəticə məlumatları təhlükəsiz bulud verilənlər bazasında saxlanılır. Giriş sessiyası cihazınızın brauzerində (localStorage) yadda qalır və "Çıxış" düyməsi ilə silinir. Ümumi kompüterdən istifadə etdikdən sonra mütləq çıxış edin.</p>
+        <h4>4. Üçüncü şəxslərlə paylaşma</h4><p>Şəxsi məlumatlarınız satılmır və reklam məqsədilə üçüncü şəxslərə verilmir. Yalnız qanunvericiliyin tələb etdiyi hallarda səlahiyyətli orqanlara təqdim edilə bilər.</p>
+        <h4>5. Sizin hüquqlarınız</h4><p>Məlumatlarınıza baxmaq, düzəliş etdirmək və ya silinməsini tələb etmək üçün ${mail} ünvanına yaza bilərsiniz.</p>
+        <h4>6. Xarici xidmətlər</h4><p>WhatsApp, Telegram, Instagram və Facebook keçidləri üçüncü tərəf xidmətlərinə aparır. Onların məxfilik qaydaları öz sahibləri tərəfindən müəyyən olunur.</p>
+        <h4>7. Əlaqə</h4><p>${mail} · ${tel}</p>`]
+    }[k];
+    if (!D) return;
+    const m = document.createElement('div'); m.className = 'dq-mdl'; m.onclick = ev => { if (ev.target === m) m.remove(); };
+    m.innerHTML = `<div class="dq-doc" role="dialog" aria-modal="true"><header><div><h3>${D[0]}</h3><small>DQ Platform · Son yenilənmə: 2026</small></div><button class="x" aria-label="Bağla" onclick="this.closest('.dq-mdl').remove()">✕</button></header><div class="bd">${D[1]}</div><footer><button onclick="this.closest('.dq-mdl').remove()">Bağla</button></footer></div>`;
+    document.body.appendChild(m);
+  }
+};
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.target.id === 'user-name' || e.target.id === 'user-fin')) proceedToExamSelect(); });
 </script>
 </body>
     </html>
