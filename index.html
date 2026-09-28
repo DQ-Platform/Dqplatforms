@@ -1088,7 +1088,7 @@
             </div>
 
             <div class="mt-4" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn" style="flex: 1;" id="btn-review-questions" onclick="backToReviewQuestions()">🔍 Suallara Baxış</button>
+                <button class="btn" style="flex: 1;" id="btn-review-questions" onclick="backToReviewQuestions()"><i class="fa-solid fa-rotate-left" style="margin-right:6px;"></i>Suallara qayıt (Baxış)</button>
                 <button class="btn btn-success" style="flex: 1;" onclick="goHome()">🏠 Əsas Səhifəyə Qayıt</button>
             </div>
         </div>
@@ -3467,6 +3467,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
 
             showScreen("result-screen");
             initFeedbackBox(!isLiveEditMode, totalScore, userGroup);
+            updateReviewButtonVisibility();
 
             if (!isLiveEditMode) {
                 const { error: saveError } = await _supabase.from('exam_results').insert([{
@@ -3605,14 +3606,35 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             container.innerHTML = html;
         }
 
-        function backToReviewQuestions() {
-            isReviewMode = true;
-            examFinished = true;
+        /* ==================== YENİLİK: "SUALLARA QAYIT (BAXIŞ)" — YALNIZ 1 DƏFƏ ====================
+           Qayda: iştirakçı bu düyməyə hər nəticə üçün (FİN + sınaq + kateqoriya) cəmi 1 dəfə daxil ola bilər
+           və orada yalnız SƏHV cavabladığı suallar göstərilir. İstifadə olunduqdan sonra düymə tamamilə
+           gizlənir, yalnız cavab kartı (nəticə cədvəli) qalır.
+           Yadda saxlama: brauzerdə (localStorage) + bazada (exam_results.review_used sütunu varsa). */
+        function getReviewUsageKey() {
+            return `dq_review_used:${currentActiveFin}:${selectedExamId}:${userGroup}`;
+        }
 
-            /* YENİLİK: İştirakçı "Suallara Baxış"a daxil olanda YALNIZ öz SƏHV cavabladığı
-               sualları görsün — bütün suallar deyil. Cavabsız qoyulmuş və düzgün cavablanmış
-               suallar bu siyahıya daxil edilmir. */
-            reviewFilteredQuestions = allQuestions.filter(q => {
+        function isReviewAlreadyUsed() {
+            try { return localStorage.getItem(getReviewUsageKey()) === "1"; } catch (e) { return false; }
+        }
+
+        async function markReviewAsUsed() {
+            try { localStorage.setItem(getReviewUsageKey(), "1"); } catch (e) { /* ignore */ }
+            if (isLiveEditMode) return;
+            try {
+                /* Sütun bazada yoxdursa xəta sakitcə nəzərə alınmır (localStorage qorunması qalır). */
+                await _supabase.from('exam_results')
+                    .update({ review_used: true })
+                    .eq('fin', currentActiveFin)
+                    .eq('exam_no', selectedExamId)
+                    .eq('category', userGroup);
+            } catch (e) { /* ignore */ }
+        }
+
+        /* İştirakçının SƏHV cavabladığı suallar (cavabsız və düzgün cavablar daxil deyil). */
+        function getWrongAnsweredQuestions() {
+            return allQuestions.filter(q => {
                 const qNum = q.id;
                 const userAns = userAnswers[qNum];
                 if (userAns === undefined || userAns === "") return false;
@@ -3625,6 +3647,40 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                 }
                 return !isCorrect;
             });
+        }
+
+        /* Düymə yalnız: (1) əvvəl istifadə olunmayıbsa VƏ (2) səhv cavablanan sual varsa görünür. */
+        function updateReviewButtonVisibility() {
+            const btn = document.getElementById("btn-review-questions");
+            if (!btn) return;
+            const canReview = !isReviewAlreadyUsed() && getWrongAnsweredQuestions().length > 0;
+            btn.style.display = canReview ? "" : "none";
+        }
+
+        function backToReviewQuestions() {
+            /* YENİLİK: Yalnız 1 dəfə icazə — təkrar daxil olmaq bloklanır. */
+            if (isReviewAlreadyUsed()) {
+                alert("Suallara baxış hüququnuz artıq istifadə olunub. Yalnız cavab kartına baxa bilərsiniz.");
+                updateReviewButtonVisibility();
+                return;
+            }
+            if (getWrongAnsweredQuestions().length === 0) {
+                alert("Səhv cavablanan sual yoxdur.");
+                updateReviewButtonVisibility();
+                return;
+            }
+            if (!confirm("Diqqət! Suallara baxış yalnız 1 dəfə mümkündür və burada yalnız səhv cavab verdiyiniz suallar göstəriləcək. Davam etmək istəyirsiniz?")) {
+                return;
+            }
+            markReviewAsUsed();
+
+            isReviewMode = true;
+            examFinished = true;
+
+            /* YENİLİK: İştirakçı "Suallara Baxış"a daxil olanda YALNIZ öz SƏHV cavabladığı
+               sualları görsün — bütün suallar deyil. Cavabsız qoyulmuş və düzgün cavablanmış
+               suallar bu siyahıya daxil edilmir. */
+            reviewFilteredQuestions = getWrongAnsweredQuestions();
 
             showScreen("exam-screen");
             document.getElementById("review-banner").style.display = "block";
@@ -3749,7 +3805,14 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
 
                     /* YENİLİK: Bu, tarixçədən (2-ci dəfə) daxil olunan baxışdır — "Suallara Baxış"
                        düyməsi basılanda tam sual rejimi əvəzinə qısa məzmunlu siyahı göstəriləcək. */
-                    isHistoryReview = true;
+                    /* Yenilənmiş qayda: baxış hüququ 1 dəfədir və həmişə tam (yalnız səhv suallar) rejimdədir,
+                       ona görə qısa siyahı rejimi (isHistoryReview) artıq aktiv edilmir. */
+                    isHistoryReview = false;
+
+                    /* Baza tərəfində baxış artıq istifadə olunubsa, bu cihazda da bloklanır. */
+                    if (res.review_used === true) {
+                        try { localStorage.setItem(getReviewUsageKey(), "1"); } catch (e) { /* ignore */ }
+                    }
 
                     /* YENİLİK: "Cavab kartını gör" düyməsi artıq sual-sual baxış rejiminə deyil,
                        birbaşa yekun nəticə ekranına (result-screen) yönləndirir — 2ci şəkildəki kimi. */
@@ -3770,6 +3833,8 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
                     renderDetailedResultTables();
 
                     showScreen("result-screen");
+                    initFeedbackBox(false);
+                    updateReviewButtonVisibility();
                 } else {
                     alert("Bu sınağa aid sual məlumatları sistemdən silinib.");
                 }
