@@ -2,7 +2,7 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="author" content="Yunis İmanov">
     <meta name="google-site-verification" content="googleb1b3a92566520cae" />
     <title>DQ Platform - Dövlət Qulluğu Sınaq Sistemi</title>
@@ -398,7 +398,7 @@
         .secret-admin-trigger { cursor: pointer; text-decoration: none; color: inherit; }
 
         /* Giriş ekranı: elanlar (sol yuxarı) və təəssüratlar (altbilgi, sağ) düymələri */
-        .login-topbar { display: none; justify-content: flex-start; margin-bottom: 14px; }
+        .login-topbar { display: none; justify-content: flex-end; margin-bottom: 14px; }
         .footer-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
         .footer-bar .footer-text { flex: 1 1 auto; text-align: center; }
         .footer-bar .feed-btn { display: none; margin-left: auto; }
@@ -932,21 +932,73 @@
         .v2-mob{display:none}
         @media(max-width:820px){.v2-side{position:static;width:auto;display:flex;overflow-x:auto;gap:6px;padding:10px;border-right:0;border-bottom:1px solid #e7e5e0}.v2-prof{display:none}.v2-nav{white-space:nowrap;margin:0}#v2-root{overflow-y:auto}.v2-main{position:static;padding:18px 14px 60px}.v2-grid{grid-template-columns:1fr}.v2-mob{display:inline-block}}
     </style>
+
+    <style id="dq-responsive-v7">
+        /* ===== v7: Universal uyğunlaşma (telefon / planşet / kompyuter) ===== */
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-behavior: smooth; }
+        body { padding: max(20px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); min-height: 100vh; overflow-wrap: anywhere; }
+        img, canvas, video, svg { max-width: 100%; }
+        button, .btn, .feed-btn, input, select, textarea { font-family: inherit; touch-action: manipulation; }
+        .code-input, .select-control, .form-control { font-size: max(16px, 1em); } /* iOS-da avtomatik böyüdülməsin */
+
+        /* Giriş ekranı */
+        #login-screen { max-width: 760px; margin: 0 auto; }
+        #login-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        #login-links > a { margin: 0 !important; white-space: nowrap; }
+        #login-links > div { flex: 0 0 100%; }
+        .login-topbar { width: 100%; }
+
+        /* Alt hissə: yazı dəqiq mərkəzdə, düymə sağda */
+        .footer-bar { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px 12px; }
+        .footer-bar .footer-text { grid-column: 2; grid-row: 1; text-align: center; justify-self: center; flex: none; white-space: nowrap; }
+        .footer-bar .feed-btn { grid-column: 3; grid-row: 1; justify-self: end; margin-left: 0; }
+
+        @media (max-width: 720px) {
+            .footer-bar { grid-template-columns: 1fr; justify-items: center; }
+            .footer-bar .footer-text { grid-column: 1; grid-row: 1; width: 100%; white-space: normal; text-align: center; }
+            .footer-bar .feed-btn { grid-column: 1; grid-row: 2; justify-self: end; }
+        }
+        @media (max-width: 600px) {
+            body { padding-left: 6px; padding-right: 6px; }
+            .container { padding: 16px 14px; }
+            h2 { font-size: 20px; line-height: 1.3; }
+            #login-links > a { font-size: 12px !important; padding: 7px 11px !important; }
+            .footer-text { font-size: 13px; }
+        }
+        @media (max-width: 380px) {
+            .container { padding: 14px 10px; }
+            h2 { font-size: 18px; }
+            #login-links > a { white-space: normal; }
+        }
+        @media (min-width: 1024px) {
+            body { padding-top: 32px; }
+            .container { padding: 32px 36px; }
+        }
+        @media (hover: none) { .btn:hover, .feed-btn:hover { transform: none; } }
+        @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+        /* Modal pəncərələr və elan kartı */
+        .dq-modal { padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+        .dq-modal > div { max-height: none; }
+        #dq-ticker { top: max(14px, env(safe-area-inset-top)); }
+        @media (min-width: 900px) { .dq-modal > div { max-width: 680px; } .dq-ann-hd { height: 140px; } }
+        @media (max-width: 420px) { .dq-ann-bd h4 { font-size: 16px; } .dq-ab { font-size: 14px; padding: 12px 10px; } .dq-logo span { font-size: 17px; } }
+    </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div class="container" id="top">
         <!-- GİRİŞ HİSSƏSİ -->
         <div id="login-screen" class="screen text-center active">
-            <!-- Sol yuxarı künc: İmtahan elanları -->
+            <!-- Əlaqə keçidləri: ən yuxarıda -->
+            <div id="login-links" style="margin:0 0 14px;display:none"></div>
+
+            <!-- Elan düyməsi: keçidlərin altında, sağda -->
             <div class="login-topbar">
                 <button type="button" id="btn-open-news" class="feed-btn feed-btn-news" onclick="openFeedModal('news')">
                     <i class="fa-solid fa-bullhorn"></i> İmtahan elanları (<span id="news-count">0</span>)
                 </button>
             </div>
-
-            <!-- Əlaqə keçidləri: başlığın üstündə -->
-            <div id="login-links" style="margin:0 0 14px;display:none"></div>
 
             <h2>DQ Platform - Dövlət Qulluğu Sınaq İmtahanı</h2>
             <p class="mt-2 mb-4">Zəhmət olmasa məlumatlarınızı daxil edin:</p>
@@ -1131,6 +1183,8 @@
             <!-- ADMİN NAVİQASİYASI -->
             <div class="admin-nav-grid">
                 <div class="admin-nav-card" onclick="switchAdminTab('suallar')"><span class="icon">📝</span> Suallar Modulu</div>
+                <div class="admin-nav-card" onclick="YX.open()" style="background:#b45309;color:#fff"><span class="icon">🔍</span> Yoxlama Rejimi</div>
+                <div class="admin-nav-card" onclick="YQ.openAdmin()" style="background:#0369a1;color:#fff"><span class="icon">✅</span> Təsdiq, PDF & Elan</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('sualbanki')"><span class="icon">📄</span> Sual Bankı (PDF & OCR)</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('sualbankiv2')"><span class="icon">🧩</span> Məntiq Sual Bankı (Crop V2)</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('cropgen')"><span class="icon">🖼️</span> Universal Kəsmə Alətı</div>
@@ -1139,6 +1193,7 @@
                 <div class="admin-nav-card" onclick="switchAdminTab('copypaste')"><span class="icon">📋</span> Copy / Paste Sual Daxil Et</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('bq')"><span class="icon">🗂️</span> Fənn üzrə Ardıcıl Daxiletmə</div>
                 <div class="admin-nav-card" onclick="V2.open()" style="background:#1e1b4b;color:#fff"><span class="icon">🧭</span> İdarəçi V2</div>
+                <div class="admin-nav-card" onclick="V3.open()" style="background:#00c853;color:#fff"><span class="icon">🧩</span> İdarəçi V3</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('sablonlar')"><span class="icon">📋</span> Şablonlar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('idare')"><span class="icon">⚙️</span> İdarə & Ayarlar</div>
                 <div class="admin-nav-card" onclick="switchAdminTab('kabinet')"><span class="icon">👤</span> Şəxsi Kabinet</div>
@@ -1274,6 +1329,65 @@
                             <button class="btn btn-success" onclick="saveQuestionToSupabase()">💾 Sualı Bazaya Saxla</button>
                         </div>
                         <button class="btn btn-primary" onclick="nextQuestionEditor()">➡️ Növbəti Sual</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QEYDİYYAT TƏSDİQİ + PDF + ELAN -->
+            <div id="mod-yq" class="admin-module-block">
+                <h4 style="text-align:left;">✅ Qeydiyyat Təsdiqi</h4>
+                <div id="yq-regs" style="overflow-x:auto;margin-bottom:24px;"></div>
+                <h4 style="text-align:left;">📄 PDF Materiallar</h4>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0;">
+                    <input type="text" id="yq-pdf-title" class="form-control" style="flex:1;min-width:160px;" placeholder="PDF adı">
+                    <input type="file" id="yq-pdf-file" accept="application/pdf" class="form-control" style="flex:1;min-width:160px;">
+                    <button class="btn btn-success" onclick="YQ.addPdf()">Yüklə</button>
+                </div>
+                <div id="yq-pdfs" style="margin-bottom:24px;"></div>
+                <h4 style="text-align:left;">📲 WhatsApp-dan elan yapışdır</h4>
+                <p style="font-size:13px;color:#64748b;">Kanaldakı mesajı kopyalayıb bura yapışdırın: 1-ci sətir başlıq, qalanı mətn olur.</p>
+                <textarea id="yq-paste" class="form-control" rows="5" placeholder="Mesajı bura yapışdırın..."></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <select id="yq-kind" class="form-control" style="width:auto;"><option>İmtahan elanı</option><option>Elan</option><option>Xəbər</option></select>
+                    <button class="btn btn-primary" onclick="YQ.pasteNews()">Yeniliklərə əlavə et</button>
+                </div>
+            </div>
+
+            <!-- YOXLAMA REJİMİ -->
+            <div id="mod-yoxlama" class="admin-module-block">
+                <h4 style="text-align:left;">🔍 Yoxlama Rejimi</h4>
+                <div id="yx-step1">
+                    <p class="mt-1 mb-3" style="color:#64748b;">Kateqoriyanı seçin:</p>
+                    <div class="folder-grid">
+                        <div class="folder-card" id="yx-card-BA" onclick="YX.pick('BA')"><div class="folder-icon">🏷️</div><div class="folder-title">BA Kateqoriyası</div></div>
+                        <div class="folder-card" id="yx-card-BB" onclick="YX.pick('BB')"><div class="folder-icon">🏷️</div><div class="folder-title">BB Kateqoriyası</div></div>
+                        <div class="folder-card" id="yx-card-AC" onclick="YX.pick('AC')"><div class="folder-icon">🏷️</div><div class="folder-title">AC Kateqoriyası</div></div>
+                    </div>
+                    <div id="yx-continue-box" style="display:none;margin-top:14px;display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <label style="font-size:13px;font-weight:bold;">Sınaq:</label>
+                        <select id="yx-exam" class="form-control" style="width:auto;"></select>
+                        <button class="btn btn-success" onclick="YX.go()">Davam et ➡️</button>
+                    </div>
+                </div>
+                <div id="yx-step2" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;" class="mb-2">
+                        <b id="yx-head"></b>
+                        <button class="btn btn-secondary btn-sm" onclick="YX.back()">⬅️ Kateqoriyanı dəyiş</button>
+                    </div>
+                    <div id="yx-nums" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;"></div>
+                    <div class="editor-section" style="display:block;margin-top:0;">
+                        <div class="form-group"><label>Sual № / Fənn:</label><input type="text" class="form-control" id="yx-info" readonly></div>
+                        <div class="form-group"><label>Sualın başlığı:</label><input type="text" class="form-control" id="yx-title"></div>
+                        <div class="form-group"><label>Abzas / əlavə mətn:</label><textarea class="form-control" id="yx-para" rows="4"></textarea></div>
+                        <div id="yx-opts"></div>
+                        <div class="actions-bar">
+                            <div class="left-buttons">
+                                <button class="btn btn-secondary" onclick="YX.step(-1)">⬅️ Əvvəlki</button>
+                                <button class="btn btn-success" onclick="YX.save()">💾 Saxla</button>
+                                <button class="btn btn-danger" onclick="YX.del()">🗑️ Sil</button>
+                            </div>
+                            <button class="btn btn-primary" onclick="YX.step(1)">Növbəti ➡️</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4786,6 +4900,97 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
         }
 
         /* --- SUALLAR MODULU BREADCRUMB VƏ EDİTORİAL DƏSTƏK --- */
+        /* YOXLAMA REJİMİ */
+        const YX = {
+            cat: null, exam: null, n: 1, rows: {},
+            $(id) { return document.getElementById(id); },
+            async open() {
+                switchAdminTab('yoxlama');
+                this.back();
+                let ex = new Set();
+                try { const { data } = await _supabase.from('exam_questions').select('exam_id').eq('q_number', 1); (data || []).forEach(r => ex.add(String(r.exam_id))); } catch (e) {}
+                if (!ex.size) { ex.add('1'); ex.add('2'); }
+                this.$('yx-exam').innerHTML = [...ex].sort((a, b) => a - b).map(v => `<option value="${v}">Sınaq ${v}</option>`).join('');
+            },
+            back() {
+                this.$('yx-step1').style.display = 'block'; this.$('yx-step2').style.display = 'none';
+                this.$('yx-continue-box').style.display = 'none';
+                ['BA', 'BB', 'AC'].forEach(c => this.$('yx-card-' + c).style.borderColor = '');
+                this.cat = null;
+            },
+            pick(c) {
+                this.cat = c;
+                ['BA', 'BB', 'AC'].forEach(x => this.$('yx-card-' + x).style.borderColor = x === c ? '#16a34a' : '');
+                this.$('yx-continue-box').style.display = 'flex';
+            },
+            async go() {
+                this.exam = this.$('yx-exam').value;
+                this.$('yx-step1').style.display = 'none'; this.$('yx-step2').style.display = 'block';
+                this.$('yx-head').innerText = `${this.cat} Kateqoriyası — Sınaq ${this.exam}`;
+                await this.load(); this.show(1);
+            },
+            async load() {
+                const { data } = await _supabase.from('exam_questions').select('*').eq('exam_id', this.exam).eq('category', this.cat).order('q_number', { ascending: true });
+                this.rows = {}; (data || []).forEach(q => this.rows[q.q_number] = q);
+                this.nums();
+            },
+            nums() {
+                let h = '';
+                for (let i = 1; i <= 100; i++) {
+                    const has = !!this.rows[i], cur = i === this.n;
+                    h += `<button class="btn btn-sm" style="min-width:34px;padding:4px 6px;background:${cur ? '#1d4ed8' : has ? '#dcfce7' : '#fee2e2'};color:${cur ? '#fff' : '#111'};" onclick="YX.show(${i})">${i}</button>`;
+                }
+                this.$('yx-nums').innerHTML = h;
+            },
+            isOpen(n) { return this.cat === 'BA' && openQuestionIds.includes(n); },
+            show(n) {
+                this.n = parseInt(n); n = this.n;
+                const q = this.rows[n], subj = getSubjectByNumber(n);
+                this.$('yx-info').value = `Sual ${n} — ${subj}${q ? '' : ' (bazada yoxdur — saxlayanda yaradılacaq)'}`;
+                const full = (q && q.question) || '', i = full.indexOf('\n');
+                this.$('yx-title').value = i < 0 ? full : full.slice(0, i).trim();
+                this.$('yx-para').value = i < 0 ? '' : full.slice(i + 1).trim();
+                const box = this.$('yx-opts');
+                if (this.isOpen(n)) {
+                    box.innerHTML = '<div class="form-group"><label>Düzgün açıq cavab:</label><input type="text" id="yx-open" class="form-control"></div>';
+                    this.$('yx-open').value = q && q.correct != null ? q.correct : '';
+                } else {
+                    const L = ['A', 'B', 'C', 'D', 'E'], lim = subj === 'Qanunvericilik' ? 4 : 5, ops = q && Array.isArray(q.options) ? q.options : [];
+                    let h = '';
+                    for (let k = 0; k < lim; k++) h += `<div class="option-row"><span class="option-label">${L[k]})</span><input type="text" class="form-control option-input yx-opt"><label class="correct-radio"><input type="radio" name="yx-correct" value="${k}"> Düzgün</label></div>`;
+                    box.innerHTML = h;
+                    const ins = box.querySelectorAll('.yx-opt');
+                    ins.forEach((el, k) => { const o = ops[k]; el.value = o ? (typeof o === 'object' ? (o.text || '') : o) : ''; });
+                    const c = q ? parseInt(q.correct) : 0;
+                    const r = box.querySelector(`input[name="yx-correct"][value="${isNaN(c) ? 0 : c}"]`); if (r) r.checked = true;
+                }
+                this.nums();
+            },
+            step(d) { const n = this.n + d; if (n >= 1 && n <= 100) this.show(n); },
+            async save() {
+                const n = this.n, q = this.rows[n];
+                const t = this.$('yx-title').value.trim(), pa = this.$('yx-para').value.trim();
+                const payload = { question: pa ? t + '\n' + pa : t };
+                if (this.isOpen(n)) payload.correct = this.$('yx-open').value.trim().toUpperCase();
+                else {
+                    const old = q && Array.isArray(q.options) ? q.options : [];
+                    payload.options = [...document.querySelectorAll('.yx-opt')].map((el, k) => ({ text: el.value.trim(), image: (old[k] && typeof old[k] === 'object' ? old[k].image : null) || null }));
+                    const r = document.querySelector('input[name="yx-correct"]:checked'); payload.correct = r ? parseInt(r.value) : 0;
+                }
+                let res;
+                if (q) res = await _supabase.from('exam_questions').update(payload).eq('id', q.id);
+                else res = await _supabase.from('exam_questions').insert([{ exam_id: this.exam, category: this.cat, q_number: n, subject: getSubjectByNumber(n), image_url: null, options: [], ...payload }]);
+                if (res.error) return alert('Xəta: ' + res.error.message);
+                await this.load(); this.show(n); alert(`Sual ${n} saxlanıldı!`);
+            },
+            async del() {
+                const q = this.rows[this.n]; if (!q) return alert('Bu sual bazada yoxdur.');
+                if (!confirm(`Sual ${this.n} bazadan silinsin?`)) return;
+                await _supabase.from('exam_questions').delete().eq('id', q.id);
+                await this.load(); this.show(this.n);
+            }
+        };
+
         function showStep(stepNum) {
             document.getElementById("stepExams").style.display = stepNum === 1 ? "block" : "none";
             document.getElementById("stepCategories").style.display = stepNum === 2 ? "block" : "none";
@@ -6122,7 +6327,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             /* --- Ümumi CRUD (sifarişlər, xəbərlər, uğurlar) --- */
             fld(f, v) {
                 const id = 'v2f-' + f.k, val = V2.esc(v ?? '');
-                const inp = f.t === 'area' ? `<textarea class="v2-in" id="${id}" rows="3">${val}</textarea>`
+                const inp = f.t === 'area' ? `<textarea class="v2-in" id="${id}" rows="${f.k==='body'?8:3}">${val}</textarea>`
                     : f.t === 'sel' ? `<select class="v2-in" id="${id}">${f.o.map(o => `<option ${o === v ? 'selected' : ''}>${o}</option>`).join('')}</select>`
                     : f.t === 'img' ? `<input type="file" accept="image/*" class="v2-in" id="${id}">` : `<input class="v2-in" id="${id}" type="${f.t || 'text'}" value="${val}">`;
                 return `<div class="v2-f ${f.full ? 'v2-full' : ''}"><label>${f.l}</label>${inp}</div>`;
@@ -6150,7 +6355,7 @@ E) Lənkəran" oninput="autoParseCopyPasteText()"></textarea>
             /* --- Səhifələr --- */
             async pageHtml(p) {
                 V2.specs = {
-                    news: [{ k: 'title', l: 'Başlıq', req: 1, full: 1 }, { k: 'kind', l: 'Növ', t: 'sel', o: ['Xəbər', 'Elan'] }, { k: 'pub', l: 'Tarix', t: 'date' }, { k: 'body', l: 'Mətn', t: 'area', full: 1, req: 1 }, { k: 'img', l: 'Şəkil (istəyə görə)', t: 'img' }]
+                    news: [{ k: 'title', l: 'Başlıq', req: 1, full: 1 }, { k: 'kind', l: 'Növ', t: 'sel', o: ['Xəbər', 'Elan', 'İmtahan elanı'] }, { k: 'pub', l: 'Tarix', t: 'date' }, { k: 'body', l: 'Mətn', t: 'area', full: 1, req: 1 }, { k: 'img', l: 'Şəkil (istəyə görə)', t: 'img' }]
                 };
                 return await V2['p_' + p]();
             },
@@ -6503,18 +6708,612 @@ async function runTicker() {
     }
     if (my === __tickTok) holder.innerHTML = '';
 }
-function registerForAnnouncement() {
-    const msg = 'Salam mən elan olunan sınaq imtahanında iştirak etmək üçün qeydiyyatdan keçmək istəyirəm';
-    window.open('https://wa.me/994504305162?text=' + encodeURIComponent(msg), '_blank');
+/* ===== v7: DQplatform elan kartı (vahid dizayn), qeydiyyat WhatsApp/Telegram, Kopyala və Paylaş ===== */
+const DQ_WA = '994504305162', DQ_TG = 'Imanoff_oo1';
+const DQ_REG_MSG = 'Salam mən elan olunan sınaq imtahanında iştirak etmək üçün qeydiyyatdan keçmək istəyirəm. Ətraflı məlumat verə bilərsizmi?';
+(function () {
+    const s = document.createElement('style');
+    s.textContent = `
+.dq-ann{background:#fff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;margin-bottom:14px;text-align:left;box-shadow:0 4px 14px rgba(30,64,175,.08)}
+.dq-ann-hd{position:relative;height:120px;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.dq-ann-hd i.sq{position:absolute;border-radius:18px;background:linear-gradient(135deg,#7aa2f0,#1e3a8a);box-shadow:0 6px 12px rgba(30,58,138,.25)}
+.dq-logo{position:relative;z-index:2;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);padding:8px 14px;border-radius:12px}
+.dq-logo b.mk{width:34px;height:34px;border-radius:9px;background:#1e3a8a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;letter-spacing:.5px}
+.dq-logo span{font-weight:900;font-size:20px;color:#1e3a8a;letter-spacing:.3px}
+.dq-logo span em{font-style:normal;color:#3b82f6}
+.dq-ann-bd{padding:14px 16px}
+.dq-ann-bd h4{margin:0 0 4px;font-size:18px;color:#0f172a;line-height:1.3}
+.dq-ann-bd small{color:#64748b}
+.dq-ann-bd .tx{font-size:15px;color:#334155;margin-top:10px;white-space:pre-wrap;line-height:1.5}
+.dq-ann-bd img.pic{max-width:100%;border-radius:10px;margin-top:10px}
+.dq-ab{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;color:#fff;margin-top:10px;text-decoration:none}
+.dq-ab.wa{background:#25D366}.dq-ab.tg{background:#229ed9}.dq-ab.sh{background:#1e3a8a}
+.dq-ab:active{transform:scale(.98)}
+.dq-share{z-index:9700}
+.dq-share>div{max-width:380px}
+.dq-share .dq-ab{margin-top:8px}
+.dq-share .dq-ab.cp{background:#475569}.dq-share .dq-ab.im{background:#d97706}
+.dq-toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:9999}
+`;
+    document.head.appendChild(s);
+})();
+function dqToast(t) { const d = document.createElement('div'); d.className = 'dq-toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+function registerForAnnouncement(via) {
+    const url = via === 'tg'
+        ? 'https://t.me/' + DQ_TG + '?text=' + encodeURIComponent(DQ_REG_MSG)
+        : 'https://wa.me/' + DQ_WA + '?text=' + encodeURIComponent(DQ_REG_MSG);
+    window.open(url, '_blank');
+}
+function dqShareText(n) {
+    return `📢 DQplatform | ${n.kind || 'Elan'}\n\n*${n.title}*\n\n${String(n.body || '').trim()}\n\n📝 Qeydiyyat üçün:\n💬 WhatsApp: +${DQ_WA} → https://wa.me/${DQ_WA}\n✈️ Telegram: @${DQ_TG} → https://t.me/${DQ_TG}\n\n🌐 ${location.origin}${location.pathname}`;
+}
+async function dqCopy(text) {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) { const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (_) {} t.remove(); }
+    dqToast('Kopyalandı ✅');
+}
+function dqWrap(ctx, text, maxW) {
+    const out = [];
+    String(text).split('\n').forEach(p => {
+        if (!p.trim()) { out.push(''); return; }
+        let line = '';
+        p.split(/\s+/).forEach(w => { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; });
+        out.push(line);
+    });
+    return out;
+}
+function dqRR(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function dqCardBlob(n) {
+    return new Promise(res => {
+        const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+        x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+        const sq = [[-60, 20, 230, .5], [-90, 700, 300, 1], [820, -60, 260, .9], [880, 520, 340, 1], [380, 1120, 200, .6], [-40, 1180, 180, .5], [900, 1220, 160, .5]];
+        sq.forEach(([sx, sy, sz, a]) => { const g = x.createLinearGradient(sx, sy, sx + sz, sy + sz); g.addColorStop(0, '#7aa2f0'); g.addColorStop(1, '#1e3a8a'); x.save(); x.globalAlpha = a * .35; x.shadowColor = 'rgba(30,58,138,.4)'; x.shadowBlur = 30; x.fillStyle = g; dqRR(x, sx, sy, sz, sz, 46); x.fill(); x.restore(); });
+        x.fillStyle = 'rgba(255,255,255,.93)'; dqRR(x, 60, 150, W - 120, 1050, 36); x.fill();
+        x.fillStyle = '#1e3a8a'; dqRR(x, 90, 60, 84, 84, 20); x.fill();
+        x.fillStyle = '#fff'; x.font = '800 36px Arial'; x.textAlign = 'center'; x.fillText('DQ', 132, 116);
+        x.textAlign = 'left'; x.fillStyle = '#1e3a8a'; x.font = '900 54px Arial'; x.fillText('DQ', 196, 118); const wdq = x.measureText('DQ').width; x.fillStyle = '#3b82f6'; x.fillText('platform', 196 + wdq, 118);
+        x.fillStyle = '#0f172a'; x.font = '900 58px Arial';
+        let ty = 240; dqWrap(x, n.title, W - 200).slice(0, 3).forEach(l => { x.fillText(l, 100, ty); ty += 70; });
+        x.fillStyle = '#64748b'; x.font = '600 28px Arial'; x.fillText(n.pub || n.date || '', 100, ty - 10); ty += 40;
+        const bottom = 1040; let fs = 42, lines;
+        for (; fs >= 24; fs -= 2) { x.font = `500 ${fs}px Arial`; lines = dqWrap(x, String(n.body || '').trim(), W - 200); if (ty + lines.length * fs * 1.4 < bottom) break; }
+        x.fillStyle = '#334155'; x.font = `500 ${fs}px Arial`; lines.forEach(l => { ty += fs * 1.4; if (ty < bottom + 10) x.fillText(l, 100, ty); });
+        x.fillStyle = '#1e3a8a'; dqRR(x, 100, 1075, W - 200, 100, 22); x.fill();
+        x.fillStyle = '#fff'; x.font = '800 34px Arial'; x.textAlign = 'center';
+        x.fillText('WhatsApp: +' + DQ_WA + '   |   Telegram: @' + DQ_TG, W / 2, 1136);
+        c.toBlob(b => res(b), 'image/png');
+    });
+}
+function dqOpenShare(i) {
+    const n = DQ_NEWS[i]; if (!n) return;
+    const text = dqShareText(n), enc = encodeURIComponent(text), site = location.origin + location.pathname;
+    const d = document.createElement('div'); d.className = 'dq-modal dq-share'; d.onclick = ev => { if (ev.target === d) d.remove(); };
+    d.innerHTML = `<div><h3 style="text-align:center;margin-bottom:6px">📤 Elanı paylaş</h3><p style="text-align:center;color:#64748b;font-size:13px;margin:0 0 6px">Mətn olduğu kimi, əlaqə keçidləri ilə paylaşılır</p>
+        ${navigator.share ? `<button class="dq-ab sh" id="dq-sh-n"><i class="fa-solid fa-share-nodes"></i> Paylaş (telefon menyusu)</button>` : ''}
+        <a class="dq-ab wa" target="_blank" rel="noopener" href="https://wa.me/?text=${enc}"><i class="fa-brands fa-whatsapp"></i> WhatsApp-da paylaş</a>
+        <a class="dq-ab tg" target="_blank" rel="noopener" href="https://t.me/share/url?url=${encodeURIComponent(site)}&text=${enc}"><i class="fa-brands fa-telegram"></i> Telegram-da paylaş</a>
+        <button class="dq-ab im" id="dq-sh-i"><i class="fa-solid fa-image"></i> Şəkil kimi paylaş / yüklə</button>
+        <button class="dq-ab cp" id="dq-sh-c"><i class="fa-regular fa-copy"></i> Mətni kopyala</button>
+        <button class="btn" style="width:100%;margin-top:10px" onclick="this.closest('.dq-modal').remove()">Bağla</button></div>`;
+    document.body.appendChild(d);
+    const nb = d.querySelector('#dq-sh-n'); if (nb) nb.onclick = () => navigator.share({ title: n.title, text }).catch(() => {});
+    d.querySelector('#dq-sh-c').onclick = () => dqCopy(text);
+    d.querySelector('#dq-sh-i').onclick = async () => {
+        const blob = await dqCardBlob(n), file = new File([blob], 'DQplatform-elan.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: n.title, text }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'DQplatform-elan.png'; document.body.appendChild(a); a.click(); a.remove(); dqToast('Şəkil yükləndi ✅');
+    };
+}
+function dqAnnCard(n, i) {
+    const e = V2.esc;
+    return `<div class="dq-ann"><div class="dq-ann-hd">
+        <i class="sq" style="width:90px;height:90px;left:-25px;top:-25px;opacity:.55"></i><i class="sq" style="width:70px;height:70px;left:34px;top:48px;opacity:.85"></i>
+        <i class="sq" style="width:110px;height:110px;right:-30px;top:-10px"></i><i class="sq" style="width:60px;height:60px;right:70px;bottom:-24px;opacity:.7"></i>
+        <div class="dq-logo"><b class="mk">DQ</b><span>DQ<em>platform</em></span></div></div>
+        <div class="dq-ann-bd"><h4>${e(n.title)}</h4><small>${e(n.kind || 'Elan')} · ${e(n.pub || '')}</small>
+        ${n.img ? `<img class="pic" src="${n.img}">` : ''}<div class="tx">${e(n.body)}</div>
+        <button type="button" class="dq-ab wa" onclick="registerForAnnouncement('wa')"><i class="fa-brands fa-whatsapp" style="font-size:18px"></i> Qeydiyyatdan keç (WhatsApp)</button>
+        <button type="button" class="dq-ab tg" onclick="registerForAnnouncement('tg')"><i class="fa-brands fa-telegram" style="font-size:18px"></i> Qeydiyyatdan keç (Telegram)</button>
+        <button type="button" class="dq-ab sh" onclick="dqOpenShare(${i})"><i class="fa-solid fa-share-nodes"></i> Kopyala və paylaş</button></div></div>`;
 }
 function openFeedModal(kind) {
     const e = V2.esc, isNews = kind === 'news', list = isNews ? DQ_NEWS : DQ_FB;
     const d = document.createElement('div'); d.className = 'dq-modal'; d.onclick = ev => { if (ev.target === d) d.remove(); };
-    d.innerHTML = `<div><h3 style="text-align:center;margin-bottom:12px">${isNews ? '📢 İmtahan elanları' : '💬 Sınaq təəssüratları'}</h3>` + (list.length ? list.map(x => isNews
-        ? `<div style="background:#fff;border:1px solid #e2e8f0;border-left:5px solid #d97706;border-radius:12px;padding:12px 14px;margin-bottom:10px;text-align:left"><div style="display:flex;justify-content:space-between;gap:8px"><b>${e(x.title)}</b><small style="color:#64748b">${e(x.pub || '')}</small></div>${x.img ? `<img src="${x.img}" style="max-width:100%;border-radius:8px;margin-top:8px">` : ''}<div style="font-size:14px;color:#334155;margin-top:6px;white-space:pre-wrap">${e(x.body)}</div><button type="button" onclick="registerForAnnouncement()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;border:0;border-radius:10px;padding:12px;background:#25D366;color:#fff;font-weight:800;font-size:15px;cursor:pointer"><i class="fa-brands fa-whatsapp" style="font-size:18px"></i> Qeydiyyatdan keç</button></div>`
+    d.innerHTML = `<div><h3 style="text-align:center;margin-bottom:12px">${isNews ? '📢 İmtahan elanları' : '💬 Sınaq təəssüratları'}</h3>` + (list.length ? list.map((x, i) => isNews
+        ? dqAnnCard(x, i)
         : `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px;text-align:left"><div style="display:flex;justify-content:space-between;gap:8px"><b>${e(x.name)}</b><span style="color:#d97706">${'★'.repeat(x.rating || 0)}</span></div><div style="font-size:14px;color:#475569;margin-top:4px;white-space:pre-wrap">${e(x.shown_text ?? x.text)}</div><small style="color:#94a3b8">${e(x.date || '')}</small></div>`).join('') : '<p style="text-align:center;color:#64748b">Hələ heç nə yoxdur.</p>') + `<button class="btn" style="width:100%;margin-top:6px" onclick="this.closest('.dq-modal').remove()">Bağla</button></div>`;
     document.body.appendChild(d);
 }
+</script>
+<!-- ===== İDARƏÇİ V3 + ƏSAS EKRAN ===== -->
+<style>
+body.v3on{padding:0!important;background:#f8f9fa}body.v3on .container{display:none}
+.v3s{font-family:Roboto,-apple-system,"Segoe UI",Arial,sans-serif;color:#0f172a;min-height:100vh}
+.v3-top{background:#00c853;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.v3-top a{color:#fff;text-decoration:none;font-weight:700;font-size:14px;margin-right:14px}
+.v3-soc{display:flex;gap:10px}.v3-soc a{width:34px;height:34px;border-radius:50%;background:#fff;color:#00c853;display:flex;align-items:center;justify-content:center;margin:0;cursor:pointer}
+.v3-hd{background:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid #eee}
+.v3-hd h1{font-size:26px;text-align:left}.v3-hd .v3-r{display:flex;gap:10px;flex-wrap:wrap}
+.v3-nav{background:#0f172a;display:flex;justify-content:center;flex-wrap:wrap;gap:26px;padding:16px}
+.v3-nav a{color:#fff;font-weight:700;font-size:14px;cursor:pointer}.v3-nav a:hover{color:#00c853}
+.v3-hero{max-width:960px;margin:44px auto 0;background:#fff;border-radius:24px;padding:44px 24px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+.v3-hero h2{font-size:clamp(24px,5vw,34px);margin-bottom:16px}.v3-hero p{color:#64748b;font-size:17px;max-width:640px;margin:0 auto 26px}
+.v3-row{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:14px}
+.v3-b{display:inline-block;padding:14px 26px;border-radius:40px;font-weight:700;font-size:15px;cursor:pointer;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.14);text-decoration:none}
+.v3-row.sm .v3-b{padding:11px 18px;font-size:13px}
+.v3-g{background:#00c853}.v3-d{background:#0f172a}.v3-r{background:transparent}.v3-hd .v3-b.v3-r{color:#dc2626;border:1px solid #dc2626;box-shadow:none;padding:10px 22px}.v3-hd .v3-b{padding:11px 22px;font-size:14px}
+.v3-sv{max-width:960px;margin:44px auto 0;padding:0 14px}.v3-sv h2{text-align:center;font-size:28px;margin-bottom:26px}
+.v3-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px}
+.v3-cd{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:26px 14px;text-align:center;cursor:pointer}.v3-cd b{font-size:19px;display:block}.v3-cd small{color:#64748b}
+.v3-ft{background:#0f172a;border-top:4px solid #00c853;color:#fff;text-align:center;padding:30px 14px;margin-top:60px}
+.v3-t{max-width:900px;margin:0 auto;padding:22px 14px}.v3-t img{width:100%;border-radius:12px;border:1px solid #e2e8f0}
+.v3-sh{display:flex;flex-wrap:wrap;gap:8px 14px;margin:16px 0}.v3-q{display:flex;align-items:center;gap:4px;background:#fff;padding:6px 8px;border-radius:10px;border:1px solid #e2e8f0}
+.v3-q i{font-style:normal;font-weight:700;width:26px;font-size:13px}.v3-o{width:30px;height:30px;border-radius:50%;border:1.5px solid #94a3b8;background:#fff;font-weight:700;font-size:12px;cursor:pointer}
+.v3-o.on{background:#0f172a;color:#fff}.v3-o.ok{background:#10b981;color:#fff;border-color:#10b981}.v3-o.no{background:#ef4444;color:#fff;border-color:#ef4444}
+/* admin */
+#v3-root{position:fixed;inset:0;z-index:99998;background:#f1f5f9;overflow-y:auto;display:none;font-family:Roboto,Arial,sans-serif;color:#0f172a;text-align:left}
+.v3-bar{position:sticky;top:0;background:#0f172a;padding:10px;display:flex;gap:8px;overflow-x:auto;z-index:2}
+.v3-bar button{white-space:nowrap;border:0;border-radius:20px;padding:9px 16px;font-weight:700;background:#1e293b;color:#fff;cursor:pointer}.v3-bar button.on{background:#00c853}
+.v3-w{max-width:1000px;margin:0 auto;padding:16px}.v3-c{background:#fff;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.v3-c h3{text-align:left;margin-bottom:10px;font-size:16px}
+.v3-grp{display:flex;flex-wrap:wrap;gap:8px;min-height:48px;padding:10px;border:2px dashed #cbd5e1;border-radius:12px;background:#f8fafc}
+.v3-chip{padding:10px 14px;border-radius:24px;color:#fff;font-weight:700;font-size:13px;cursor:grab;touch-action:none;user-select:none;background:#00c853}
+.v3-chip.d{background:#0f172a}.v3-chip.r{background:#dc2626}.v3-chip.w{background:#64748b}.v3-chip.h{opacity:.4}.v3-chip.add{background:#fff;color:#0f172a;border:1px dashed #64748b;cursor:pointer}
+.v3-ghost{position:fixed;pointer-events:none;z-index:99999;opacity:.85;transform:scale(1.08)}
+.v3-in{width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;margin:4px 0 10px}
+.v3-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:700px){.v3-2{grid-template-columns:1fr}}
+.v3-bt{background:#00c853;color:#fff;border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}.v3-bt.x{background:#ef4444}.v3-bt.o{background:#0f172a}
+.v3-gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;margin-top:8px}.v3-ce{border:1.5px solid #cbd5e1;border-radius:8px;text-align:center;padding:5px 0;cursor:pointer;font-size:12px;background:#fff}.v3-ce b{display:block;font-size:16px;min-height:22px}
+.v3-md{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;display:flex;align-items:center;justify-content:center;padding:14px}.v3-md>div{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:420px}
+</style>
+
+<div id="v3-home" class="screen v3s"></div>
+<div id="v3-tests" class="screen v3s"></div>
+<div id="v3-root"></div>
+
+<script>
+const V3 = {
+  id: null, tab: 'look', ed: null, tests: [],
+  A: [['exam','Sınaqlara keçid (giriş)'],['reg','Qeydiyyat (WhatsApp)'],['tests','Testlər'],['news','Yeniliklər / elanlar'],['home','Ana səhifə'],['out','Çıxış'],['url','Link (URL)'],['none','Heç nə']],
+  DEF: {
+    txt: { phone:'+994 50 667 15 57', email:'Ys.imanoff@gmail.com', logo:'DQ Platform', heroT:'Dövlət Qulluğu üçün Sınaq İmtahanları!', heroS:'Real imtahan təcrübəsi əsasında hazırlanmış sınaq imtahanları, fənn testləri və PDF materiallar.', svcT:'Bizim Xidmətlərimiz', foot1:'© 2026 DQ Platform – Developed', foot2:'Yunis İmanov' },
+    items: {
+      f:{t:'f',a:'https://www.facebook.com',c:'w'}, ig:{t:'📷',a:'https://www.instagram.com/ys.imanoff',c:'w'}, wa:{t:'💬',a:'https://wa.me/qr/2OLYZXD45JFZO1',c:'w'},
+      kab:{t:'👤 Kabinet',a:'exam',c:'g'}, out:{t:'Çıxış',a:'out',c:'r'},
+      n1:{t:'Ana səhifə',a:'home'}, n2:{t:'Sınaqlar',a:'exam'}, n3:{t:'Testlər',a:'tests'}, n4:{t:'Yeniliklər',a:'news'},
+      m1:{t:'🎓 Sınaqlara Bax',a:'exam',c:'g'}, m2:{t:'👤 Qeydiyyatdan Keç və İndi Başla',a:'reg',c:'d'},
+      l1:{t:'📢 Telegram Kanal',a:'https://t.me/dovlettqullugu',c:'d'}, l2:{t:'👥 Telegram Qrup',a:'https://t.me/+dovletqullugu_qrup',c:'d'},
+      l3:{t:'📢 WhatsApp Kanal',a:'https://whatsapp.com/channel/',c:'g'}, l4:{t:'💬 WhatsApp Qrup',a:'https://chat.whatsapp.com/GIb2EwwiXXg3PpEJWZVKss',c:'g'},
+      s1:{t:'SINAQLAR',s:'Ümumi imtahan sınaqları',a:'exam'}, s2:{t:'TESTLƏR',s:'Fənlər üzrə testlər',a:'tests'}, s3:{t:'YENİLİKLƏR',s:'Elanlar və xəbərlər',a:'news'}, s4:{t:'PDF MATERİAL',s:'Dərs vəsaitləri',a:'none'}
+    },
+    groups: { soc:['f','ig','wa'], hdr:['kab','out'], nav:['n1','n2','n3','n4'], main:['m1','m2'], lnk:['l1','l2','l3','l4'], svc:['s1','s2','s3','s4'] }
+  },
+  GN: { soc:'Üst panel – sosial ikonlar', hdr:'Başlıq düymələri', nav:'Menyu (tünd zolaq)', main:'Əsas böyük düymələr', lnk:'Kiçik keçid düymələri', svc:'Xidmət kartları' },
+  $: id => document.getElementById(id),
+  esc: s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  async load() {
+    let saved = null;
+    try { saved = (await V2.list('v3cfg'))[0]; } catch (e) {}
+    const d = JSON.parse(JSON.stringify(V3.DEF));
+    if (saved) { V3.id = saved._id; if (saved.txt) Object.assign(d.txt, saved.txt); if (saved.items) d.items = saved.items; if (saved.groups) d.groups = { ...d.groups, ...saved.groups }; }
+    V3.D = d; V3.render();
+  },
+  timer: null,
+  save() { clearTimeout(V3.timer); V3.timer = setTimeout(async () => { await V2.put('v3cfg', { txt: V3.D.txt, items: V3.D.items, groups: V3.D.groups }, V3.id); if (!V3.id) { const r = await V2.list('v3cfg'); V3.id = r[0] && r[0]._id; } V3.render(); }, 400); },
+  go(id) {
+    const it = V3.D.items[id]; if (!it) return; const a = it.a || 'none';
+    if (/^https?:/.test(a)) return void window.open(a, '_blank');
+    ({ exam: () => showScreen('login-screen'), reg: () => registerViaWhatsApp(), tests: () => V3.showTests(), news: () => openFeedModal('news'), home: () => { showScreen('v3-home'); scrollTo(0, 0); }, out: () => goHome() })[a]?.();
+  },
+  render() {
+    const D = V3.D, T = D.txt, e = V3.esc, g = k => (D.groups[k] || []).map(id => [id, D.items[id]]).filter(x => x[1] && !x[1].h);
+    const btn = x => `<a class="v3-b v3-${x[1].c || 'g'}" onclick="V3.go('${x[0]}')">${e(x[1].t)}</a>`;
+    V3.$('v3-home').innerHTML = `
+      <div class="v3-top"><div><a href="tel:${e(T.phone.replace(/\s/g, ''))}">📞 ${e(T.phone)}</a><a href="mailto:${e(T.email)}">✉️ ${e(T.email)}</a></div>
+        <div class="v3-soc">${g('soc').map(x => `<a onclick="V3.go('${x[0]}')">${e(x[1].t)}</a>`).join('')}</div></div>
+      <div class="v3-hd"><h1>${e(T.logo)}</h1><div class="v3-r" style="display:flex;gap:10px">${g('hdr').map(btn).join('')}</div></div>
+      <div class="v3-nav">${g('nav').map(x => `<a onclick="V3.go('${x[0]}')">${e(x[1].t)}</a>`).join('')}</div>
+      <div class="v3-hero"><h2>${e(T.heroT)}</h2><p>${e(T.heroS)}</p>
+        <div class="v3-row">${g('main').map(btn).join('')}</div><div class="v3-row sm" style="margin-top:22px">${g('lnk').map(btn).join('')}</div></div>
+      <div class="v3-sv"><h2>${e(T.svcT)}</h2><div class="v3-cards">${g('svc').map(x => `<div class="v3-cd" onclick="V3.go('${x[0]}')"><b>${e(x[1].t)}</b><small>${e(x[1].s || '')}</small></div>`).join('')}</div></div>
+      <div class="v3-ft">${e(T.foot1).replace(/Developed/, 'Developed <span onclick="openAdminLogin()">by</span>')} ${e(T.foot2)}<div style="margin-top:16px;font-size:14px"><a style="color:#22c55e;cursor:pointer" onclick="V3.info('terms')">İstifadə Şərtləri</a> &nbsp;|&nbsp; <a style="color:#22c55e;cursor:pointer" onclick="V3.info('priv')">Məxfilik Siyasəti</a></div></div>`;
+  },
+  info(k) {
+    const T = { terms: ['İstifadə Şərtləri', 'Bu istifadə şərtləri platformadan istifadə edən şəxslər üçün keçərlidir.'], priv: ['Məxfilik Siyasəti', 'İstifadəçilərin şəxsi məlumatlarının qorunması prinsiplərini müəyyən edir.'] }[k];
+    const m = document.createElement('div'); m.className = 'v3-md'; m.onclick = ev => { if (ev.target === m) m.remove(); };
+    m.innerHTML = `<div><h3 style="text-align:left">${T[0]}</h3><p style="margin:10px 0 14px">${T[1]}</p><button class="v3-bt o" onclick="this.closest('.v3-md').remove()">Bağla</button></div>`; document.body.appendChild(m);
+  },
+  /* ---------- Testlər (istifadəçi) ---------- */
+  async loadTests() { V3.tests = await V2.list('v3tests'); },
+  async showTests() {
+    showScreen('v3-tests'); const el = V3.$('v3-tests'); el.innerHTML = '<div class="v3-t">Yüklənir...</div>'; await V3.loadTests();
+    const by = {}; V3.tests.forEach((t, i) => (by[t.subject] = by[t.subject] || []).push([t, i]));
+    el.innerHTML = `<div class="v3-t"><h2>Fənn Testləri</h2>${Object.keys(by).length ? Object.keys(by).map(s => `<h3 style="text-align:left;margin:18px 0 8px">${V3.esc(s)}</h3><div class="v3-cards">${by[s].map(([t, i]) => `<div class="v3-cd" onclick="V3.openTest(${i})"><b>${V3.esc(t.title)}</b><small>${t.ans.length} sual</small></div>`).join('')}</div>`).join('') : '<p style="margin:20px 0">Hələ test əlavə edilməyib.</p>'}
+      <div class="v3-row"><a class="v3-b v3-d" onclick="showScreen('v3-home')">Ana səhifəyə qayıt</a></div></div>`;
+  },
+  openTest(i) {
+    const t = V3.tests[i]; V3.cur = { t, a: [] };
+    V3.$('v3-tests').innerHTML = `<div class="v3-t"><h2>${V3.esc(t.title)}</h2>${t.img ? `<img src="${t.img}">` : ''}
+      <div class="v3-sh" id="v3-sh">${[...t.ans].map((_, n) => `<div class="v3-q"><i>${n + 1}.</i>${'ABCDE'.split('').map(l => `<button class="v3-o" data-n="${n}" data-l="${l}" onclick="V3.pick(this)">${l}</button>`).join('')}</div>`).join('')}</div>
+      <div id="v3-res"></div><div class="v3-row"><a class="v3-b v3-g" onclick="V3.check()">Nəticəni yoxla</a><a class="v3-b v3-d" onclick="V3.showTests()">Testlərə qayıt</a></div></div>`;
+    scrollTo(0, 0);
+  },
+  pick(b) { V3.cur.a[b.dataset.n] = b.dataset.l; b.parentNode.querySelectorAll('.v3-o').forEach(x => x.classList.toggle('on', x === b)); },
+  check() {
+    const { t, a } = V3.cur; let ok = 0, bos = 0;
+    [...t.ans].forEach((k, n) => { const row = V3.$('v3-sh').children[n]; row.querySelectorAll('.v3-o').forEach(o => { o.classList.remove('on'); if (o.dataset.l === k) o.classList.add('ok'); else if (o.dataset.l === a[n]) o.classList.add('no'); o.disabled = true; }); if (a[n] === k) ok++; else if (!a[n]) bos++; });
+    V3.$('v3-res').innerHTML = `<div class="v3-c" style="text-align:center"><b style="font-size:22px">${ok} / ${t.ans.length}</b><br>Düz: ${ok} · Səhv: ${t.ans.length - ok - bos} · Boş: ${bos}</div>`;
+  },
+  /* ---------- İdarəçi V3 ---------- */
+  async open() {
+    if (!V3.$('v3-root')) return; await V2.probe(); if (!V3.D) await V3.load(); await V3.loadTests();
+    V3.$('v3-root').style.display = 'block'; document.body.style.overflow = 'hidden'; V3.draw();
+  },
+  close() { V3.$('v3-root').style.display = 'none'; document.body.style.overflow = ''; },
+  setTab(t) { V3.tab = t; V3.draw(); },
+  draw() {
+    const tabs = [['look','🎨 Görünüş'],['txt','✏️ Mətnlər'],['tst','📝 Testlər']];
+    V3.$('v3-root').innerHTML = `<div class="v3-bar">${tabs.map(t => `<button class="${V3.tab === t[0] ? 'on' : ''}" onclick="V3.setTab('${t[0]}')">${t[1]}</button>`).join('')}<button onclick="V3.close();showScreen('v3-home')">👁 Sayta bax</button><button onclick="V3.close()" style="background:#dc2626">✕ Bağla</button><button onclick="V3.close();V2.open()" style="background:#4f46e5">V2</button></div><div class="v3-w" id="v3-body"></div>`;
+    ({ look: V3.tLook, txt: V3.tTxt, tst: V3.tTst })[V3.tab]();
+  },
+  tLook() {
+    const D = V3.D; V3.$('v3-body').innerHTML = `<div class="v3-c" style="background:#ecfdf5"><b>Canva kimi:</b> düymələri basıb saxlayıb sürüşdürün — sıranı dəyişin və ya başqa qrupa aparın. Toxunmaq = redaktə / gizlət / sil. Dəyişikliklər avtomatik saxlanır.</div>` +
+      Object.keys(V3.GN).map(k => `<div class="v3-c"><h3>${V3.GN[k]}</h3><div class="v3-grp" data-g="${k}">${(D.groups[k] || []).filter(id => D.items[id]).map(id => `<div class="v3-chip ${D.items[id].c || ''} ${D.items[id].h ? 'h' : ''}" data-id="${id}">${V3.esc(D.items[id].t)}</div>`).join('')}<div class="v3-chip add" onclick="V3.addItem('${k}')">＋ əlavə et</div></div></div>`).join('');
+    V3.$('v3-body').querySelectorAll('.v3-chip[data-id]').forEach(ch => ch.addEventListener('pointerdown', V3.dragStart));
+  },
+  dragStart(ev) {
+    const ch = ev.currentTarget, sx = ev.clientX, sy = ev.clientY; let ghost = null;
+    const mv = m => {
+      if (!ghost) { if (Math.hypot(m.clientX - sx, m.clientY - sy) < 8) return; const r = ch.getBoundingClientRect(); ghost = ch.cloneNode(true); ghost.className += ' v3-ghost'; ghost.style.width = r.width + 'px'; document.body.appendChild(ghost); ch.style.opacity = .3; }
+      ghost.style.left = m.clientX - 30 + 'px'; ghost.style.top = m.clientY - 18 + 'px';
+      const t = document.elementFromPoint(m.clientX, m.clientY); if (!t) return;
+      const o = t.closest('.v3-chip[data-id]'), gp = t.closest('.v3-grp');
+      if (o && o !== ch) { const r = o.getBoundingClientRect(); o.parentNode.insertBefore(ch, m.clientX > r.left + r.width / 2 ? o.nextSibling : o); }
+      else if (gp && !o) { const add = gp.querySelector('.add'); gp.insertBefore(ch, add); }
+    };
+    const up = () => {
+      removeEventListener('pointermove', mv); removeEventListener('pointerup', up);
+      if (!ghost) return V3.editItem(ch.dataset.id);
+      ghost.remove(); ch.style.opacity = ''; const gr = {};
+      V3.$('v3-body').querySelectorAll('.v3-grp').forEach(gp => gr[gp.dataset.g] = [...gp.querySelectorAll('.v3-chip[data-id]')].map(x => x.dataset.id));
+      V3.D.groups = gr; V3.save();
+    };
+    addEventListener('pointermove', mv); addEventListener('pointerup', up);
+  },
+  addItem(k) { const id = 'x' + Date.now(); V3.D.items[id] = { t: 'Yeni', s: '', a: 'none', c: k === 'lnk' || k === 'main' ? 'g' : '' }; V3.D.groups[k] = [...(V3.D.groups[k] || []), id]; V3.save(); V3.draw(); V3.editItem(id); },
+  editItem(id) {
+    const it = V3.D.items[id], isUrl = /^https?:/.test(it.a || ''), e = V3.esc, m = document.createElement('div'); m.className = 'v3-md';
+    m.innerHTML = `<div><h3 style="text-align:left">Redaktə</h3>Mətn<input class="v3-in" id="e-t" value="${e(it.t)}">Alt mətn (kartlar üçün)<input class="v3-in" id="e-s" value="${e(it.s || '')}">
+      Toxunanda nə olsun?<select class="v3-in" id="e-a">${V3.A.map(o => `<option value="${o[0]}" ${(isUrl ? 'url' : it.a || 'none') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>
+      Link<input class="v3-in" id="e-u" placeholder="https://..." value="${isUrl ? e(it.a) : ''}">Rəng<select class="v3-in" id="e-c">${[['g','Yaşıl'],['d','Tünd'],['r','Qırmızı'],['w','Boz']].map(o => `<option value="${o[0]}" ${(it.c || 'g') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>
+      <label><input type="checkbox" id="e-h" ${it.h ? 'checked' : ''}> Gizlət</label>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="v3-bt" id="e-ok">Saxla</button><button class="v3-bt x" id="e-del">Sil</button><button class="v3-bt o" id="e-no">Ləğv</button></div></div>`;
+    document.body.appendChild(m); const q = i => m.querySelector('#' + i);
+    q('e-no').onclick = () => m.remove();
+    q('e-del').onclick = () => { if (!confirm('Silinsin?')) return; delete V3.D.items[id]; Object.keys(V3.D.groups).forEach(k => V3.D.groups[k] = V3.D.groups[k].filter(x => x !== id)); m.remove(); V3.save(); V3.draw(); };
+    q('e-ok').onclick = () => { const a = q('e-a').value; Object.assign(it, { t: q('e-t').value, s: q('e-s').value, a: a === 'url' ? q('e-u').value.trim() : a, c: q('e-c').value, h: q('e-h').checked }); m.remove(); V3.save(); V3.draw(); };
+  },
+  tTxt() {
+    const L = { phone:'Telefon', email:'E-poçt', logo:'Sayt adı (logo)', heroT:'Əsas başlıq', heroS:'Alt mətn', svcT:'Xidmətlər başlığı', foot1:'Alt yazı (1-ci hissə)', foot2:'Alt yazı (ad)' };
+    V3.$('v3-body').innerHTML = `<div class="v3-c">${Object.keys(L).map(k => `<label>${L[k]}</label><input class="v3-in" id="t-${k}" value="${V3.esc(V3.D.txt[k])}">`).join('')}<button class="v3-bt" onclick="Object.keys(${JSON.stringify(L).replace(/"/g, "'")}).forEach(k=>V3.D.txt[k]=V3.\$('t-'+k).value);V3.save();V2.toast('Saxlanıldı ✅')">Yadda saxla</button></div>`;
+  },
+  /* ----- Test əlavə et: sol şəkil, sağ cavablar (avtomatik sinxron) ----- */
+  parse(s) {
+    s = s.toUpperCase(); const out = [], re = /(\d+)\s*[-.:)=]?\s*([A-E])/g; let m, any = false;
+    while ((m = re.exec(s))) { any = true; out[+m[1] - 1] = m[2]; }
+    if (any) return Array.from(out, x => x || '');
+    return [...s.replace(/[^A-E]/g, '')];
+  },
+  tTst() {
+    const ed = V3.ed = V3.ed || { id: null, title: '', subject: 'Məntiq', img: '', ans: [] };
+    V3.$('v3-body').innerHTML = `<div class="v3-c"><h3>${ed.id ? 'Testi redaktə et' : 'Yeni test'}</h3>
+      <div class="v3-2"><div><label>Test adı</label><input class="v3-in" id="w-t" value="${V3.esc(ed.title)}"><label>Fənn</label><input class="v3-in" id="w-s" list="w-sl" value="${V3.esc(ed.subject)}"><datalist id="w-sl"><option>Azərbaycan dili<option>Qanunvericilik<option>İnformatika<option>Məntiq</datalist>
+        <label>Test şəkli</label><input type="file" accept="image/*" class="v3-in" onchange="V3.pickImg(this)"><img id="w-img" src="${ed.img}" style="width:100%;border-radius:10px;${ed.img ? '' : 'display:none'}"></div>
+      <div><label>Cavablar (məs: 1A 2B 3C və ya ABCDA...)</label><textarea class="v3-in" id="w-a" rows="5" oninput="V3.ansIn(this.value)">${ed.ans.map((a, i) => a ? (i + 1) + a : '').join(' ')}</textarea>
+        <label>Sual sayı: <b id="w-n">${ed.ans.length}</b> <button class="v3-bt o" onclick="V3.ed.ans.push('');V3.gridDraw()">＋</button> <button class="v3-bt o" onclick="V3.ed.ans.pop();V3.gridDraw()">－</button></label><div class="v3-gr" id="w-g"></div></div></div>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="v3-bt" onclick="V3.saveTest()">Yadda saxla</button><button class="v3-bt o" onclick="V3.ed=null;V3.tTst()">Yeni / təmizlə</button></div></div>
+      <div class="v3-c"><h3>Mövcud testlər (${V3.tests.length})</h3>${V3.tests.map((t, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee"><span><b>${V3.esc(t.title)}</b> · ${V3.esc(t.subject)} · ${t.ans.length} sual</span><span><button class="v3-bt o" onclick="V3.editTest(${i})">✏️</button> <button class="v3-bt x" onclick="V3.delTest(${i})">🗑</button></span></div>`).join('')}</div>`;
+    V3.gridDraw();
+  },
+  gridDraw() {
+    const a = V3.ed.ans; V3.$('w-n').innerText = a.length;
+    V3.$('w-g').innerHTML = a.map((x, i) => `<div class="v3-ce" onclick="V3.cyc(${i})">${i + 1}<b>${x || '·'}</b></div>`).join('');
+    const ta = V3.$('w-a'); if (document.activeElement !== ta) ta.value = a.map((x, i) => x ? (i + 1) + x : '').join(' ');
+  },
+  ansIn(v) { V3.ed.ans = V3.parse(v); V3.gridDraw(); },
+  cyc(i) { const L = ['', 'A', 'B', 'C', 'D', 'E']; V3.ed.ans[i] = L[(L.indexOf(V3.ed.ans[i]) + 1) % 6]; V3.gridDraw(); },
+  pickImg(inp) {
+    const f = inp.files[0]; if (!f) return; const r = new FileReader();
+    r.onload = () => { const im = new Image(); im.onload = () => { const k = Math.min(1, 1400 / im.width), c = document.createElement('canvas'); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); V3.ed.img = c.toDataURL('image/jpeg', .75); const p = V3.$('w-img'); p.src = V3.ed.img; p.style.display = 'block'; }; im.src = r.result; };
+    r.readAsDataURL(f);
+  },
+  async saveTest() {
+    const ed = V3.ed; ed.title = V3.$('w-t').value.trim(); ed.subject = V3.$('w-s').value.trim() || 'Digər';
+    if (!ed.title || !ed.img || !ed.ans.length) return alert('Ad, şəkil və ən azı bir cavab lazımdır.');
+    if (ed.ans.some(a => !a) && !confirm('Bəzi sualların cavabı boşdur. Yenə saxlansın?')) return;
+    await V2.put('v3tests', { title: ed.title, subject: ed.subject, img: ed.img, ans: ed.ans.map(a => a || '-').join('') }, ed.id);
+    V2.toast('Test saxlanıldı ✅'); V3.ed = null; await V3.loadTests(); V3.tTst();
+  },
+  editTest(i) { const t = V3.tests[i]; V3.ed = { id: t._id, title: t.title, subject: t.subject, img: t.img, ans: [...t.ans].map(x => x === '-' ? '' : x) }; V3.tTst(); scrollTo(0, 0); V3.$('v3-root').scrollTop = 0; },
+  async delTest(i) {
+    if (!confirm('Test silinsin?')) return; const id = V3.tests[i]._id;
+    if (V2.mode === 'cloud') await _supabase.from('dq_v2_store').delete().eq('id', id); else localStorage.setItem('dq_v2_v3tests', JSON.stringify(V3.tests.filter((_, j) => j !== i)));
+    await V3.loadTests(); V3.tTst();
+  }
+};
+/* qoşulma */
+(function () {
+  const os = showScreen;
+  showScreen = function (id) { os(id); document.body.classList.toggle('v3on', id.startsWith('v3-')); if (id.startsWith('v3-')) localStorage.removeItem('dq_active_screen'); };
+  const og = goHome; goHome = function () { og(); showScreen('v3-home'); };
+  V3.load().then(() => setTimeout(() => { const sv = localStorage.getItem('dq_active_screen'); if (!sv || ['login-screen', 'exam-select-screen'].includes(sv) || sv.startsWith('v3-')) showScreen('v3-home'); }, 250));
+})();
+</script>
+
+
+<style>
+.yq-news{max-width:960px;margin:24px auto;padding:0 16px;perspective:1100px}
+.yq-news h2{text-align:center;margin-bottom:12px}
+.yq-pg{background:#fff;border:1px solid #e2e8f0;border-left:6px solid #00c853;border-radius:14px;padding:18px 20px;box-shadow:0 6px 18px rgba(15,23,42,.08);transition:transform .45s ease,opacity .45s ease;transform-origin:left center;cursor:pointer;text-align:left}
+.yq-pg.out{transform:rotateY(-80deg);opacity:0}
+.yq-pg.in{transform:rotateY(80deg);opacity:0;transform-origin:right center}
+.yq-pg small{color:#64748b}.yq-pg h3{margin:4px 0 6px;font-size:18px}.yq-pg p{margin:0;color:#334155;white-space:pre-wrap}
+.yq-dots{text-align:center;margin-top:8px}.yq-dots i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#cbd5e1;margin:0 3px}.yq-dots i.on{background:#00c853}
+.yq-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:14px;font-weight:700;font-size:14px;z-index:100001;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+</style>
+<script>
+const YQ = {
+  WA: '994504305162', news: null, i: 0, tm: null, regs: [],
+  $: id => document.getElementById(id),
+  e: s => V2.esc(s),
+  key(c) { c = String(c || '').trim().toLowerCase(); if (c.includes('@')) return c; c = c.replace(/\D/g, '').replace(/^0+/, ''); return c.startsWith('994') ? c : '994' + c; },
+  valid(c) { c = String(c || '').trim(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c) || c.replace(/\D/g, '').length >= 9; },
+  gen() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({ length: 7 }, () => a[Math.floor(Math.random() * a.length)]).join(''); },
+  async find(k) {
+    await V2.probe();
+    if (V2.mode === 'cloud') { const { data } = await _supabase.from('dq_v2_store').select('*').eq('collection', 'regs').eq('data->>key', k).order('id', { ascending: false }).limit(1); const r = data && data[0]; return r ? { ...r.data, _id: r.id } : null; }
+    return (await V2.list('regs')).find(x => x.key === k) || null;
+  },
+  /* ---------- istifadəçi tərəfi ---------- */
+  open(tab) {
+    document.getElementById('yq-m')?.remove();
+    const m = document.createElement('div'); m.className = 'v3-md'; m.id = 'yq-m'; m.onclick = ev => { if (ev.target === m) m.remove(); };
+    document.body.appendChild(m); this.draw(tab || 'reg');
+  },
+  draw(tab, body) {
+    const m = this.$('yq-m'); if (!m) return;
+    const tb = (t, l) => `<button class="v3-bt ${tab === t ? '' : 'o'}" style="flex:1" onclick="YQ.draw('${t}')">${l}</button>`;
+    m.innerHTML = `<div><div style="display:flex;gap:8px;margin-bottom:12px">${tb('reg', 'Qeydiyyat')}${tb('in', 'Giriş')}</div>` + (body ||
+      `${tab === 'reg' ? 'Ad Soyad<input class="v3-in" id="yq-n" placeholder="Ad Soyad">' : ''}Gmail və ya telefon nömrəsi<input class="v3-in" id="yq-c" placeholder="mail@gmail.com və ya 050 000 00 00">
+      <button class="v3-bt" style="width:100%" onclick="YQ.${tab === 'reg' ? 'register' : 'login'}()">${tab === 'reg' ? 'Qeydiyyatdan keç' : 'Daxil ol'}</button>`) +
+      `<button class="v3-bt o" style="width:100%;margin-top:8px" onclick="this.closest('.v3-md').remove()">Bağla</button></div>`;
+  },
+  state(r) {
+    if (r.status === 'approved') return this.draw('in', `<p style="margin:6px 0 12px">✅ Təsdiqlənib. Daxil ola bilərsiniz.</p><button class="v3-bt" style="width:100%" onclick="YQ.enter('${r.key}')">Daxil ol</button>`);
+    if (r.status === 'rejected') return this.draw('in', `<p style="margin:6px 0 12px">❌ Qeydiyyat təsdiqlənməyib. Admin ilə əlaqə saxlayın.</p>`);
+    const t = `Salam mən ${r.name} (${r.contact}) saytda qeydiyyatdan keçdim, təsdiq edə bilərsizmi?`;
+    this.draw('in', `<p style="margin:6px 0 12px">⏳ Admin təsdiqi gözlənilir.</p><a class="v3-bt" style="display:block;text-align:center;text-decoration:none;background:#25D366" target="_blank" href="https://wa.me/${this.WA}?text=${encodeURIComponent(t)}">📲 Adminə bildir</a>`);
+  },
+  async register() {
+    const name = this.$('yq-n').value.trim(), c = this.$('yq-c').value.trim();
+    if (name.length < 3 || !this.valid(c)) return alert('Ad Soyad və düzgün Gmail / telefon nömrəsi daxil edin.');
+    await V2.probe(); if (V2.mode !== 'cloud') return alert('Baza əlçatan deyil, qeydiyyat hazırda mümkün deyil.');
+    const k = this.key(c), ex = await this.find(k); if (ex) return this.state(ex);
+    const r = { name, contact: c, key: k, status: 'pending', ts: new Date().toISOString() };
+    await V2.put('regs', r); this.state(r);
+  },
+  async login() {
+    const c = this.$('yq-c').value.trim(); if (!this.valid(c)) return alert('Düzgün Gmail / telefon nömrəsi daxil edin.');
+    const r = await this.find(this.key(c)); if (!r) return this.draw('in', '<p style="margin:6px 0 12px">Bu məlumatla qeydiyyat tapılmadı. «Qeydiyyat» bölməsindən keçin.</p>');
+    this.state(r);
+  },
+  async enter(k) {
+    const r = await this.find(k); if (!r || r.status !== 'approved') return;
+    this.$('yq-m')?.remove(); this.$('user-name').value = r.name; this.$('user-fin').value = r.fin; proceedToExamSelect();
+  },
+  /* ---------- admin ---------- */
+  async openAdmin() { switchAdminTab('yq'); this.loadRegs(); this.loadPdfs(); },
+  async loadRegs() {
+    await V2.probe(); this.regs = (await V2.list('regs')); const e = this.e, L = { pending: '⏳ Gözləyir', approved: '✅ Təsdiqli', rejected: '❌ Rədd' };
+    this.$('yq-regs').innerHTML = `<table><thead><tr><th>Ad</th><th>Əlaqə</th><th>Tarix</th><th>Status</th><th></th></tr></thead><tbody>` + (this.regs.map((r, i) => `<tr><td>${e(r.name)}</td><td>${e(r.contact)}</td><td>${e((r.ts || '').slice(0, 10))}</td><td>${L[r.status] || ''}${r.fin ? '<br><small>' + e(r.fin) + '</small>' : ''}</td><td>${r.status !== 'approved' ? `<button class="btn btn-success btn-sm" onclick="YQ.setStatus(${i},'approved')">Təsdiq</button> ` : ''}${r.status === 'pending' ? `<button class="btn btn-secondary btn-sm" onclick="YQ.setStatus(${i},'rejected')">Rədd</button> ` : ''}<button class="btn btn-danger btn-sm" onclick="YQ.delReg(${i})">Sil</button></td></tr>`).join('') || '<tr><td colspan="5">Qeydiyyat yoxdur</td></tr>') + '</tbody></table>';
+  },
+  async setStatus(i, st) {
+    const r = { ...this.regs[i] };
+    if (st === 'approved') {
+      r.fin = r.fin || this.gen();
+      const { error } = await _supabase.from('allowed_students').insert([{ student_name: r.name, fin: r.fin, exam_no: '1', categories: ['BA', 'BB', 'AC'] }]);
+      if (error) return alert('Xəta: ' + error.message);
+    }
+    r.status = st; await V2.put('regs', r, r._id); this.loadRegs();
+  },
+  async delReg(i) {
+    const r = this.regs[i]; if (!confirm('Silinsin?')) return;
+    if (r.fin) await _supabase.from('allowed_students').delete().eq('fin', r.fin);
+    await V2.del('regs', r._id); this.loadRegs();
+  },
+  async pdfList() {
+    await V2.probe();
+    if (V2.mode === 'cloud') { const { data } = await _supabase.from('dq_v2_store').select('id, title:data->>title, ts:data->>ts').eq('collection', 'pdfs').order('id', { ascending: false }); return (data || []).map(r => ({ _id: r.id, title: r.title, ts: r.ts })); }
+    return (await V2.list('pdfs')).map(({ data, ...x }) => x);
+  },
+  async addPdf() {
+    const f = this.$('yq-pdf-file').files[0], t = this.$('yq-pdf-title').value.trim() || (f && f.name.replace(/\.pdf$/i, ''));
+    if (!f || f.type !== 'application/pdf') return alert('PDF fayl seçin.');
+    if (f.size > 4e6) return alert('Fayl 4 MB-dan böyükdür.');
+    const data = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+    await V2.put('pdfs', { title: t, name: f.name, data, ts: new Date().toISOString() });
+    this.$('yq-pdf-file').value = ''; this.$('yq-pdf-title').value = ''; V2.toast('PDF əlavə olundu ✅'); this.loadPdfs();
+  },
+  async loadPdfs() {
+    const l = await this.pdfList(), e = this.e;
+    this.$('yq-pdfs').innerHTML = l.map(p => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #eee"><span>📄 ${e(p.title)}</span><button class="btn btn-danger btn-sm" onclick="YQ.delPdf(${p._id})">Sil</button></div>`).join('') || '<p style="color:#64748b">PDF yoxdur.</p>';
+  },
+  async delPdf(id) { if (confirm('Silinsin?')) { await V2.del('pdfs', id); this.loadPdfs(); } },
+  async pasteNews() {
+    const t = this.$('yq-paste').value.trim(); if (!t) return;
+    const ln = t.split('\n'), title = ln[0].replace(/[*_~]/g, '').trim().slice(0, 120);
+    await V2.put('news', { title, kind: this.$('yq-kind').value, pub: new Date().toISOString().slice(0, 10), body: ln.slice(1).join('\n').trim() || title, img: '' });
+    this.$('yq-paste').value = ''; this.news = null; V2.toast('Yeniliklərə əlavə olundu ✅');
+  },
+  /* ---------- istifadəçi: PDF siyahısı ---------- */
+  async showPdfs() {
+    document.getElementById('yq-m')?.remove();
+    const m = document.createElement('div'); m.className = 'v3-md'; m.id = 'yq-m'; m.onclick = ev => { if (ev.target === m) m.remove(); };
+    m.innerHTML = '<div>Yüklənir...</div>'; document.body.appendChild(m);
+    const l = await this.pdfList(), e = this.e;
+    m.firstChild.innerHTML = `<h3 style="text-align:left;margin-bottom:10px">📄 PDF Materiallar</h3>` + (l.map(p => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee"><span>${e(p.title)}</span><button class="v3-bt" onclick="YQ.getPdf(${p._id})">Aç / Yüklə</button></div>`).join('') || '<p>Hələ PDF yoxdur.</p>') + '<button class="v3-bt o" style="width:100%;margin-top:12px" onclick="this.closest(\'.v3-md\').remove()">Bağla</button>';
+  },
+  async getPdf(id) {
+    let d, nm = 'material';
+    if (V2.mode === 'cloud') { const { data } = await _supabase.from('dq_v2_store').select('data').eq('id', id).single(); d = data && data.data; }
+    else d = (await V2.list('pdfs')).find(x => x._id == id);
+    if (!d) return alert('Fayl tapılmadı.');
+    const b = await (await fetch(d.data)).blob(), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = d.name || nm + '.pdf'; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove();
+  },
+  /* ---------- yeniliklər: vərəq çevrilməsi ---------- */
+  async mount() {
+    const home = this.$('v3-home'), sv = home && home.querySelector('.v3-sv'); if (!sv) return;
+    const box = document.createElement('div'); box.id = 'yq-news'; box.className = 'yq-news'; sv.parentNode.insertBefore(box, sv);
+    if (!this.news) { try { await V2.probe(); this.news = (await V2.list('news')).slice(0, 8); } catch (x) { this.news = []; } }
+    this.i = 0; this.paint(); clearInterval(this.tm); this.tm = setInterval(() => this.flip(), 5000);
+  },
+  paint(cls) {
+    const el = this.$('yq-news'); if (!el) return; const n = this.news || [];
+    if (!n.length) { el.style.display = 'none'; return; }
+    const x = n[this.i % n.length], e = this.e;
+    el.innerHTML = `<h2>📢 Yeniliklər</h2><div class="yq-pg ${cls || ''}" onclick="openFeedModal('news')"><small>${e(x.kind || 'Elan')} · ${e(x.pub || '')}</small><h3>${e(x.title)}</h3><p>${e(String(x.body || '').slice(0, 220))}</p></div><div class="yq-dots">${n.map((_, k) => `<i class="${k === this.i % n.length ? 'on' : ''}"></i>`).join('')}</div>`;
+    if (cls) requestAnimationFrame(() => requestAnimationFrame(() => el.querySelector('.yq-pg')?.classList.remove(cls)));
+  },
+  flip() {
+    const el = this.$('yq-news'), v = this.$('v3-home'); if (!el || !v || !v.classList.contains('active') || (this.news || []).length < 2) return;
+    el.querySelector('.yq-pg').classList.add('out'); setTimeout(() => { this.i++; this.paint('in'); }, 450);
+  },
+  /* ---------- giriş zamanı bildiriş ---------- */
+  async notify() {
+    try {
+      const [tests, pdfs] = [await V2.list('v3tests'), await this.pdfList()], msg = [];
+      const chk = (k, n, txt) => { const o = localStorage.getItem(k); localStorage.setItem(k, n); if (o !== null && n > +o) msg.push(txt); };
+      chk('dq_seen_tests', tests.length, tests[0] ? '🆕 Yeni test əlavə olunub: ' + tests[0].title : '🆕 Yeni test əlavə olunub');
+      chk('dq_seen_pdfs', pdfs.length, '📄 Yeni PDF material əlavə olunub');
+      if (!msg.length) return;
+      const d = document.createElement('div'); d.className = 'yq-toast'; d.innerHTML = msg.map(this.e).join('<br>'); document.body.appendChild(d); setTimeout(() => d.remove(), 2500);
+    } catch (x) {}
+  }
+};
+registerViaWhatsApp = () => YQ.open('reg');
+(function () {
+  const og = V3.go; V3.go = function (id) { const it = V3.D.items[id]; if (it && (it.a === 'pdf' || (id === 's4' && it.a === 'none'))) return YQ.showPdfs(); og.call(V3, id); };
+  V3.A.splice(3, 0, ['pdf', 'PDF materiallar']);
+  const or = V3.render; V3.render = function () { or.call(V3); YQ.mount(); };
+  const os = showScreen; showScreen = function (id) { os(id); if (id === 'exam-select-screen') YQ.notify(); };
+  if (V3.D) V3.render();
+})();
+</script>
+<style id="dq-v9">
+.dq-cn{max-width:960px;margin:34px auto;padding:0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.dq-cn div{position:relative;overflow:hidden;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:16px;padding:20px;text-align:center;box-shadow:0 10px 28px rgba(15,23,42,.25);border:1px solid rgba(0,200,83,.35)}
+.dq-cn div:before{content:"";position:absolute;inset:-60%;background:conic-gradient(from 0deg,transparent,rgba(0,200,83,.35),transparent 30%);animation:dqsp 6s linear infinite}
+.dq-cn div>*{position:relative}.dq-cn b{display:block;font-size:38px;color:#00e676;text-shadow:0 0 16px rgba(0,230,118,.6)}.dq-cn small{font-size:13px;opacity:.85}
+@keyframes dqsp{to{transform:rotate(360deg)}}
+#dq-cab{position:fixed;inset:0;z-index:99990;background:#eef2ff;display:flex;font-family:inherit;text-align:left}
+#dq-cab aside{width:230px;background:#fff;border-right:1px solid #e2e8f0;padding:12px;flex-shrink:0;overflow:auto}
+#dq-cab aside .u{display:flex;align-items:center;gap:8px;font-weight:700;padding:8px 4px 14px;border-bottom:1px solid #e2e8f0;margin-bottom:10px}
+.dq-av{width:34px;height:34px;border-radius:50%;background:#0b5ed7;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+#dq-cab aside a{display:block;padding:11px 12px;border-radius:10px;margin:3px 0;cursor:pointer;color:#334155;font-weight:600}
+#dq-cab aside a.on{background:#e8f1ff;color:#0b5ed7;border-left:3px solid #0b5ed7}#dq-cab aside a.r{color:#dc2626}
+#dq-cab main{flex:1;overflow:auto;padding:18px}
+.dq-hd{background:linear-gradient(90deg,#0b3fc7,#0b6ae0);color:#fff;border-radius:16px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dq-cd{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin-bottom:16px}
+.dq-cd label{display:block;font-weight:600;font-size:13px;margin:12px 0 5px}.dq-cd input{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;font-size:14px}
+.dq-in{background:#e8f1ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;font-size:13px;color:#1e3a8a;margin-top:14px}
+.dq-st{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}.dq-st div{background:#fff;border-radius:14px;padding:14px;border:1px solid #e2e8f0;text-align:center}.dq-st b{font-size:26px;color:#0b5ed7;display:block}
+.dq-tb{width:100%;border-collapse:collapse;font-size:13px}.dq-tb td,.dq-tb th{padding:9px 6px;border-bottom:1px solid #eef2f7;text-align:left}
+@media(max-width:700px){#dq-cab{flex-direction:column}#dq-cab aside{width:100%;display:flex;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid #e2e8f0;padding:8px}#dq-cab aside .u{display:none}#dq-cab aside a{white-space:nowrap;margin:0}}
+</style>
+<script>
+/* ===== DQ v9: sayğac + kabinet + profil sorğuları (mövcud kodlara toxunulmayıb) ===== */
+const YQ2 = {
+  SK: 'dq_yq_sess', tab: 'home', me: null,
+  $: id => document.getElementById(id), e: s => V2.esc(s),
+  sess() { return localStorage.getItem(this.SK); },
+  /* --- animasiyalı sayğac --- */
+  async counters() {
+    const home = this.$('v3-home'); if (!home || home.querySelector('.dq-cn')) return;
+    const ref = this.$('yq-news') || home.querySelector('.v3-sv'); if (!ref) return;
+    const box = document.createElement('div'); box.className = 'dq-cn'; ref.parentNode.insertBefore(box, ref);
+    const cnt = async (t, f) => { try { let q = _supabase.from(t).select('*', { count: 'exact', head: true }); if (f) q = f(q); const { count } = await q; return count || 0; } catch (x) { return 0; } };
+    let users = 0, exams = 0, saglar = 0, ques = await cnt('exam_questions');
+    try { const regs = (await V2.list('regs')).filter(r => r.status === 'approved').length; users = Math.max(regs, await cnt('allowed_students')); } catch (x) {}
+    try { const { data } = await _supabase.from('exam_questions').select('exam_id,category').limit(20000); const ex = new Set(), sn = new Set(); (data || []).forEach(r => { ex.add(r.exam_id); sn.add(r.exam_id + '|' + r.category); }); exams = ex.size; saglar = sn.size; } catch (x) {}
+    const it = [['👥', users, 'İstifadəçi'], ['📝', exams, 'İmtahan'], ['🎓', saglar, 'Sınaq'], ['❓', ques, 'Sual']];
+    box.innerHTML = it.map(x => `<div><span style="font-size:24px">${x[0]}</span><b data-n="${x[1]}">0</b><small>${x[2]} sayı</small></div>`).join('');
+    const run = () => box.querySelectorAll('b').forEach(b => { const n = +b.dataset.n, t0 = performance.now(); (function s(t) { const p = Math.min((t - t0) / 1600, 1); b.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))).toLocaleString('az-AZ') + (p >= 1 && n ? '+' : ''); if (p < 1) requestAnimationFrame(s); })(t0); });
+    new IntersectionObserver((en, o) => { if (en[0].isIntersecting) { run(); o.disconnect(); } }).observe(box);
+  },
+  /* --- kabinet --- */
+  async open() {
+    const k = this.sess(); if (!k) return YQ.open('in');
+    const r = await YQ.find(k); if (!r || r.status !== 'approved') { localStorage.removeItem(this.SK); return YQ.open('in'); }
+    this.me = r; this.$('dq-cab')?.remove();
+    const d = document.createElement('div'); d.id = 'dq-cab'; document.body.appendChild(d); this.go('home');
+  },
+  async go(t) {
+    this.tab = t; const r = this.me, e = this.e, ini = r.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const nav = [['home', '🏠 Əsas'], ['tests', '📝 Testlər'], ['res', '🏆 Nəticələrim'], ['pdf', '📄 PDF'], ['prof', '👤 Profilim']].map(x => `<a class="${t === x[0] ? 'on' : ''}" onclick="YQ2.go('${x[0]}')">${x[1]}</a>`).join('');
+    this.$('dq-cab').innerHTML = `<aside><div class="u"><div class="dq-av">${e(ini)}</div>${e(r.name)}</div>${nav}<a onclick="YQ2.exit()">🏠 Ana səhifə</a><a class="r" onclick="YQ2.logout()">⎋ Çıxış</a></aside><main id="dq-cm"><div class="dq-hd"><div><h2 style="margin:0">${{ home: 'Əsas', tests: 'Testlər', res: 'Nəticələrim', pdf: 'PDF Materiallar', prof: 'Profilim' }[t]}</h2><small>Şəxsi məlumatlarınızı idarə edin</small></div><div class="dq-av" style="width:auto;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.2)">${e(r.name.split(' ')[0])}</div></div><div id="dq-cb">Yüklənir...</div></main>`;
+    const b = this.$('dq-cb');
+    if (t === 'prof') return this.prof(b);
+    if (t === 'pdf') { const l = await YQ.pdfList(); b.innerHTML = `<div class="dq-cd">${l.map(p => `<div style="display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #eee"><span>📄 ${e(p.title)}</span><button class="v3-bt" onclick="YQ.getPdf(${p._id})">Aç / Yüklə</button></div>`).join('') || 'Hələ PDF yoxdur.'}</div>`; return; }
+    if (t === 'tests') { let l = []; try { l = await V2.list('v3tests'); } catch (x) {} b.innerHTML = `<div class="dq-cd"><button class="v3-bt" onclick="YQ2.startExam()">🎓 Sınaqlara keç</button></div>` + (l.length ? `<div class="dq-cd"><b>Fənn testləri</b>${l.map(x => `<div style="padding:8px 0;border-bottom:1px solid #eee">${e(x.title)}</div>`).join('')}</div>` : ''); return; }
+    const { data } = await _supabase.from('exam_results').select('*').eq('fin', r.fin).order('created_at', { ascending: false });
+    const rs = data || [], sc = rs.map(x => +x.score || 0), avg = sc.length ? (sc.reduce((a, c) => a + c, 0) / sc.length).toFixed(1) : 0;
+    const st = `<div class="dq-st"><div><b>${rs.length}</b>Cəhd</div><div><b>${avg}</b>Orta bal</div><div><b>${sc.length ? Math.max(...sc) : 0}</b>Ən yüksək</div></div>`;
+    const tbl = `<div class="dq-cd" style="overflow-x:auto"><table class="dq-tb"><thead><tr><th>Tarix</th><th>İmtahan</th><th>Kateqoriya</th><th>✅</th><th>❌</th><th>Bal</th></tr></thead><tbody>${(t === 'home' ? rs.slice(0, 5) : rs).map(x => `<tr><td>${e((x.created_at || '').slice(0, 10))}</td><td>№${e(x.exam_no)}</td><td>${e(x.category)}</td><td>${x.correct_count ?? ''}</td><td>${x.wrong_count ?? ''}</td><td><b>${x.score ?? ''}</b></td></tr>`).join('') || '<tr><td colspan="6">Hələ nəticə yoxdur</td></tr>'}</tbody></table></div>`;
+    b.innerHTML = st + tbl;
+  },
+  async prof(b) {
+    const r = this.me, e = this.e, pend = (await V2.list('profreq')).find(x => x.key === r.key && x.status === 'pending');
+    const ph = /@/.test(r.contact) ? (r.phone || '') : r.contact, em = /@/.test(r.contact) ? r.contact : (r.email || '');
+    b.innerHTML = `<div class="dq-cd"><div style="display:flex;gap:14px;align-items:center"><div class="dq-av" style="width:70px;height:70px;font-size:24px">${e(r.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}</div><div><b style="font-size:20px">${e(r.name)}</b><br><small>${e(r.contact)} · Kod: <b>${e(r.fin || '')}</b></small></div></div>
+    <label>Ad Soyad</label><input id="pf-n" value="${e(r.name)}"><label>Mobil nömrə</label><input id="pf-p" value="${e(ph)}"><label>Email</label><input id="pf-e" value="${e(em)}">
+    <div class="dq-in">ℹ️ Dəyişikliklər dərhal tətbiq olunmur — admin təsdiqlədikdən sonra aktiv olacaq.${pend ? '<br>⏳ Gözləyən sorğunuz var.' : ''}</div>
+    <button class="v3-bt" style="margin-top:14px;background:#0b5ed7" onclick="YQ2.sendReq()">Dəyişiklik sorğusu göndər</button></div>`;
+  },
+  async sendReq() {
+    const r = this.me, n = this.$('pf-n').value.trim(), p = this.$('pf-p').value.trim(), m = this.$('pf-e').value.trim();
+    if (n.length < 3) return alert('Ad Soyad daxil edin.'); if (m && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) return alert('Email düzgün deyil.');
+    await V2.put('profreq', { key: r.key, name: n, phone: p, email: m, old: r.name, status: 'pending', ts: new Date().toISOString() });
+    V2.toast('Sorğu adminə göndərildi ✅'); this.go('prof');
+  },
+  startExam() { const r = this.me; this.exit(); YQ.enter(r.key); },
+  exit() { this.$('dq-cab')?.remove(); },
+  logout() { localStorage.removeItem(this.SK); this.exit(); },
+  /* --- admin: profil sorğuları --- */
+  async loadReqs() {
+    const host = this.$('yq-regs'); if (!host) return; let box = this.$('yq-reqs');
+    if (!box) { box = document.createElement('div'); box.id = 'yq-reqs'; box.style.cssText = 'overflow-x:auto;margin-bottom:24px'; host.after(box); }
+    const l = await V2.list('profreq'), e = this.e; this.reqs = l;
+    box.innerHTML = `<h4 style="text-align:left">📝 Profil dəyişiklik sorğuları</h4><table><thead><tr><th>İstifadəçi</th><th>Yeni məlumat</th><th>Status</th><th></th></tr></thead><tbody>${l.map((x, i) => `<tr><td>${e(x.old)}</td><td>${e(x.name)}<br><small>${e(x.phone)} ${e(x.email)}</small></td><td>${x.status === 'pending' ? '⏳' : x.status === 'approved' ? '✅' : '❌'}</td><td>${x.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="YQ2.decide(${i},'approved')">Təsdiq</button> <button class="btn btn-secondary btn-sm" onclick="YQ2.decide(${i},'rejected')">Rədd</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="4">Sorğu yoxdur</td></tr>'}</tbody></table>`;
+  },
+  async decide(i, st) {
+    const q = { ...this.reqs[i] }, reg = await YQ.find(q.key);
+    if (st === 'approved' && reg) {
+      const nr = { ...reg, name: q.name, phone: q.phone, email: q.email }; await V2.put('regs', nr, reg._id);
+      if (reg.fin) await _supabase.from('allowed_students').update({ student_name: q.name }).eq('fin', reg.fin);
+    }
+    q.status = st; await V2.put('profreq', q, q._id); this.loadReqs();
+  }
+};
+(function () {
+  const oe = YQ.enter; YQ.enter = async function (k) { localStorage.setItem(YQ2.SK, k); return oe.call(YQ, k); };
+  const og = V3.go; V3.go = function (id) { if (id === 'kab') return YQ2.open(); og.call(V3, id); };
+  const oa = YQ.openAdmin; YQ.openAdmin = async function () { await oa.call(YQ); YQ2.loadReqs(); };
+  const os = YQ.setStatus; YQ.setStatus = async function (i, st) { await os.call(YQ, i, st); };
+  const or = V3.render; V3.render = function () { or.call(V3); setTimeout(() => YQ2.counters(), 400); };
+  const oc = YQ.state; YQ.state = function (r) { if (r.status === 'approved') localStorage.setItem(YQ2.SK, r.key); return oc.call(YQ, r); };
+  if (V3.D) V3.render();
+})();
 </script>
 </body>
     </html>
