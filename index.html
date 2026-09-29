@@ -9965,5 +9965,180 @@ const SX = (() => {
 </script>
     <h1 style="font-size:16px;margin:8px 0;text-align:center;">DQPlatform Exam - Dövlət Qulluğu Sınaq Platforması</h1>
 
+    <!-- ===== DƏRS MATERİALLARI – ADMİN BÖLMƏSİ (</body>-dən əvvələ yapışdırın) ===== -->
+<style>
+#mod-dersmat .dm-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+#mod-dersmat .dm-row{display:grid;grid-template-columns:38px 1fr;gap:8px;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:8px}
+#mod-dersmat .dm-no{width:34px;height:34px;border-radius:50%;background:#0b2a7a;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+#mod-dersmat .dm-fields{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#mod-dersmat .dm-fields .form-control{flex:1;min-width:150px}
+#mod-dersmat .dm-fn{font-size:12px;color:#475569;word-break:break-all}
+#mod-dersmat .dm-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}
+#mod-dersmat .dm-item span{flex:1;min-width:0;word-break:break-word}
+#mod-dersmat .dm-sub{margin:14px 0 4px;font-weight:800;color:#0b2a7a}
+#mod-dersmat .dm-prog{font-size:13px;color:#0369a1;font-weight:700;margin-top:8px}
+</style>
+
+<script>
+(function () {
+  const DM = window.DM = {
+    SUBS: ['Azərbaycan dili', 'Qanunvericilik', 'İnformatika', 'Məntiq'],
+    rows: [],
+    $: id => document.getElementById(id),
+    e: s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+
+    /* ---- bazadan siyahı (nömrə daxil) ---- */
+    async raw() {
+      await V2.probe();
+      if (V2.mode === 'cloud') {
+        const { data } = await _supabase.from('dq_v2_store')
+          .select('id, title:data->>title, sub:data->>sub, ts:data->>ts, no:data->>no, name:data->>name')
+          .eq('collection', 'pdfs').order('id', { ascending: false });
+        return (data || []).map(r => ({ _id: r.id, title: r.title, sub: r.sub, ts: r.ts, no: r.no ? +r.no : 0, name: r.name }));
+      }
+      return (await V2.list('pdfs')).map(({ data, ...x }) => ({ ...x, no: x.no ? +x.no : 0 }));
+    },
+    sorted(l) {
+      return l.slice().sort((a, b) => (a.no || 9999) - (b.no || 9999) || String(a.ts).localeCompare(String(b.ts)));
+    },
+    countIn(l, sub) { return l.filter(p => (p.sub || 'Digər') === sub).length; },
+
+    /* ---- forma ---- */
+    async nextNo() {
+      const sub = (DM.$('dm-sub').value || '').trim();
+      const l = await DM.raw();
+      const mx = l.filter(p => (p.sub || 'Digər') === sub).reduce((m, p) => Math.max(m, p.no || 0), 0);
+      return Math.max(mx, DM.countIn(l, sub)) + 1;
+    },
+    async renumber() {
+      const start = await DM.nextNo();
+      DM.$('dm-rows').querySelectorAll('.dm-row').forEach((r, i) => { r.querySelector('.dm-no').textContent = start + i; r.dataset.no = start + i; });
+    },
+    addRow(file) {
+      const box = DM.$('dm-rows'), r = document.createElement('div');
+      r.className = 'dm-row'; r.file = file || null;
+      r.innerHTML = `<div class="dm-no">?</div><div class="dm-fields">
+        <input type="text" class="form-control dm-name" placeholder="Materialın adı" value="${file ? DM.e(file.name.replace(/\.pdf$/i, '')) : ''}">
+        ${file ? `<span class="dm-fn">📄 ${DM.e(file.name)}</span>` : '<input type="file" accept="application/pdf" class="form-control dm-file">'}
+        <button type="button" class="btn btn-danger btn-sm">✕</button></div>`;
+      const inp = r.querySelector('.dm-file');
+      if (inp) inp.onchange = () => {
+        r.file = inp.files[0] || null;
+        const nm = r.querySelector('.dm-name');
+        if (r.file && !nm.value.trim()) nm.value = r.file.name.replace(/\.pdf$/i, '');
+      };
+      r.querySelector('button').onclick = () => { r.remove(); DM.renumber(); };
+      box.appendChild(r); DM.renumber();
+    },
+    addMany(files) {
+      [...files].forEach(f => { if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) DM.addRow(f); });
+      DM.$('dm-multi').value = '';
+    },
+
+    /* ---- yükləmə ---- */
+    async upload() {
+      const sub = DM.$('dm-sub').value.trim();
+      if (!sub) return alert('Fənni seçin.');
+      const rows = [...DM.$('dm-rows').querySelectorAll('.dm-row')];
+      if (!rows.length) return alert('Ən azı bir material əlavə edin.');
+      await V2.probe();
+      const max = V2.mode === 'cloud' ? 10e6 : 4e6;
+      for (const [i, r] of rows.entries()) {
+        const nm = r.querySelector('.dm-name').value.trim();
+        if (!nm) return alert((i + 1) + '-ci materialın adını yazın.');
+        if (!r.file) return alert('"' + nm + '" üçün PDF seçin.');
+        if (r.file.size > max) return alert('"' + nm + '" faylı ' + (max / 1e6) + ' MB-dan böyükdür.');
+      }
+      const prog = DM.$('dm-prog'), btn = DM.$('dm-up');
+      btn.disabled = true;
+      try {
+        for (const [i, r] of rows.entries()) {
+          prog.textContent = `Yüklənir: ${i + 1} / ${rows.length} ...`;
+          const data = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(r.file); });
+          await V2.put('pdfs', {
+            title: r.querySelector('.dm-name').value.trim(), sub, no: +r.dataset.no,
+            name: r.file.name, data, ts: new Date().toISOString()
+          });
+        }
+        prog.textContent = '';
+        DM.$('dm-rows').innerHTML = '';
+        V2.toast(rows.length + ' material əlavə olundu ✅');
+        await DM.load();
+      } catch (err) {
+        prog.textContent = '';
+        alert('Yükləmə xətası: ' + (err && err.message ? err.message : err));
+      }
+      btn.disabled = false;
+    },
+
+    /* ---- mövcud materiallar ---- */
+    async load() {
+      const l = DM.sorted(await DM.raw()), e = DM.e, subs = [...DM.SUBS];
+      l.forEach(p => { const s = p.sub || 'Digər'; if (!subs.includes(s)) subs.push(s); });
+      const opts = DM.$('dm-sub'); const cur = opts.value;
+      opts.innerHTML = subs.filter(s => s !== 'Digər').map(s => `<option>${e(s)}</option>`).join('');
+      if (cur) opts.value = cur;
+      DM.$('dm-list').innerHTML = subs.map(s => {
+        const it = l.filter(p => (p.sub || 'Digər') === s);
+        if (!it.length && !DM.SUBS.includes(s)) return '';
+        return `<div class="dm-sub">📘 ${e(s)} <small style="color:#64748b;font-weight:600">· ${it.length} material</small></div>` +
+          (it.map(p => `<div class="dm-item"><span>${p.no ? '<b>' + p.no + '.</b> ' : ''}📄 ${e(p.title)}</span>
+            <button class="btn btn-success btn-sm" onclick="YQ.getPdf(${p._id})">Aç</button>
+            <button class="btn btn-danger btn-sm" onclick="DM.del(${p._id})">Sil</button></div>`).join('') || '<p style="color:#94a3b8;font-size:13px;margin:4px 0">Hələ material yoxdur.</p>');
+      }).join('');
+      DM.renumber();
+    },
+    async del(id) {
+      if (!confirm('Material silinsin?')) return;
+      await V2.probe();
+      if (V2.mode === 'cloud') await _supabase.from('dq_v2_store').delete().eq('id', id);
+      else localStorage.setItem('dq_v2_pdfs', JSON.stringify((await V2.list('pdfs')).filter(x => x._id != id)));
+      V2.toast('Silindi');
+      DM.load();
+    },
+
+    /* ---- admin panelə qoşulma ---- */
+    mount() {
+      const grid = document.querySelector('#admin-panel .admin-nav-grid'), anchor = DM.$('mod-suallar');
+      if (!grid || !anchor || DM.$('mod-dersmat')) return;
+      const card = document.createElement('div');
+      card.className = 'admin-nav-card'; card.style.cssText = 'background:#0b2a7a;color:#fff';
+      card.innerHTML = '<span class="icon">📚</span> Dərs Materialları';
+      card.onclick = () => { switchAdminTab('dersmat'); DM.load(); };
+      grid.insertBefore(card, grid.firstChild);
+
+      const blk = document.createElement('div');
+      blk.id = 'mod-dersmat'; blk.className = 'admin-module-block';
+      blk.innerHTML = `
+        <h4 style="text-align:left;">📚 Dərs Materialları (PDF)</h4>
+        <p style="font-size:13px;color:#64748b;margin:4px 0 10px">Fənni seçin, bir və ya bir neçə material əlavə edin (nömrə avtomatik verilir). İstifadəçilər "Dərs materialları" bölməsindən açıb yükləyə biləcək.</p>
+        <div class="dm-top">
+          <select id="dm-sub" class="form-control" style="max-width:260px" onchange="DM.renumber()"></select>
+          <button type="button" class="btn btn-primary" onclick="DM.addRow()">➕ Material əlavə et</button>
+          <label class="btn btn-secondary" style="margin:0;cursor:pointer">📎 Bir neçə PDF seç
+            <input type="file" id="dm-multi" accept="application/pdf" multiple style="display:none" onchange="DM.addMany(this.files)"></label>
+        </div>
+        <div id="dm-rows"></div>
+        <button type="button" id="dm-up" class="btn btn-success" onclick="DM.upload()">⬆️ Yüklə</button>
+        <div id="dm-prog" class="dm-prog"></div>
+        <h4 style="text-align:left;margin-top:26px;">📋 Mövcud materiallar</h4>
+        <div id="dm-list"></div>`;
+      anchor.parentNode.insertBefore(blk, anchor);
+      DM.load();
+    }
+  };
+
+  /* İstifadəçi tərəfi: materiallar nömrə üzrə sıralansın və "1. Ad" kimi görünsün */
+  try {
+    YQ.pdfList = async function () {
+      return DM.sorted(await DM.raw()).map(p => ({ ...p, title: p.no ? p.no + '. ' + p.title : p.title }));
+    };
+  } catch (err) { console.warn('DM: YQ tapılmadı', err); }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', DM.mount); else DM.mount();
+})();
+</script>
+<!-- ===== SON ===== -->
+
 </body>
     </html>
