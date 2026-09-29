@@ -9327,6 +9327,260 @@ const SX = (() => {
   };
 })();
 </script>
+    <!-- ===== DQ PATCH v13: (1) "İmanov" düyməsi → 2 klik = admin giriş formu  (2) Peşəkar canlı redaktor (şəkil sürüşdürmə/ölçü, abzas, format)
+     </body> teqindən dərhal əvvələ yapışdırın. Köhnə '"Yunis İmanov" → 2 dəfə klik' blokunu silin (bu blok onu əvəz edir). ===== -->
+<style>
+.dq-imbtn{display:inline-block;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  margin-left:2px;padding:2px 12px;border-radius:999px;border:1px solid rgba(251,191,36,.7);background:rgba(251,191,36,.14);color:inherit;font-weight:600;transition:.15s}
+.dq-imbtn:hover,.dq-imbtn:active{background:rgba(251,191,36,.32);transform:translateY(-1px)}
+/* rendering: redaktorla yaradılan məzmun imtahan ekranında da düzgün görünsün */
+.question-title img,.options label img.dq-ri{max-width:100%;height:auto}
+.question-title{white-space:normal}
+.question-title p,.options label p{margin:0 0 .6em}
+.question-title::after,.options label>span::after{content:"";display:block;clear:both}
+.question-title ul,.question-title ol{padding-left:24px;margin:.3em 0}
+.options label>span{flex:1;min-width:0}
+/* redaktor */
+.rt-wrap{position:relative;border:1px solid #cbd5e1;border-radius:10px;background:#fff;margin:4px 0 10px;color:#0f172a}
+.rt-bar{display:flex;flex-wrap:wrap;gap:4px;padding:6px;border-bottom:1px solid #e2e8f0;background:#f8fafc;border-radius:10px 10px 0 0;position:sticky;top:0;z-index:5}
+.rt-b{min-width:34px;height:34px;padding:0 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#0f172a;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.rt-b:active,.rt-b.on{background:#dbeafe;border-color:#2563eb}
+.rt-sep{width:1px;background:#e2e8f0;margin:2px 3px}
+.rt-ed{min-height:90px;padding:10px 12px;outline:none;line-height:1.6;font-size:15px;overflow-wrap:anywhere}
+.rt-ed:empty:before{content:attr(data-ph);color:#94a3b8}
+.rt-ed p{margin:0 0 .6em}
+.rt-ed img{max-width:100%;height:auto;cursor:pointer;-webkit-user-drag:none;user-select:none}
+.rt-ed img.rt-sel{outline:3px solid #2563eb;outline-offset:2px;touch-action:none}
+.rt-handle{position:absolute;width:20px;height:20px;background:#2563eb;border:2px solid #fff;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.4);cursor:nwse-resize;touch-action:none;display:none;z-index:6}
+.rt-imgbar{display:none;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;border-top:1px dashed #93c5fd;background:#eff6ff;border-radius:0 0 10px 10px;font-size:13px}
+.rt-imgbar input[type=range]{flex:1;min-width:110px}
+.rt-hint{font-size:12px;color:#64748b;padding:0 10px 8px}
+.rt-optrow{border:1px solid #e2e8f0;border-radius:10px;padding:8px;margin-bottom:10px;background:#fafcff}
+.rt-optlab{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;margin-bottom:2px}
+</style>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
+
+  /* =============== 1) "İmanov" düyməsi: 2 klik/toxunuş → admin giriş formu =============== */
+  var RX = /Yunis\s+([İIi]manov)/, last = 0;
+  function wrapFooter() {
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n, list = [];
+    while ((n = w.nextNode())) {
+      var p = n.parentNode;
+      if (RX.test(n.nodeValue) && p.closest && p.closest('.footer-text,.footer-bar,footer') && !p.closest('.dq-imbtn,script,style,textarea,input')) list.push(n);
+    }
+    list.forEach(function (t) {
+      var m = t.nodeValue.match(RX), start = m.index + m[0].length - m[1].length;
+      var b = document.createElement('span');
+      b.className = 'dq-imbtn'; b.setAttribute('role', 'button'); b.title = 'Admin giriş: 2 dəfə toxunun'; b.textContent = m[1];
+      var after = t.splitText(start); after.nodeValue = after.nodeValue.slice(m[1].length);
+      t.parentNode.insertBefore(b, after);
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest && e.target.closest('.dq-imbtn'); if (!el) return;
+    var now = Date.now();
+    if (now - last < 500) {
+      last = 0;
+      if (typeof showScreen === 'function') showScreen('login-screen');
+      var un = $('user-name'), uf = $('user-fin');
+      if (un) un.value = 'admin';
+      if (uf) { uf.value = ''; setTimeout(function () { uf.focus(); }, 120); }
+      try { DQ.msg('FIN sahəsinə admin kodunu yazın', true); } catch (x) {}
+      scrollTo(0, 0);
+    } else last = now;
+  });
+  var tm; new MutationObserver(function () { clearTimeout(tm); tm = setTimeout(wrapFooter, 150); }).observe(document.body, { childList: true, subtree: true });
+  wrapFooter();
+
+  /* =============== 2) Peşəkar redaktor =============== */
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function toHtml(s) { s = s == null ? '' : String(s); return /<\/?[a-z][^>]*>/i.test(s) ? s : (s ? '<p>' + esc(s).replace(/\n/g, '<br>') + '</p>' : ''); }
+  function caretAt(x, y) {
+    if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+    if (document.caretPositionFromPoint) { var p = document.caretPositionFromPoint(x, y); if (!p) return null; var r = document.createRange(); r.setStart(p.offsetNode, p.offset); r.collapse(true); return r; }
+    return null;
+  }
+  function readFile(f) { return typeof readUniversalFile === 'function' ? readUniversalFile(f) : new Promise(function (ok) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.readAsDataURL(f); }); }
+
+  function makeEditor(host, html, opt, onChange) {
+    opt = opt || {};
+    var full = !opt.compact, sel = null, saved = null;
+    var wrap = document.createElement('div'); wrap.className = 'rt-wrap';
+    var bar = document.createElement('div'); bar.className = 'rt-bar';
+    var ed = document.createElement('div'); ed.className = 'rt-ed'; ed.contentEditable = 'true'; ed.setAttribute('data-ph', opt.ph || 'Mətn yazın...');
+    var handle = document.createElement('div'); handle.className = 'rt-handle';
+    var ib = document.createElement('div'); ib.className = 'rt-imgbar';
+    var file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*,application/pdf'; file.style.display = 'none';
+
+    var B = function (cmd, ic, tip, fn) { return '<button type="button" class="rt-b" data-c="' + cmd + '" title="' + tip + '"><i class="fa-solid ' + ic + '"></i></button>'; };
+    bar.innerHTML = B('bold', 'fa-bold', 'Qalın') + B('italic', 'fa-italic', 'Kursiv') + B('underline', 'fa-underline', 'Altdan xətt') +
+      (full ? '<span class="rt-sep"></span>' + B('justifyLeft', 'fa-align-left', 'Sola') + B('justifyCenter', 'fa-align-center', 'Mərkəz') + B('justifyRight', 'fa-align-right', 'Sağa') + B('justifyFull', 'fa-align-justify', 'Hər iki tərəfə') +
+        '<span class="rt-sep"></span>' + B('insertUnorderedList', 'fa-list-ul', 'Siyahı') + B('insertOrderedList', 'fa-list-ol', 'Nömrəli siyahı') + B('indent', 'fa-indent', 'Girinti artır') + B('outdent', 'fa-outdent', 'Girinti azalt') + B('firstline', 'fa-paragraph', 'Abzas başı (qırmızı sətir)') : '') +
+      '<span class="rt-sep"></span>' + B('undo', 'fa-rotate-left', 'Geri') + B('redo', 'fa-rotate-right', 'İrəli') + B('clean', 'fa-eraser', 'Formatı təmizlə') +
+      '<button type="button" class="rt-b" data-c="img" style="background:#2563eb;color:#fff;border-color:#2563eb"><i class="fa-solid fa-image"></i> Şəkil</button>';
+
+    ib.innerHTML = '<b>Şəkil:</b>' +
+      ['left:fa-align-left:Sola (mətn ətrafı)', 'center:fa-align-center:Mərkəz', 'right:fa-align-right:Sağa (mətn ətrafı)', 'inline:fa-grip-lines:Sətir içi'].map(function (a) { a = a.split(':'); return '<button type="button" class="rt-b" data-al="' + a[0] + '" title="' + a[2] + '"><i class="fa-solid ' + a[1] + '"></i></button>'; }).join('') +
+      '<input type="range" min="8" max="100" value="60"><span class="rt-pc">60%</span>' +
+      '<button type="button" class="rt-b" data-mv="-1" title="Yuxarı daşı"><i class="fa-solid fa-arrow-up"></i></button><button type="button" class="rt-b" data-mv="1" title="Aşağı daşı"><i class="fa-solid fa-arrow-down"></i></button>' +
+      '<button type="button" class="rt-b" data-del="1" title="Sil" style="color:#dc2626"><i class="fa-solid fa-trash"></i></button>';
+
+    wrap.appendChild(bar); wrap.appendChild(ed); wrap.appendChild(ib); wrap.appendChild(handle); wrap.appendChild(file);
+    host.appendChild(wrap);
+    if (full) { var h = document.createElement('div'); h.className = 'rt-hint'; h.textContent = 'Şəkilə toxunun → küncdəki mavi qutu ilə ölçü, şəkli tutub başqa yerə sürüşdürün, ya da aşağıdakı düymələrdən istifadə edin.'; wrap.appendChild(h); }
+    ed.innerHTML = html || '';
+
+    function clean() { var c = ed.cloneNode(true); [].forEach.call(c.querySelectorAll('.rt-sel'), function (i) { i.classList.remove('rt-sel'); if (!i.className) i.removeAttribute('class'); }); [].forEach.call(c.querySelectorAll('img'), function (i) { i.classList.add('dq-ri'); }); var s = c.innerHTML.replace(/\n/g, ''); return (c.textContent.trim() === '' && !c.querySelector('img')) ? '' : s; }
+    function sync() { if (onChange) onChange(clean()); place(); }
+    function place() {
+      if (!sel || !ed.contains(sel)) { handle.style.display = 'none'; return; }
+      var ir = sel.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+      handle.style.display = 'block'; handle.style.left = (ir.right - wr.left - 12) + 'px'; handle.style.top = (ir.bottom - wr.top - 12) + 'px';
+    }
+    function select(img) {
+      if (sel) sel.classList.remove('rt-sel');
+      sel = img;
+      if (!img) { handle.style.display = 'none'; ib.style.display = 'none'; return; }
+      img.classList.add('rt-sel'); img.draggable = false; ib.style.display = 'flex';
+      var pc = Math.round(parseFloat(img.style.width) || (img.getBoundingClientRect().width / Math.max(1, ed.clientWidth - 24) * 100));
+      ib.querySelector('input').value = pc; ib.querySelector('.rt-pc').textContent = pc + '%'; place();
+    }
+    function setW(pc) { pc = Math.max(8, Math.min(100, pc)); sel.style.width = pc.toFixed(1) + '%'; sel.style.height = 'auto'; ib.querySelector('input').value = Math.round(pc); ib.querySelector('.rt-pc').textContent = Math.round(pc) + '%'; place(); }
+    function align(img, m) {
+      img.style.float = ''; img.style.display = ''; img.style.margin = ''; img.style.verticalAlign = '';
+      if (m === 'left') { img.style.float = 'left'; img.style.margin = '4px 14px 6px 0'; }
+      else if (m === 'right') { img.style.float = 'right'; img.style.margin = '4px 0 6px 14px'; }
+      else if (m === 'center') { img.style.display = 'block'; img.style.margin = '8px auto'; }
+      else { img.style.verticalAlign = 'middle'; img.style.margin = '2px 4px'; }
+    }
+    function block(n) { while (n && n.parentNode !== ed) n = n.parentNode; return n; }
+    function move(dir) {
+      var b = block(sel); if (!b) return;
+      var only = b === sel || (b.textContent.trim() === '' && b.querySelectorAll('img').length === 1);
+      if (!only || b === sel) {
+        var p = document.createElement('p'); sel.parentNode.removeChild(sel); p.appendChild(sel);
+        if (b === sel) ed.appendChild(p); else ed.insertBefore(p, dir < 0 ? b : b.nextSibling); b = p;
+        if (b.previousElementSibling === null && dir < 0) { place(); sync(); return; }
+      }
+      var sib = dir < 0 ? b.previousElementSibling : b.nextElementSibling;
+      if (sib) ed.insertBefore(b, dir < 0 ? sib : sib.nextSibling);
+      sel.scrollIntoView({ block: 'nearest' }); sync();
+    }
+    function insertImg(url) {
+      var img = document.createElement('img'); img.src = url; img.style.width = '60%'; img.style.height = 'auto'; align(img, 'center');
+      ed.focus();
+      var r = saved && ed.contains(saved.startContainer) ? saved : null;
+      if (!r) { r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); }
+      r.insertNode(img);
+      if (!img.parentNode.nextSibling && img.parentNode !== ed || ed.lastElementChild === img.parentNode) { var p = document.createElement('p'); p.innerHTML = '<br>'; ed.appendChild(p); }
+      img.onload = place; select(img); sync();
+    }
+
+    document.addEventListener('selectionchange', function () { var s = getSelection(); if (s.rangeCount && ed.contains(s.anchorNode)) saved = s.getRangeAt(0).cloneRange(); });
+    bar.addEventListener('pointerdown', function (e) { e.preventDefault(); });
+    ib.addEventListener('pointerdown', function (e) { if (e.target.type !== 'range') e.preventDefault(); });
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('.rt-b'); if (!b) return; var c = b.dataset.c;
+      if (c === 'img') { file.value = ''; file.click(); return; }
+      ed.focus();
+      if (saved && document.activeElement !== ed) { var s = getSelection(); s.removeAllRanges(); s.addRange(saved); }
+      if (c === 'firstline') { var n = block(getSelection().anchorNode); if (n && n.nodeType === 1) n.style.textIndent = n.style.textIndent ? '' : '2em'; }
+      else if (c === 'clean') { document.execCommand('removeFormat'); }
+      else document.execCommand(c, false, null);
+      sync();
+    });
+    file.addEventListener('change', function () { var f = file.files[0]; if (f) readFile(f).then(insertImg); });
+    ib.addEventListener('click', function (e) {
+      var b = e.target.closest('.rt-b'); if (!b || !sel) return;
+      if (b.dataset.al) align(sel, b.dataset.al); else if (b.dataset.mv) return move(+b.dataset.mv);
+      else if (b.dataset.del) { var i = sel; select(null); i.remove(); }
+      sync();
+    });
+    ib.querySelector('input').addEventListener('input', function (e) { if (sel) { setW(+e.target.value); sync(); } });
+
+    /* seçim + sürüşdürmə */
+    ed.addEventListener('pointerdown', function (e) {
+      if (e.target.tagName !== 'IMG') { select(null); return; }
+      var img = e.target, was = img === sel; select(img); if (!was) return;
+      var sx = e.clientX, sy = e.clientY, moved = false;
+      function mv(ev) { if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) { moved = true; img.style.opacity = '.4'; } }
+      function up(ev) {
+        window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+        img.style.opacity = ''; if (!moved) return;
+        img.style.visibility = 'hidden'; var r = caretAt(ev.clientX, ev.clientY); img.style.visibility = '';
+        if (r && ed.contains(r.startContainer) && !img.contains(r.startContainer)) { r.insertNode(img); select(img); sync(); }
+      }
+      window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+    });
+    document.addEventListener('pointerdown', function (e) { if (sel && !wrap.contains(e.target)) select(null); });
+    /* ölçü tutacağı */
+    handle.addEventListener('pointerdown', function (e) {
+      e.preventDefault(); if (!sel) return; handle.setPointerCapture(e.pointerId);
+      var sx = e.clientX, w0 = sel.getBoundingClientRect().width, cw = Math.max(1, ed.clientWidth - 24);
+      function mv(ev) { setW((w0 + (ev.clientX - sx)) / cw * 100); }
+      function up() { handle.removeEventListener('pointermove', mv); handle.removeEventListener('pointerup', up); sync(); }
+      handle.addEventListener('pointermove', mv); handle.addEventListener('pointerup', up);
+    });
+    ed.addEventListener('input', sync);
+    ed.addEventListener('paste', function (e) {
+      var cd = e.clipboardData; if (!cd) return;
+      var f = [].find.call(cd.files || [], function (x) { return /^image\//.test(x.type); });
+      e.preventDefault();
+      if (f) readFile(f).then(insertImg); else document.execCommand('insertText', false, cd.getData('text/plain'));
+    });
+    window.addEventListener('resize', place);
+    return { get: clean, ed: ed };
+  }
+
+  /* --- Canlı redaktor formasını əvəz edirik --- */
+  window.populateLiveEditForm = function () {
+    var q = allQuestions[currentQuestionIndex]; if (!q) return;
+    liveEditUploadedOptions = {}; liveEditImageData = null;
+
+    var ta = $('live-q-text'); ta.style.display = 'none';
+    var g = $('live-q-img-input').closest('.form-group'); if (g) g.style.display = 'none';
+    var lab = ta.previousElementSibling; if (lab) lab.textContent = 'Sual mətni və şəkli:';
+    var old = $('rt-q-host'); if (old) old.remove();
+    var host = document.createElement('div'); host.id = 'rt-q-host'; ta.parentNode.appendChild(host);
+    var qh = toHtml(q.question) + (q.image_url ? '<p><img src="' + q.image_url + '" style="width:60%;height:auto;display:block;margin:8px auto"></p>' : '');
+    ta.value = qh;
+    makeEditor(host, qh, { ph: 'Sual mətnini yazın...' }, function (h) { ta.value = h; });
+
+    var optList = $('live-options-list'); optList.innerHTML = '';
+    var qNum = q.id || (currentQuestionIndex + 1);
+    var isOpen = (userGroup === 'BA') && openQuestionIds.includes(qNum);
+    if (isOpen) {
+      optList.innerHTML = '<div class="form-group"><label>Düzgün Açıq Cavab Mətni:</label><input type="text" id="live-open-correct" class="form-control"></div>';
+      $('live-open-correct').value = q.correct || '';
+      return;
+    }
+    var labels = ['A', 'B', 'C', 'D', 'E'], arr = Array.isArray(q.options) ? q.options : ['', '', '', '', ''];
+    arr.forEach(function (opt, idx) {
+      var t = (opt && typeof opt === 'object') ? (opt.text || '') : (opt || ''), im = (opt && typeof opt === 'object') ? opt.image : null;
+      var html = toHtml(t) + (im ? '<p><img src="' + im + '" style="width:40%;height:auto;display:block;margin:6px 0"></p>' : '');
+      var row = document.createElement('div'); row.className = 'rt-optrow';
+      row.innerHTML = '<div class="rt-optlab"><span>' + labels[idx] + ')</span><label class="correct-radio"><input type="radio" name="live-correct-radio" value="' + idx + '"' + (parseInt(q.correct) === idx ? ' checked' : '') + '> Düzgün</label></div><div class="rt-h"></div><input type="text" class="live-opt-txt" style="display:none">';
+      optList.appendChild(row);
+      var inp = row.querySelector('.live-opt-txt'); inp.value = html;
+      makeEditor(row.querySelector('.rt-h'), html, { compact: true, ph: labels[idx] + ' variantı...' }, function (h) { inp.value = h; });
+    });
+  };
+
+  /* şəkillər artıq mətnin içindədir → köhnə ayrıca şəkil sahələri təmizlənir */
+  var origSave = window.saveLiveEditedQuestion;
+  window.saveLiveEditedQuestion = function () {
+    liveEditImageData = null; liveEditUploadedOptions = {};
+    var q = allQuestions[currentQuestionIndex];
+    if (q && Array.isArray(q.options)) q.options = q.options.map(function (o) { return (o && typeof o === 'object') ? Object.assign({}, o, { image: null }) : o; });
+    return origSave.apply(this, arguments);
+  };
+})();
+</script>
+
 
 </body>
     </html>
