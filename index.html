@@ -9580,6 +9580,210 @@ const SX = (() => {
   };
 })();
 </script>
+    <!-- ===== DQ PATCH v14 — </body> teqindən əvvələ, v13-ün və digər yamaqların ALTINA (ən sonda) yapışdırın. Heç nə silinmir. =====
+     (1) "İmanov" düyməsi ana səhifənin alt hissəsində (.v3-ft) də yaransın
+     (2) Elan/Yeniliklər kartı: plavnı krossfeyd, ölçü sabit (səhifə böyüyüb-kiçilmir)
+     (3) Giriş ekranındakı elan lenti: eyni sabit ölçü + plavnı keçid -->
+<style>
+/* ---- (2) Ana səhifə: Yeniliklər kartı ---- */
+#yq-news{min-height:280px;contain:layout}
+.dq-stage{display:grid}
+.dq-stage>.yq-pg{grid-area:1/1;transition:opacity .8s ease,transform .8s cubic-bezier(.22,.61,.36,1)!important;will-change:opacity,transform}
+.dq-stage>.yq-pg.dq-in{opacity:0;transform:translateX(28px)}
+.dq-stage>.yq-pg.dq-out{opacity:0;transform:translateX(-28px);pointer-events:none}
+.yq-dots i{transition:background .6s ease,transform .6s ease}
+.yq-dots i.on{transform:scale(1.25)}
+/* ---- (3) Giriş ekranı lenti ---- */
+.dq-tick{height:88px;box-sizing:border-box;overflow:hidden;animation:none!important;opacity:0;
+  transform:translateX(-50%) translateY(-12px);transition:opacity .55s ease,transform .55s cubic-bezier(.22,.61,.36,1)!important}
+.dq-tick.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.dq-tick>b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dq-tick>div[style*="font-size:13px"]{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (prefers-reduced-motion:reduce){.dq-stage>.yq-pg,.dq-tick{transition:none!important}}
+</style>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* =============== (1) "İmanov" düyməsi — ana səhifə footer-i də daxil =============== */
+  var RX = /Yunis\s+([İIi]manov)/;
+  var SCOPE = '.v3-ft,.dq-fttx,.footer-text,.footer-bar,footer';
+  function wrapFooter2() {
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n, list = [];
+    while ((n = w.nextNode())) {
+      var p = n.parentNode;
+      if (RX.test(n.nodeValue) && p.closest && p.closest(SCOPE) && !p.closest('.dq-imbtn,script,style,textarea,input')) list.push(n);
+    }
+    list.forEach(function (t) {
+      var m = t.nodeValue.match(RX), start = m.index + m[0].length - m[1].length;
+      var b = document.createElement('span');
+      b.className = 'dq-imbtn'; b.setAttribute('role', 'button'); b.title = 'Admin giriş: 2 dəfə toxunun'; b.textContent = m[1];
+      var after = t.splitText(start); after.nodeValue = after.nodeValue.slice(m[1].length);
+      t.parentNode.insertBefore(b, after);
+    });
+  }
+  var tm; new MutationObserver(function () { clearTimeout(tm); tm = setTimeout(wrapFooter2, 150); }).observe(document.body, { childList: true, subtree: true });
+  wrapFooter2();
+  // ikiqat toxunuş zamanı brauzerin yaxınlaşdırmasını (zoom) söndür
+  var st = document.createElement('style'); st.textContent = '.dq-imbtn{touch-action:manipulation}'; document.head.appendChild(st);
+
+  /* =============== (2) Yeniliklər kartı: krossfeyd =============== */
+  function patchFlip() {
+    if (typeof YQ === 'undefined') return false;
+    YQ.flip = function () {
+      var el = $('yq-news'), v = $('v3-home'), n = this.news || [];
+      if (!el || !v || !v.classList.contains('active') || n.length < 2 || this.busy || document.hidden) return;
+      var old = el.querySelector('.yq-pg'); if (!old) return;
+      var stg = old.parentNode;
+      if (!stg.classList.contains('dq-stage')) {
+        stg = document.createElement('div'); stg.className = 'dq-stage';
+        old.parentNode.insertBefore(stg, old); stg.appendChild(old);
+      }
+      var self = this; this.busy = true; this.i++;
+      var x = n[this.i % n.length], nw = old.cloneNode(false);
+      nw.className = 'yq-pg dq-in'; nw.innerHTML = this.cardHTML(x); stg.appendChild(nw);
+      el.querySelectorAll('.yq-dots i').forEach(function (d, k) { d.classList.toggle('on', k === self.i % n.length); });
+      requestAnimationFrame(function () { requestAnimationFrame(function () { nw.classList.remove('dq-in'); old.classList.add('dq-out'); }); });
+      setTimeout(function () { old.remove(); self.busy = false; }, 900);
+    };
+    return true;
+  }
+  if (!patchFlip()) window.addEventListener('load', patchFlip);
+
+  /* =============== (3) Giriş ekranı lenti: krossfeyd =============== */
+  if (typeof runTicker === 'function' && typeof __tickTok !== 'undefined') {
+    window.runTicker = async function () {
+      var my = ++__tickTok;
+      var holder = $('dq-ticker'); if (!holder) { holder = document.createElement('div'); holder.id = 'dq-ticker'; document.body.appendChild(holder); }
+      holder.innerHTML = '';
+      var items = DQ_NEWS.slice(0, 5).map(function (n) { return { k: 'news', d: 6000, n: n }; })
+        .concat(DQ_FB.slice(0, 8).map(function (f) { return { k: 'fb', d: 3000, f: f }; }));
+      await dqSleep(700);
+      var prev = null, e = V2.esc;
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (my !== __tickTok || !$('login-screen').classList.contains('active')) break;
+        var c = document.createElement('div'); c.className = 'dq-tick ' + it.k; c.onclick = (function (k) { return function () { openFeedModal(k); }; })(it.k);
+        if (it.k === 'news') { var n = it.n; c.innerHTML = '<b>📢 ' + e(n.kind || 'Elan') + ': ' + e(n.title) + '</b><div style="font-size:13px;color:#475569;margin-top:3px">' + e(String(n.body || '').slice(0, 140)) + '</div><div class="bar"><i></i></div>'; }
+        else { var f = it.f; c.innerHTML = '<div style="display:flex;justify-content:space-between"><b>💬 ' + e(f.name) + '</b><span style="color:#d97706">' + '★'.repeat(f.rating || 0) + '</span></div><div style="font-size:13px;color:#475569;margin-top:3px">' + e(String(f.shown_text != null ? f.shown_text : (f.text != null ? f.text : '')).slice(0, 140)) + '</div><div class="bar"><i style="background:#0284c7"></i></div>'; }
+        holder.appendChild(c);
+        var bar = c.querySelector('.bar i');
+        (function (c, bar, d) { requestAnimationFrame(function () { requestAnimationFrame(function () { c.classList.add('show'); bar.style.transitionDuration = d + 'ms'; bar.style.width = '0%'; }); }); })(c, bar, it.d);
+        if (prev) { (function (p) { p.classList.remove('show'); setTimeout(function () { p.remove(); }, 650); })(prev); }
+        prev = c;
+        await dqSleep(it.d);
+      }
+      if (prev) { prev.classList.remove('show'); await dqSleep(650); }
+      if (my === __tickTok) holder.innerHTML = '';
+    };
+  }
+})();
+</script>
+    <!-- ===== DQ: SINAQDA İŞTİRAK MÜDDƏTİ (icazə pəncərəsi) — </body> teqindən əvvələ, ən sonda yapışdırın =====
+     Diqqət: dq-addon.txt-i artıq yapışdırmısınızsa, bunu YAPIŞDIRMAYIN (eyni funksiya orada var). -->
+<script>
+(function () {
+  'use strict';
+  var TZ = '+04:00'; // Bakı vaxtı
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var fmt = function (d) { var p = String(d).split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : d; };
+  var fin = function () { return typeof currentActiveFin !== 'undefined' ? currentActiveFin : ''; };
+
+  var skew = null;
+  async function now() { // mümkünsə server vaxtı, olmasa cihaz vaxtı
+    if (skew === null) {
+      skew = 0;
+      try {
+        var r = await fetch(SUPABASE_URL + '/rest/v1/', { method: 'HEAD', headers: { apikey: SUPABASE_KEY } });
+        var d = r.headers.get('date'); if (d) skew = new Date(d).getTime() - Date.now();
+      } catch (e) {}
+    }
+    return Date.now() + skew;
+  }
+  async function getWin(f) {
+    var rows = []; try { rows = await V2.list('permwin'); } catch (e) {}
+    f = String(f || '').toUpperCase();
+    return rows.find(function (r) { return String(r.fin).toUpperCase() === f; }) || rows.find(function (r) { return r.fin === '*'; }) || null;
+  }
+  async function winState(f) {
+    var w = await getWin(f); if (!w) return { s: 'none' };
+    var t = await now(), a = new Date(w.from + 'T00:00:00' + TZ).getTime(), b = new Date(w.to + 'T23:59:59' + TZ).getTime();
+    return { s: t < a ? 'before' : t > b ? 'after' : 'in', w: w };
+  }
+  function winMsg(st) {
+    var f = fmt(st.w.from), t = fmt(st.w.to);
+    if (st.s === 'before') return 'Sınaqda iştirak müddəti hələ başlamayıb. İcazə müddəti: ' + f + ' – ' + t;
+    if (st.s === 'after') return 'Sınaqda iştirak müddətiniz bitib (' + f + ' – ' + t + '). Yenidən icazə üçün admin ilə əlaqə saxlayın.';
+    return 'İcazə müddətiniz: ' + f + ' – ' + t;
+  }
+
+  var oStart = window.startExamSession;
+  window.startExamSession = async function () {
+    if (!(typeof isLiveEditMode !== 'undefined' && isLiveEditMode)) {
+      var st = await winState(fin());
+      if (st.s === 'before' || st.s === 'after') { alert(winMsg(st)); if (typeof renderRegisteredExams === 'function') renderRegisteredExams(); return; }
+    }
+    return oStart.apply(this, arguments);
+  };
+  var oPerm = window.dqFetchNameMatchedPermissions;
+  window.dqFetchNameMatchedPermissions = async function () {
+    var res = await oPerm.apply(this, arguments), st = await winState(fin());
+    return (st.s === 'before' || st.s === 'after') ? { matched: [], anyForFin: false } : res;
+  };
+  var oRender = window.renderRegisteredExams;
+  window.renderRegisteredExams = async function () {
+    var r = await oRender.apply(this, arguments);
+    try {
+      var st = await winState(fin()), box = $('registered-exams-list');
+      if (box && st.s !== 'none') {
+        var bad = st.s !== 'in';
+        box.insertAdjacentHTML('afterbegin', '<div style="padding:10px 12px;margin-bottom:10px;border-radius:8px;font-size:13px;font-weight:600;' +
+          (bad ? 'background:#fef2f2;color:#b91c1c;border:1px solid #fecaca' : 'background:#ecfdf5;color:#047857;border:1px solid #a7f3d0') + '">🕒 ' + esc(winMsg(st)) + '</div>');
+      }
+    } catch (e) {}
+    return r;
+  };
+
+  window.DQSEC = window.DQSEC || {};
+  DQSEC.saveWin = async function () {
+    var f = $('pw-fin').value.trim().toUpperCase(), a = $('pw-from').value, b = $('pw-to').value;
+    if (!f || !a || !b) return alert('FIN (və ya *), başlanğıc və son tarixi daxil edin.');
+    if (b < a) return alert('Son tarix başlanğıcdan əvvəl ola bilməz.');
+    var ex = (await V2.list('permwin')).find(function (r) { return String(r.fin).toUpperCase() === f; });
+    await V2.put('permwin', { fin: f, from: a, to: b }, ex ? ex._id : undefined);
+    $('pw-fin').value = ''; DQSEC.loadWin();
+  };
+  DQSEC.delWin = async function (id) {
+    if (!confirm('Silinsin?')) return; await V2.probe();
+    if (V2.mode === 'cloud') await _supabase.from('dq_v2_store').delete().eq('id', id);
+    else localStorage.setItem('dq_v2_permwin', JSON.stringify((await V2.list('permwin')).filter(function (x) { return x._id != id; })));
+    DQSEC.loadWin();
+  };
+  DQSEC.loadWin = async function () {
+    var box = $('pw-list'); if (!box) return;
+    var rows = []; try { rows = await V2.list('permwin'); } catch (e) {}
+    box.innerHTML = rows.length ? rows.map(function (r) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px"><span><b>' +
+        esc(r.fin === '*' ? 'Hamı' : r.fin) + '</b> · ' + fmt(r.from) + ' – ' + fmt(r.to) + '</span><button class="btn btn-danger" onclick="DQSEC.delWin(' + esc(JSON.stringify(r._id)) + ')">Sil</button></div>';
+    }).join('') : '<p style="font-size:13px;color:#64748b">Hələ müddət təyin edilməyib.</p>';
+  };
+
+  try {
+    var grid = document.querySelector('.admin-nav-grid');
+    if (grid) grid.insertAdjacentHTML('beforeend', '<div class="admin-nav-card" onclick="switchAdminTab(\'permwin\');DQSEC.loadWin()"><span class="icon">🕒</span> İcazə müddəti</div>');
+    var anchor = $('mod-suallar');
+    if (anchor) anchor.insertAdjacentHTML('beforebegin',
+      '<div id="mod-permwin" class="admin-module-block"><h3>🕒 Sınaqda iştirak müddəti</h3>' +
+      '<p style="font-size:13px;color:#64748b">İstifadəçinin FIN-ini yazın (hamı üçün: <b>*</b>). Müddətdən kənarda sınağa girə bilməz.</p>' +
+      '<input id="pw-fin" placeholder="FIN və ya *" style="width:100%;padding:10px;margin:6px 0;border:1px solid #cbd5e1;border-radius:8px">' +
+      '<label style="font-size:12px">Başlanğıc tarix</label><input id="pw-from" type="date" style="width:100%;padding:10px;margin:4px 0 8px;border:1px solid #cbd5e1;border-radius:8px">' +
+      '<label style="font-size:12px">Son tarix (daxil)</label><input id="pw-to" type="date" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #cbd5e1;border-radius:8px">' +
+      '<button class="btn btn-success" onclick="DQSEC.saveWin()">💾 Yadda saxla</button><div id="pw-list" style="margin-top:14px"></div></div>');
+  } catch (e) { console.warn('permwin UI:', e); }
+})();
+</script>
 
 
 </body>
