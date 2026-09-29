@@ -9784,6 +9784,156 @@ const SX = (() => {
   } catch (e) { console.warn('permwin UI:', e); }
 })();
 </script>
+    <!-- ===== DQ: ADMİN PANEL + ADMİN REDAKTƏ ÜÇÜN FACE ID / BARMAQ İZİ — </body> teqindən əvvələ, ən sonda yapışdırın =====
+     Diqqət: əvvəl dq-addon.txt yapışdırmısınızsa, onu SİLİN (bu fayl onun biometrik hissəsini əvəz edir).
+     Sizin registerAdminBiometrics() funksiyası da daxildir (eyni adla, düymə ilə çağırıla bilər). -->
+<script>
+(function () {
+  'use strict';
+  var LS_CRED = 'dq_bio_cred', SS_OK = 'dq_bio_ok';
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- köməkçilər ---------- */
+  function b64u(buf) { var s = ''; new Uint8Array(buf).forEach(function (b) { s += String.fromCharCode(b); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function unb64u(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+  function rnd(n) { return crypto.getRandomValues(new Uint8Array(n)); }
+  function enrolled() { return !!localStorage.getItem(LS_CRED); }
+  async function supported() {
+    try { return !!(window.PublicKeyCredential && window.isSecureContext && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch (e) { return false; }
+  }
+
+  /* ---------- "kilid" bayrağı: hər cihazda görünsün deyə Supabase-də (V2) saxlanır ---------- */
+  async function isLocked() { try { return (await V2.list('adminbio')).some(function (r) { return r.locked; }); } catch (e) { return false; } }
+  async function setLocked() {
+    try { var rows = await V2.list('adminbio'); if (!rows.some(function (r) { return r.locked; })) await V2.put('adminbio', { locked: true, at: new Date().toISOString() }); } catch (e) {}
+  }
+  async function clearLock() {
+    try {
+      await V2.probe();
+      if (V2.mode === 'cloud') await _supabase.from('dq_v2_store').delete().eq('collection', 'adminbio');
+      else localStorage.removeItem('dq_v2_adminbio');
+    } catch (e) {}
+  }
+
+  /* ---------- qeydiyyat (sizin funksiyanın təkmilləşdirilmiş forması) ---------- */
+  async function registerAdminBiometrics() {
+    if (!(await supported())) { alert('Bu cihaz/brauzer Face ID / barmaq izini dəstəkləmir (sayt HTTPS ilə açılmalıdır).'); return false; }
+    try {
+      var c = await navigator.credentials.create({ publicKey: {
+        challenge: rnd(32),
+        rp: { name: 'DQ Platform Admin' },
+        user: { id: rnd(16), name: 'yunis', displayName: 'Yunis İmanov' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+        timeout: 60000, attestation: 'none'
+      } });
+      localStorage.setItem(LS_CRED, b64u(c.rawId));
+      sessionStorage.setItem(SS_OK, '1');
+      await setLocked(); // bundan sonra qeydiyyatsız cihazlar admin-ə girə bilməz
+      alert('Face ID qeydə alındı. Artıq yalnız bu cihaz admin-ə girə bilər.');
+      status();
+      return true;
+    } catch (e) { console.error(e); alert('Qeydiyyat ləğv olundu və ya xəta baş verdi.'); return false; }
+  }
+  window.registerAdminBiometrics = registerAdminBiometrics;
+
+  /* ---------- yoxlama ---------- */
+  async function verify() {
+    var id = localStorage.getItem(LS_CRED);
+    if (!id) { // bu cihaz qeydiyyatsızdır
+      if (await isLocked()) { alert('Bu cihaz admin girişi üçün icazəli deyil.'); return false; }
+      return true; // hələ heç bir cihaz qeydiyyatdan keçməyib (ilk quraşdırma)
+    }
+    try {
+      await navigator.credentials.get({ publicKey: {
+        challenge: rnd(32),
+        allowCredentials: [{ type: 'public-key', id: unb64u(id), transports: ['internal'] }],
+        userVerification: 'required', timeout: 60000
+      } });
+      sessionStorage.setItem(SS_OK, '1');
+      return true;
+    } catch (e) { alert('Face ID / barmaq izi təsdiqlənmədi.'); return false; }
+  }
+
+  /* ---------- qapılar ---------- */
+  // 1) Admin panel (footer-dakı "by" və ya digər yollar): əvvəl Face ID, sonra şifrə
+  var oOpen = window.openAdminLogin;
+  window.openAdminLogin = async function () { if (await verify()) return oOpen.apply(this, arguments); };
+
+  // 2) Admin redaktə (ad: admin + kod): əvvəl Face ID
+  var oProceed = window.proceedToExamSelect;
+  window.proceedToExamSelect = async function () {
+    var n = ($('user-name') || {}).value, f = ($('user-fin') || {}).value;
+    if (String(n || '').trim().toLowerCase() === 'admin' && String(f || '').trim().toUpperCase() === String(LIVE_EDIT_ADMIN_PASS).toUpperCase()) {
+      if (!(await verify())) return;
+    }
+    return oProceed.apply(this, arguments);
+  };
+
+  // 3) Səhifə yenilənəndə admin panelin avtomatik açılması da kilidlənir
+  var oShow = window.showScreen;
+  window.showScreen = function (id) {
+    if (id === 'admin-panel' && enrolled() && !sessionStorage.getItem(SS_OK)) { oShow.call(this, 'login-screen'); lock(); return; }
+    return oShow.apply(this, arguments);
+  };
+  var oClose = window.closeAdminPanel;
+  window.closeAdminPanel = function () { sessionStorage.removeItem(SS_OK); return oClose.apply(this, arguments); };
+
+  // 4) Qeydiyyatsız cihazda əvvəlki "açıq qalmış" admin sessiyası ləğv edilir
+  (async function () {
+    if (!enrolled() && localStorage.getItem('dq_admin_logged') === 'true' && await isLocked()) {
+      localStorage.removeItem('dq_admin_logged'); localStorage.removeItem('dq_active_screen');
+      try { if (typeof goHome === 'function') goHome(); } catch (e) {}
+    }
+  })();
+
+  function lock() {
+    if ($('dq-lock')) return;
+    var d = document.createElement('div'); d.id = 'dq-lock';
+    d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.96);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#fff;text-align:center;padding:20px';
+    d.innerHTML = '<div style="font-size:44px">🔐</div><div style="font-size:16px">Admin panel kilidlidir</div><button id="dq-lock-ok" class="btn btn-success">Face ID / barmaq izi ilə aç</button><button id="dq-lock-no" class="btn btn-danger">Ləğv et</button>';
+    document.body.appendChild(d);
+    $('dq-lock-ok').onclick = async function () {
+      if (await verify()) {
+        d.remove(); oShow.call(window, 'admin-panel');
+        switchAdminTab(localStorage.getItem('dq_admin_tab') || 'suallar');
+        if (typeof loadAdminPanelData === 'function') loadAdminPanelData();
+      }
+    };
+    $('dq-lock-no').onclick = function () { d.remove(); localStorage.removeItem('dq_admin_logged'); };
+  }
+
+  /* ---------- admin panelə idarəetmə bölməsi ---------- */
+  async function status() {
+    var el = $('bio-status'); if (!el) return;
+    await V2.probe();
+    el.innerHTML = ((await supported()) ? '✅ Bu cihaz biometrik dəstəkləyir' : '⚠️ Dəstəklənmir (HTTPS lazımdır)') + '<br>' +
+      (enrolled() ? '🔐 Bu cihaz qeydiyyatlıdır' : '🔓 Bu cihaz qeydiyyatdan keçməyib') + '<br>' +
+      ((await isLocked()) ? '🔒 Kilid AKTİVDİR: yalnız qeydiyyatlı cihaz girə bilər' : '🔓 Kilid qapalıdır: hələ heç bir cihaz qeydiyyatdan keçməyib') +
+      (V2.mode === 'cloud' ? '' : '<br>⚠️ Supabase cədvəli (dq_v2_store) yoxdur, kilid yalnız bu cihazda qalır, digər cihazlara təsir etmir.');
+  }
+  window.DQBIO = {
+    status: status,
+    enroll: registerAdminBiometrics,
+    test: async function () { if (!enrolled()) return alert('Əvvəl cihazı qeydiyyatdan keçirin.'); if (await verify()) alert('Təsdiqləndi.'); },
+    reset: async function () { // yalnız qeydiyyatlı cihazda və Face ID ilə
+      if (!enrolled()) return alert('Sıfırlamaq üçün qeydiyyatlı cihazdan istifadə edin.');
+      if (!(await verify())) return;
+      if (!confirm('Kilid və bu cihazın qeydiyyatı silinsin? Bundan sonra yalnız şifrə ilə girmək olar.')) return;
+      await clearLock(); localStorage.removeItem(LS_CRED); status();
+    }
+  };
+  try {
+    var grid = document.querySelector('.admin-nav-grid');
+    if (grid && !$('dq-bio-card')) grid.insertAdjacentHTML('beforeend', '<div id="dq-bio-card" class="admin-nav-card" onclick="switchAdminTab(\'bio\');DQBIO.status()"><span class="icon">🔐</span> Face ID Qeydiyyatı</div>');
+    var anchor = $('mod-suallar');
+    if (anchor && !$('mod-bio')) anchor.insertAdjacentHTML('beforebegin',
+      '<div id="mod-bio" class="admin-module-block"><h3>🔐 Face ID / Barmaq izi</h3><div id="bio-status" style="font-size:13px;line-height:1.8;margin:8px 0"></div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn btn-success" onclick="DQBIO.enroll()">➕ Bu cihazı qeydiyyatdan keçir</button>' +
+      '<button class="btn" onclick="DQBIO.test()">🧪 Test</button><button class="btn btn-danger" onclick="DQBIO.reset()">🗑️ Kilidi və qeydiyyatı sıfırla</button></div></div>');
+  } catch (e) { console.warn('bio UI:', e); }
+})();
+</script>
     <!-- ===== DQ: "İmanov" GİZLİ DÜYMƏ — </body> teqindən əvvələ, ən sonda (bütün yamaqların altına) yapışdırın =====
      Düymə funksiyası (2 toxunuş → admin giriş) olduğu kimi qalır, yalnız görünüşü adi mətnə çevrilir. -->
 <style>
@@ -9806,7 +9956,6 @@ const SX = (() => {
   hide();
 })();
 </script>
-
 
 </body>
     </html>
