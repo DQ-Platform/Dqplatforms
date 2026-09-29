@@ -9166,5 +9166,43 @@ const SX = (() => {
   };
 })();
 </script>
+    <script>
+(function () {
+  if (typeof V3 === 'undefined' || typeof YQ === 'undefined' || typeof YQ2 === 'undefined') return;
+  async function who() {
+    try {
+      var k = YQ2.sess();
+      if (k) {
+        if (!YQ2.me) { var r = await YQ.find(k); if (r && r.status === 'approved') YQ2.me = r; }
+        if (YQ2.me && YQ2.me.fin) { DQ.saveCabinet({ name: YQ2.me.name, fin: YQ2.me.fin }); return YQ2.me; }
+      }
+    } catch (e) {}
+    var c = DQ.cabinet(); return c && c.fin ? c : null;
+  }
+  function guestExams() {
+    var old = document.getElementById('yq-ex'); if (old) old.remove();
+    var m = document.createElement('div'); m.className = 'v3-md'; m.id = 'yq-ex';
+    m.onclick = function (e) { if (e.target === m) m.remove(); };
+    m.innerHTML = '<div><h3 style="margin:0 0 4px;text-align:left">🎓 Sınaqlar</h3><p style="color:#64748b;margin:0 0 10px;text-align:left">Sınaqda iştirak üçün qeydiyyat lazımdır.</p>' +
+      '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:10px;text-align:left"><b>Sınaq 1</b>' +
+      ['BA', 'BB', 'AC'].map(function (c) { return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px dashed #e2e8f0;margin-top:6px"><span>' + c + ' Kateqoriyası</span><span>🔒</span></div>'; }).join('') + '</div>' +
+      '<button class="v3-bt" style="width:100%;margin-top:12px" onclick="document.getElementById(\'yq-ex\').remove();YQ.open(\'reg\')">📝 Sınaq üçün qeydiyyatdan keç</button>' +
+      '<button class="v3-bt o" style="width:100%;margin-top:8px" onclick="document.getElementById(\'yq-ex\').remove();YQ.open(\'in\')">Artıq qeydiyyatlıyam — Giriş</button>' +
+      '<button class="v3-bt o" style="width:100%;margin-top:8px" onclick="this.closest(\'.v3-md\').remove()">Bağla</button></div>';
+    document.body.appendChild(m);
+  }
+  var oGo = V3.go;
+  V3.go = async function (id) {
+    var it = V3.D && V3.D.items && V3.D.items[id], a = it && it.a;
+    if (a === 'exam') { var u = await who(); return u ? DQ.openCabinet() : guestExams(); }
+    if (a === 'tests') {
+      var t = await who(); if (!t) return YQ.open('in');
+      if (t.perms && t.perms.tests === false) return alert('Sizə fənn testləri üçün icazə verilməyib.');
+      return V3.showTests();
+    }
+    return oGo.apply(this, arguments);
+  };
+})();
+    </script>
 </body>
     </html>
