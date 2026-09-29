@@ -7667,6 +7667,324 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.target.i
   else moveNewsBtn();
 })();
 </script>
+    <!-- ===== DQ PATCH v11 — </body> teqindən dərhal əvvələ yapışdırın. Heç nə silinmir. ===== -->
+<style>
+/* ---- Plavnı (smooth) keçidlər ---- */
+html{scroll-behavior:smooth}
+@keyframes dqFade{from{opacity:0}to{opacity:1}}
+@keyframes dqPop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes dqPulse{0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.55)}50%{box-shadow:0 0 0 10px rgba(217,119,6,0)}}
+.screen.active{animation:dqFade .45s ease both}
+.v3-b,.v3-cd,.dq-ab,.dq-fab-b,.dq-exbtn,.dq-sharebtn,.btn{transition:transform .25s ease,box-shadow .25s ease,background-color .25s ease,opacity .25s ease}
+.v3-b:hover,.v3-cd:hover,.dq-exbtn:hover,.dq-sharebtn:hover{transform:translateY(-2px)}
+.v3-md,.dq-mdl,.dq-modal{animation:dqFade .3s ease both}
+.v3-md>div,.dq-modal>div,.dq-doc{animation:dqPop .35s cubic-bezier(.2,.8,.2,1) both}
+
+/* ---- Başlıq: istifadəçi adı ---- */
+.v3-hd .v3-b.dq-user{display:inline-flex;align-items:center;gap:8px;max-width:210px;padding:7px 16px 7px 7px}
+.dq-av2{width:28px;height:28px;border-radius:50%;background:#fff;color:#00c853;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.dq-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---- İmtahan elanı: üst bildiriş + düymə ---- */
+.dq-exwrap{max-width:960px;margin:22px auto 0;text-align:center;padding:0 14px}
+.dq-exwrap+.v3-hero{margin-top:16px}
+.dq-exbtn{border:0;border-radius:999px;background:#d97706;color:#fff;font-weight:700;font-size:14px;font-family:inherit;padding:11px 20px;cursor:pointer;box-shadow:0 6px 14px rgba(217,119,6,.35)}
+.dq-exbtn.pulse{animation:dqPulse 1.6s ease 3}
+#dq-exbar{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(92vw,460px);z-index:9300;background:#0f172a;color:#fff;border-radius:16px;padding:12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);border-left:5px solid #d97706;text-align:left;cursor:pointer;opacity:0;transition:transform .6s cubic-bezier(.2,.8,.2,1),opacity .6s ease}
+#dq-exbar.show{transform:translate(-50%,0);opacity:1}
+#dq-exbar.hide{transform:translate(-50%,-20px) scale(.6);opacity:0}
+
+/* ---- Yeniliklər: mərkəzdə ---- */
+.yq-news{text-align:center}
+.yq-pg{text-align:center;border-left:1px solid #e2e8f0;border-top:5px solid #00c853;transition:transform .45s ease,opacity .45s ease}
+.yq-act{margin-top:12px}
+.dq-sharebtn{border:0;border-radius:999px;background:#0f172a;color:#fff;font-weight:700;font-size:13px;font-family:inherit;padding:9px 18px;cursor:pointer}
+.dq-nw{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:12px;text-align:center}
+.dq-nw small{color:#64748b}.dq-nw h4{margin:4px 0 8px;font-size:17px}
+.dq-nw .tx{text-align:left;font-size:14.5px;color:#334155;white-space:pre-wrap;line-height:1.55}
+.dq-nw img{max-width:100%;border-radius:10px;margin-top:8px}
+
+/* ---- Geri sayım ---- */
+.dq-count{width:calc(100% - 28px);max-width:932px;margin:26px auto 0;padding:20px 14px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:18px;color:#fff;text-align:center;border:1px solid rgba(0,200,83,.35);box-shadow:0 10px 28px rgba(15,23,42,.25)}
+.dq-count .t{font-weight:700;font-size:15px;opacity:.92;margin-bottom:12px}
+.dq-count .cells{display:flex;justify-content:center;gap:12px}
+.dq-count .cells>div{min-width:74px;background:rgba(255,255,255,.07);border-radius:14px;padding:12px 6px}
+.dq-count b{display:block;font-size:32px;color:#00e676;font-variant-numeric:tabular-nums}
+.dq-count small{font-size:12px;opacity:.8}
+
+/* ---- Keçidlər: yalnız ikon, aşağı sağda ---- */
+.dq-fab{position:fixed;right:14px;bottom:16px;display:flex;flex-direction:column;gap:10px;z-index:900;margin:0!important}
+.dq-fab-b{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 6px 14px rgba(0,0,0,.25);cursor:pointer;text-decoration:none}
+.dq-fab-b:hover{transform:scale(1.1)}
+</style>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id), e = s => V2.esc(s);
+  const HOME = window.HOME = {
+    tok: 0, all: [], ci: null,
+    isExam: n => /mtahan/i.test((n && n.kind) || ''),
+
+    async load() { try { HOME.all = await V2.list('news'); } catch (x) { HOME.all = []; } DQ_NEWS = HOME.all; },
+
+    /* ---------- başlıq: ad + çıxış ---------- */
+    async header() {
+      const h = $('v3-home'), hd = h && h.querySelector('.v3-hd'); if (!hd) return;
+      const kab = hd.querySelector('a[onclick*="\'kab\'"]'), out = hd.querySelector('a[onclick*="\'out\'"]');
+      let name = '';
+      try {
+        const k = YQ2.sess();
+        if (k) { if (!YQ2.me) { const r = await YQ.find(k); if (r && r.status === 'approved') YQ2.me = r; } name = (YQ2.me && YQ2.me.name) || ''; }
+      } catch (x) {}
+      if (!name) { const c = DQ.cabinet(); if (c && c.name) name = c.name; }
+      if (kab) {
+        if (kab.dataset.orig === undefined) kab.dataset.orig = kab.innerHTML;
+        if (name) { kab.innerHTML = `<span class="dq-av2">${e((name.trim()[0] || '?').toUpperCase())}</span><span class="dq-nm">${e(name)}</span>`; kab.classList.add('dq-user'); }
+        else { kab.innerHTML = kab.dataset.orig; kab.classList.remove('dq-user'); }
+      }
+      if (out) out.style.display = name ? '' : 'none';
+    },
+
+    /* ---------- keçidlər → kiçik ikonlar ---------- */
+    fab() {
+      const h = $('v3-home'), row = h && h.querySelector('.v3-row.sm'); if (!row) return;
+      row.className = 'dq-fab'; row.removeAttribute('style');
+      row.querySelectorAll('a').forEach(a => {
+        const t = a.textContent.replace(/[^\p{L}\s]/gu, '').trim();
+        let ic = 'fa-solid fa-link', c = '#0f172a';
+        const grp = /qrup|group/i.test(t);
+        if (/telegram/i.test(t)) { c = '#229ed9'; ic = grp ? 'fa-solid fa-users' : 'fa-brands fa-telegram'; }
+        else if (/whatsapp/i.test(t)) { c = '#25D366'; ic = grp ? 'fa-solid fa-users' : 'fa-solid fa-bullhorn'; }
+        else if (/instagram/i.test(t)) { c = '#e1306c'; ic = 'fa-brands fa-instagram'; }
+        a.className = 'dq-fab-b'; a.style.background = c; a.title = t; a.setAttribute('aria-label', t);
+        a.innerHTML = `<i class="${ic}"></i>`;
+      });
+      h.appendChild(row);
+    },
+
+    /* ---------- yeniliklər (yalnız xəbər + Paylaş) ---------- */
+    news() {
+      const h = $('v3-home'); let box = h.querySelector('#yq-news');
+      if (!box) { box = document.createElement('div'); box.id = 'yq-news'; box.className = 'yq-news'; h.appendChild(box); }
+      YQ.news = HOME.all.filter(n => !HOME.isExam(n)).slice(0, 8); YQ.i = 0; YQ.paint();
+      clearInterval(YQ.tm); YQ.tm = setInterval(() => YQ.flip(), 5000);
+    },
+
+    /* ---------- imtahan elanı: 4 san. üstdə, sonra düymə ---------- */
+    exam() {
+      const h = $('v3-home'), hero = h.querySelector('.v3-hero'); h.querySelector('.dq-exwrap')?.remove();
+      const ex = HOME.all.filter(HOME.isExam); if (!ex.length || !hero) return;
+      const w = document.createElement('div'); w.className = 'dq-exwrap';
+      w.innerHTML = `<button type="button" class="dq-exbtn" onclick="openFeedModal('exam')"><i class="fa-solid fa-bullhorn"></i> İmtahan elanları (${ex.length})</button>`;
+      hero.before(w);
+      if (!h.classList.contains('active') || sessionStorage.getItem('dq_exbar')) return;
+      sessionStorage.setItem('dq_exbar', '1');
+      const b = document.createElement('div'); b.id = 'dq-exbar';
+      b.innerHTML = `<b>📢 ${e(ex[0].title)}</b><div style="font-size:13px;opacity:.85;margin-top:3px">${e(String(ex[0].body || '').slice(0, 110))}</div>`;
+      b.onclick = () => { b.remove(); openFeedModal('exam'); };
+      document.body.appendChild(b);
+      requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add('show')));
+      setTimeout(() => { b.classList.remove('show'); b.classList.add('hide'); setTimeout(() => { b.remove(); const bt = document.querySelector('.dq-exbtn'); if (bt) bt.classList.add('pulse'); }, 700); }, 4000);
+    },
+
+    /* ---------- geri sayım ---------- */
+    async count() {
+      const h = $('v3-home'); clearInterval(HOME.ci); h.querySelector('#dq-count')?.remove();
+      let cd = null; try { cd = (await V2.list('countdown'))[0]; } catch (x) {}
+      const t = cd && cd.at ? new Date(cd.at).getTime() : NaN; if (isNaN(t)) return;
+      const el = document.createElement('div'); el.id = 'dq-count'; el.className = 'dq-count';
+      el.innerHTML = `<div class="t">⏳ ${e(cd.title || 'Dövlət qulluğuna qəbul imtahanına qalan vaxt')}</div><div class="cells"><div><b id="dc-d">0</b><small>Gün</small></div><div><b id="dc-h">00</b><small>Saat</small></div><div><b id="dc-m">00</b><small>Dəqiqə</small></div></div>`;
+      h.appendChild(el);
+      const p = n => String(n).padStart(2, '0');
+      const tick = () => {
+        const d = t - Date.now();
+        if (d <= 0) { el.querySelector('.cells').innerHTML = '<div style="padding:12px 22px"><b style="font-size:20px">İmtahan günü gəlib!</b></div>'; clearInterval(HOME.ci); return; }
+        $('dc-d').textContent = Math.floor(d / 864e5); $('dc-h').textContent = p(Math.floor(d % 864e5 / 36e5)); $('dc-m').textContent = p(Math.floor(d % 36e5 / 6e4));
+      };
+      tick(); HOME.ci = setInterval(tick, 10000);
+    },
+
+    /* sıra: elan düyməsi, hero, yeniliklər, taymer, sayğaclar, xidmətlər */
+    order() {
+      const h = $('v3-home'); if (!h) return; let ref = h.querySelector('.v3-hero'); if (!ref) return;
+      ['#yq-news', '#dq-count', '.dq-cn', '.v3-sv'].forEach(sel => {
+        const el = h.querySelector(sel); if (!el) return;
+        if (ref.nextElementSibling !== el) ref.after(el); ref = el;
+      });
+    },
+
+    async build() {
+      const h = $('v3-home'); if (!h || !h.querySelector('.v3-hero')) return;
+      const tk = ++HOME.tok; HOME.header(); HOME.fab();
+      const lb = $('btn-open-news'); if (lb) lb.setAttribute('onclick', "openFeedModal('exam')");
+      await HOME.load(); if (tk !== HOME.tok) return;
+      HOME.news(); HOME.exam(); await HOME.count(); if (tk !== HOME.tok) return;
+      HOME.order(); setTimeout(HOME.order, 700); setTimeout(HOME.order, 1800);
+    },
+
+    /* ---------- pəncərələr ---------- */
+    modal(title, body) {
+      const d = document.createElement('div'); d.className = 'dq-modal'; d.onclick = ev => { if (ev.target === d) d.remove(); };
+      d.innerHTML = `<div><h3 style="text-align:center;margin-bottom:12px">${title}</h3>${body}<button class="btn" style="width:100%;margin-top:6px" onclick="this.closest('.dq-modal').remove()">Bağla</button></div>`;
+      document.body.appendChild(d);
+    },
+    openNews() {
+      const l = HOME.all.map((n, i) => [n, i]).filter(x => !HOME.isExam(x[0]));
+      HOME.modal('📰 Yeniliklər', l.map(([n, i]) => `<div class="dq-nw"><small>${e(n.kind || 'Xəbər')} · ${e(n.pub || '')}</small><h4>${e(n.title)}</h4>${n.img ? `<img src="${n.img}">` : ''}<div class="tx">${e(n.body)}</div><button type="button" class="dq-ab sh" onclick="dqOpenShare(${i})"><i class="fa-solid fa-share-nodes"></i> Paylaş</button></div>`).join('') || '<p style="text-align:center;color:#64748b">Hələ xəbər yoxdur.</p>');
+    },
+    openExam() {
+      const l = HOME.all.map((n, i) => [n, i]).filter(x => HOME.isExam(x[0]));
+      HOME.modal('📢 İmtahan elanları', l.map(([n, i]) => dqAnnCard(n, i)).join('') || '<p style="text-align:center;color:#64748b">Hələ elan yoxdur.</p>');
+    },
+
+    /* ---------- admin: taymer ---------- */
+    async admin() {
+      const b = V3.$('v3-body'); if (!b) return;
+      const cd = (await V2.list('countdown'))[0] || {}, c = document.createElement('div'); c.className = 'v3-c';
+      c.innerHTML = `<h3>⏳ Geri sayım taymeri (ana səhifə)</h3>Başlıq<input class="v3-in" id="cd-t" value="${V3.esc(cd.title || 'Dövlət qulluğuna qəbul imtahanına qalan vaxt')}">İmtahan tarixi və saatı<input class="v3-in" id="cd-a" type="datetime-local" value="${V3.esc(cd.at || '')}"><div style="display:flex;gap:8px"><button class="v3-bt" onclick="HOME.saveCd()">Yadda saxla</button><button class="v3-bt x" onclick="HOME.saveCd(true)">Taymeri sil</button></div>`;
+      b.appendChild(c);
+    },
+    async saveCd(clear) {
+      const cur = (await V2.list('countdown'))[0];
+      await V2.put('countdown', { title: V3.$('cd-t').value.trim(), at: clear ? '' : V3.$('cd-a').value }, cur && cur._id);
+      if (clear) V3.$('cd-a').value = ''; V2.toast(clear ? 'Taymer silindi' : 'Taymer saxlanıldı ✅');
+    }
+  };
+
+  /* ===== qoşulmalar ===== */
+  YQ.mount = () => {};                       // köhnə yeniliklər blokunu bizimki əvəz edir
+  YQ.paint = function (cls) {
+    const el = $('yq-news'); if (!el) return; const n = this.news || [];
+    if (!n.length) { el.style.display = 'none'; return; } el.style.display = '';
+    const x = n[this.i % n.length], idx = HOME.all.indexOf(x);
+    el.innerHTML = `<h2>📢 Yeniliklər</h2><div class="yq-pg ${cls || ''}" onclick="HOME.openNews()"><small>${e(x.kind || 'Xəbər')} · ${e(x.pub || '')}</small><h3>${e(x.title)}</h3><p>${e(String(x.body || '').slice(0, 220))}</p><div class="yq-act"><button type="button" class="dq-sharebtn" onclick="event.stopPropagation();dqOpenShare(${idx})"><i class="fa-solid fa-share-nodes"></i> Paylaş</button></div></div><div class="yq-dots">${n.map((_, k) => `<i class="${k === this.i % n.length ? 'on' : ''}"></i>`).join('')}</div>`;
+    if (cls) requestAnimationFrame(() => requestAnimationFrame(() => el.querySelector('.yq-pg')?.classList.remove(cls)));
+  };
+
+  const oFM = openFeedModal;
+  openFeedModal = function (k) { if (k === 'news') return HOME.openNews(); if (k === 'exam') return HOME.openExam(); return oFM.apply(this, arguments); };
+  const oST = dqShareText;
+  dqShareText = function (n) { return HOME.isExam(n) ? oST(n) : `📢 DQplatform | ${n.kind || 'Xəbər'}\n\n*${n.title}*\n\n${String(n.body || '').trim()}\n\n🌐 ${location.origin}${location.pathname}`; };
+
+  const oCnt = YQ2.counters; YQ2.counters = async function () { await oCnt.call(YQ2); HOME.order(); };
+
+  /* düymə əməliyyatı: "Öz funksiyam (JS)" + kabinet düyməsi */
+  V3.A.push(['js', 'Öz funksiyam (JS kodu)']);
+  const oGo = V3.go;
+  V3.go = function (id) {
+    const it = V3.D && V3.D.items[id];
+    if (it && typeof it.a === 'string' && it.a.indexOf('js:') === 0) { try { new Function(it.a.slice(3))(); } catch (x) { alert('Funksiya xətası: ' + x.message); } return; }
+    if (id === 'kab') { if (YQ2.sess()) return YQ2.open(); if (DQ.cabinet()) return DQ.openCabinet(); }
+    return oGo.call(V3, id);
+  };
+  V3.editItem = function (id) {
+    const it = V3.D.items[id], a0 = it.a || 'none', isJs = a0.indexOf('js:') === 0, isUrl = /^https?:/.test(a0), m = document.createElement('div'); m.className = 'v3-md';
+    const cur = isJs ? 'js' : isUrl ? 'url' : a0;
+    m.innerHTML = `<div><h3 style="text-align:left">Redaktə</h3>Mətn<input class="v3-in" id="e-t" value="${e(it.t)}">Alt mətn (kartlar üçün)<input class="v3-in" id="e-s" value="${e(it.s || '')}">
+      Toxunanda nə olsun?<select class="v3-in" id="e-a">${V3.A.map(o => `<option value="${o[0]}" ${cur === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>
+      Link (URL) və ya JS kodu<input class="v3-in" id="e-u" placeholder="https://...  və ya  alert('Salam')" value="${isJs ? e(a0.slice(3)) : isUrl ? e(a0) : ''}">
+      Rəng<select class="v3-in" id="e-c">${[['g','Yaşıl'],['d','Tünd'],['r','Qırmızı'],['w','Boz']].map(o => `<option value="${o[0]}" ${(it.c || 'g') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>
+      <label><input type="checkbox" id="e-h" ${it.h ? 'checked' : ''}> Gizlət</label>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="v3-bt" id="e-ok">Saxla</button><button class="v3-bt x" id="e-del">Sil</button><button class="v3-bt o" id="e-no">Ləğv</button></div></div>`;
+    document.body.appendChild(m); const q = i => m.querySelector('#' + i);
+    q('e-no').onclick = () => m.remove();
+    q('e-del').onclick = () => { if (!confirm('Silinsin?')) return; delete V3.D.items[id]; Object.keys(V3.D.groups).forEach(k => V3.D.groups[k] = V3.D.groups[k].filter(x => x !== id)); m.remove(); V3.save(); V3.draw(); };
+    q('e-ok').onclick = () => {
+      const a = q('e-a').value, u = q('e-u').value.trim();
+      Object.assign(it, { t: q('e-t').value, s: q('e-s').value, a: a === 'url' ? u : a === 'js' ? 'js:' + u : a, c: q('e-c').value, h: q('e-h').checked });
+      m.remove(); V3.save(); V3.draw();
+    };
+  };
+
+  /* admin: Mətnlər tabına taymer kartı əlavə et */
+  const oTxt = V3.tTxt; V3.tTxt = function () { oTxt(); HOME.admin(); };
+  const oClose = V3.close; V3.close = function () { oClose.call(V3); HOME.build(); };
+
+  /* çıxış: hər iki giriş sistemini təmizləyir */
+  YQ2.logout = function () {
+    try { localStorage.removeItem(YQ2.SK); localStorage.removeItem('dq_cabinet'); } catch (x) {}
+    YQ2.me = null; DQ.pending = null; YQ2.exit(); showScreen('v3-home');
+  };
+  DQ.logout = function () {
+    try { localStorage.removeItem('dq_cabinet'); localStorage.removeItem(YQ2.SK); } catch (x) {}
+    YQ2.me = null; DQ.pending = null; goHome();
+  };
+
+  const oShow = showScreen; showScreen = function (id) { oShow(id); if (id === 'v3-home') HOME.header(); };
+  const oRender = V3.render; V3.render = function () { oRender.call(V3); HOME.build(); };
+  if (V3.D) V3.render();
+})();
+</script>
+<!-- ===== DQ PATCH v12 — rəng uyğunluğu (loqo: tünd göy / göy / açıq göy / qızılı) =====
+     v11 yamağından SONRA, </body>-dən əvvələ yapışdırın. Yalnız CSS-dir, heç nə silinmir. -->
+<style>
+:root{
+  --dq-navy:#0a2f7a; --dq-navy2:#12408f; --dq-blue:#2f63bd; --dq-sky:#8fb3ec; --dq-ice:#eaf1fc; --dq-gold:#d9a441;
+  --primary-dark:#0a2f7a; --primary-hover:#12408f; --accent-blue:#2f63bd; --accent-gold:#d9a441;
+  --bg-color:#f3f7fd; --border-color:#c9d6ee; --text-main:#26365e;
+}
+body,body.v3on{background:#f3f7fd}
+.v3s{color:#12285e}
+
+/* üst zolaq, başlıq, menyu */
+.v3-top{background:linear-gradient(90deg,#0a2f7a,#2f63bd)}
+.v3-soc a{color:#0a2f7a}
+.v3-hd h1{color:#0a2f7a}
+.v3-nav{background:linear-gradient(90deg,#0a2f7a,#12408f)}
+.v3-nav a:hover{color:#8fb3ec}
+
+/* düymələr */
+.v3-g{background:linear-gradient(135deg,#2f63bd,#0a2f7a)}
+.v3-d{background:#12285e}
+.v3-hd .v3-b.v3-g{box-shadow:0 6px 14px rgba(10,47,122,.28)}
+.dq-exbtn{background:#d9a441;color:#1b2a55;box-shadow:0 6px 14px rgba(217,164,65,.4)}
+.dq-sharebtn{background:#0a2f7a}
+.v3-cd{border-color:#c9d6ee}.v3-cd:hover{border-color:#2f63bd;box-shadow:0 8px 20px rgba(47,99,189,.18)}
+
+/* hero: loqodakı yumru kvadratlar */
+.v3-hero{position:relative;overflow:hidden;background:#fff}
+.v3-hero>*{position:relative;z-index:1}
+.v3-hero::before,.v3-hero::after{content:"";position:absolute;width:clamp(90px,22vw,190px);aspect-ratio:1;border-radius:22%;transform:rotate(45deg);z-index:0;pointer-events:none}
+.v3-hero::before{right:-7%;bottom:-16%;background:linear-gradient(135deg,#3f74c9,#0a2f7a);opacity:.95;box-shadow:0 10px 24px rgba(10,47,122,.25)}
+.v3-hero::after{left:-6%;top:-14%;background:linear-gradient(135deg,#bcd2f5,#6f9be0);opacity:.85}
+
+/* yeniliklər, taymer, sayğaclar */
+.yq-pg{border-top-color:#2f63bd}
+.yq-dots i.on{background:#2f63bd}
+.dq-count,.dq-cn div{background:linear-gradient(135deg,#0a2f7a,#2f63bd);border:1px solid rgba(143,179,236,.5);box-shadow:0 10px 28px rgba(10,47,122,.28)}
+.dq-cn div:before{background:conic-gradient(from 0deg,transparent,rgba(143,179,236,.4),transparent 30%)}
+.dq-cn b,.dq-count b{color:#fff;text-shadow:0 0 14px rgba(143,179,236,.8)}
+.dq-count .cells>div{background:rgba(255,255,255,.12)}
+
+/* alt hissə */
+.v3-ft{background:linear-gradient(180deg,#0a2f7a,#071f52);border-top:4px solid #d9a441}
+.v3-ft a{color:#8fb3ec!important}
+
+/* giriş və kabinet */
+.dq-actions .dq-primary{background:#0a2f7a}
+.dq-form .code-input:focus{border-color:#2f63bd;box-shadow:0 0 0 4px rgba(47,99,189,.18)}
+.dq-back:focus-visible,.dq-out:focus-visible{outline-color:#2f63bd}
+.cab-card{background:linear-gradient(135deg,#0a2f7a,#2f63bd)}
+.cab-av{background:#d9a441;color:#1b2a55}
+.cab-badge.ok{background:#8fb3ec;color:#0a2f7a}
+.dq-note{background:#eaf1fc;border-color:#c9d6ee;color:#0a2f7a}
+.dq-hd{background:linear-gradient(90deg,#0a2f7a,#2f63bd)}
+#dq-cab{background:#eaf1fc}
+.dq-av{background:#2f63bd}
+#dq-cab aside a.on{background:#eaf1fc;color:#0a2f7a;border-left-color:#0a2f7a}
+
+/* imtahan ekranı */
+.exam-header{background:linear-gradient(90deg,#0a2f7a,#12408f)}
+.container{border-top-color:#d9a441}
+.nav-box.answered{background:#dbe8fb;border-color:#2f63bd;color:#0a2f7a}
+
+/* admin panel (V3) */
+.v3-bar{background:#0a2f7a}
+.v3-bar button{background:#12408f}
+.v3-bar button.on,.v3-bt,.v3-chip{background:#2f63bd}
+.v3-bt.o,.v3-chip.d{background:#0a2f7a}
+</style>
+
 
 </body>
     </html>
