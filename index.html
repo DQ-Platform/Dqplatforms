@@ -11171,6 +11171,40 @@ const SX = (() => {
   fix();
 })();
 </script>
+    <script>
+(function(){
+  var FROM = /WhatsApp\s+Kanal[ıi]m[ıi]za\s+Qo[şs]ulun/gi;
+  var TO = 'WhatsApp Kanalımıza Keçid'; // silmək istəsəniz: var TO = '';
+
+  function fix(root){
+    // Mətnlər
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;
+    while((n = w.nextNode())){
+      if(FROM.test(n.nodeValue)){
+        FROM.lastIndex = 0;
+        n.nodeValue = n.nodeValue.replace(FROM, TO);
+      }
+      FROM.lastIndex = 0;
+    }
+    // Atributlar
+    root.querySelectorAll('[title],[aria-label],[placeholder],[value]').forEach(function(el){
+      ['title','aria-label','placeholder','value'].forEach(function(a){
+        var v = el.getAttribute(a);
+        if(v && FROM.test(v)){
+          FROM.lastIndex = 0;
+          el.setAttribute(a, v.replace(FROM, TO));
+        }
+        FROM.lastIndex = 0;
+      });
+    });
+  }
+
+  function run(){ fix(document.body); }
+  new MutationObserver(run).observe(document.body, {childList:true, subtree:true});
+  setInterval(run, 500);
+  run();
+})();
+    </script>
 
 </body>
     </html>
