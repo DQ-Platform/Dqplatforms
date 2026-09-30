@@ -11149,7 +11149,28 @@ const SX = (() => {
   setInterval(fix,800);
   fix();
 })();
-    </script>
+        <script>
+(function(){
+  var NEW = 'Kanalımıza Keçid';
+  function fix(){
+    // 1) WhatsApp kanal linki olan bütün düymələr
+    document.querySelectorAll('a[href*="whatsapp.com/channel"]').forEach(function(a){
+      if(a.dataset.fx) return;
+      a.dataset.fx = 1;
+      a.innerHTML = '💬 WhatsApp ' + NEW;
+    });
+    // 2) Ehtiyat: "Qoşulun" olan hər mətn
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n, list = [];
+    while((n = w.nextNode())){ if(/Qo[şs]ulun/i.test(n.nodeValue)) list.push(n); }
+    list.forEach(function(t){
+      t.nodeValue = t.nodeValue.replace(/Kanal[ıi]m[ıi]za\s+Qo[şs]ulun/i, NEW);
+    });
+  }
+  new MutationObserver(fix).observe(document.body, {childList:true, subtree:true});
+  setInterval(fix, 500);
+  fix();
+})();
+</script>
 
 </body>
     </html>
