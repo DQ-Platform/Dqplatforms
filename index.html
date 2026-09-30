@@ -11806,6 +11806,128 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
+    <!-- ===== DQ PDF YAMAĞI: "Aç" → PDF açılır, "Yüklə" → PDF yüklənir =====
+     </body> teqindən dərhal əvvələ, ən sonda yapışdırın. Heç nə silinmir. ===== -->
+<style id="dqpdf-css">
+.dqpdf-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #eee}
+.dqpdf-row>span{flex:1;min-width:0;word-break:break-word;font-size:14px}
+.dqpdf-b{display:flex;gap:6px;flex:none}
+.dqpdf-b .v3-bt{padding:9px 13px;font-size:13px;white-space:nowrap}
+.dqpdf-b .v3-bt[disabled]{opacity:.55;pointer-events:none}
+#dqpdf-v{position:fixed;inset:0;z-index:100002;background:#e9eef7;display:flex;flex-direction:column}
+#dqpdf-v .hd{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#0f2d6b;color:#fff;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+#dqpdf-v .hd b{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dqpdf-v .hd button{border:0;border-radius:99px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#0f2d6b;white-space:nowrap}
+#dqpdf-v .hd button.x{background:#ef4444;color:#fff}
+#dqpdf-v .bd{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px 0 24px;text-align:center}
+#dqpdf-v canvas{display:block;margin:0 auto 10px;max-width:100%;height:auto!important;background:#fff;box-shadow:0 2px 10px rgba(15,45,107,.2)}
+#dqpdf-v .st{padding:30px 16px;color:#475569;font-size:14px}
+</style>
+
+<script>
+(function () {
+  'use strict';
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var tries = 0;
+
+  async function fetchDoc(id) {
+    await V2.probe();
+    var d;
+    if (V2.mode === 'cloud') { var r = await _supabase.from('dq_v2_store').select('data').eq('id', id).single(); d = r.data && r.data.data; }
+    else d = (await V2.list('pdfs')).find(function (x) { return x._id == id; });
+    return d;
+  }
+  async function toBlob(d) {
+    var b = await (await fetch(d.data)).blob();
+    return b.type === 'application/pdf' ? b : new Blob([b], { type: 'application/pdf' });
+  }
+  function fname(d) {
+    var n = String(d.name || d.title || 'material').replace(/[\\/:*?"<>|]+/g, '_');
+    return /\.pdf$/i.test(n) ? n : n + '.pdf';
+  }
+
+  /* ---- YÜKLƏ: fayl birbaşa cihaza düşür ---- */
+  function download(blob, name) {
+    var u = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = u; a.download = name; a.style.display = 'none'; document.body.appendChild(a); a.click();
+    setTimeout(function () { a.remove(); URL.revokeObjectURL(u); }, 4000);
+  }
+
+  /* ---- AÇ: səhifənin içində PDF görüntüləyici (mobildə də işləyir) ---- */
+  function closeViewer() { var v = document.getElementById('dqpdf-v'); if (v) v.remove(); document.documentElement.style.overflow = ''; }
+  async function openViewer(blob, name, title) {
+    closeViewer();
+    var v = document.createElement('div'); v.id = 'dqpdf-v';
+    v.innerHTML = '<div class="hd"><b>' + esc(title || name) + '</b><button type="button" data-a="dl">⬇️ Yüklə</button><button type="button" class="x" data-a="x">✕ Bağla</button></div><div class="bd"><div class="st">PDF açılır…</div></div>';
+    document.body.appendChild(v); document.documentElement.style.overflow = 'hidden';
+    v.onclick = function (e) { var a = e.target.closest('[data-a]'); if (!a) return; if (a.dataset.a === 'x') closeViewer(); else download(blob, name); };
+    var bd = v.querySelector('.bd');
+    try {
+      if (typeof pdfjsLib === 'undefined') throw new Error('no pdfjs');
+      var pdf = await pdfjsLib.getDocument(new Uint8Array(await blob.arrayBuffer())).promise;
+      bd.innerHTML = '';
+      var w = Math.min(bd.clientWidth - 16, 1000), dpr = Math.min(window.devicePixelRatio || 1, 2);
+      for (var i = 1; i <= pdf.numPages; i++) {
+        if (!document.getElementById('dqpdf-v')) return;
+        var pg = await pdf.getPage(i), base = pg.getViewport({ scale: 1 }), sc = w / base.width, vp = pg.getViewport({ scale: sc * dpr });
+        var c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height); c.style.width = Math.floor(vp.width / dpr) + 'px';
+        bd.appendChild(c); await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      }
+    } catch (err) {
+      /* ehtiyat: PDF.js işləmirsə brauzerin öz görüntüləyicisi */
+      closeViewer();
+      var u = URL.createObjectURL(blob), win = window.open(u, '_blank');
+      if (!win) location.href = u;
+    }
+  }
+
+  async function getPdf(id, mode, btn) {
+    mode = mode === 'dl' ? 'dl' : 'open';
+    var old = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      var d = await fetchDoc(id);
+      if (!d || !d.data) return alert('Fayl tapılmadı.');
+      var blob = await toBlob(d), name = fname(d);
+      if (mode === 'dl') { download(blob, name); V2.toast('Yüklənir ✅'); }
+      else await openViewer(blob, name, d.title);
+    } catch (e) { alert('Fayl açılmadı: ' + (e && e.message ? e.message : e)); }
+    finally { if (btn) { btn.disabled = false; btn.textContent = old; } }
+  }
+
+  function boot() {
+    if (typeof YQ === 'undefined' || typeof V2 === 'undefined') { if (tries++ < 120) return setTimeout(boot, 250); return; }
+    if (YQ.__dqpdf) return; YQ.__dqpdf = 1;
+
+    /* admin və başqa yerlərdə köhnə çağırış YQ.getPdf(id) → "Aç" kimi işləyir */
+    YQ.getPdf = function (id, mode, btn) { return getPdf(id, mode, btn); };
+    window.DQPDF = { open: function (id, b) { return getPdf(id, 'open', b); }, dl: function (id, b) { return getPdf(id, 'dl', b); }, close: closeViewer };
+
+    /* fənn → fayl siyahısı: iki ayrı düymə */
+    var oSub = YQ.subView;
+    YQ.subView = function (box, l, closeBtn) {
+      oSub.call(this, box, l, closeBtn);
+      var self = this, e = this.e || esc;
+      var wrap = function () {
+        box.querySelectorAll('button[onclick*="YQ.getPdf("]').forEach(function (b) {
+          var m = /getPdf\((\d+)\)/.exec(b.getAttribute('onclick') || ''); if (!m) return;
+          var row = b.parentNode, id = m[1]; row.classList.add('dqpdf-row');
+          var g = document.createElement('div'); g.className = 'dqpdf-b';
+          g.innerHTML = '<button type="button" class="v3-bt" data-m="open">Aç</button><button type="button" class="v3-bt o" data-m="dl">Yüklə</button>';
+          g.onclick = function (ev) { var x = ev.target.closest('[data-m]'); if (x) getPdf(id, x.dataset.m, x); };
+          row.replaceChild(g, b);
+        });
+      };
+      wrap();
+      /* "← Fənlər" ilə geri qayıdıb başqa fənni açanda yenidən tətbiq et */
+      new MutationObserver(function () { wrap(); }).observe(box, { childList: true });
+    };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+<!-- ===== PDF YAMAĞININ SONU ===== -->
+
 <!-- ===== MASAÜSTÜ REJİM YAMAĞININ SONU ===== -->
 
 <!-- ===== POSTER YAMAĞININ SONU ===== -->
