@@ -11097,6 +11097,71 @@ const SX = (() => {
 <!-- ===== YENİLİKLƏR YAMAĞININ SONU ===== -->
 
 <!-- ===== MODULUN SONU ===== -->
+<!-- ===== DQ PATCH: «Sınaqlara Bax» → Sınaqlar siyahısı (BA / BB / AC) — </body>-dən dərhal əvvələ, ən sonda yapışdırın. Heç nə silinmir. =====
+     Qeydiyyatlı            → «▶️ İştirak et»
+     İştirak edib (nəticə)  → «📄 Cavab kartını gör» + göz düyməsi
+     Qeydiyyatsız / giriş yox → «💬 Qeydiyyatdan keçmək üçün»
+     (Yuxarı sağdakı ad/«Kabinet» düyməsi dəyişmir — yeni kabinetə aparır.) -->
+<script>
+(function () {
+  'use strict';
+  if (typeof V3 === 'undefined' || typeof DQ === 'undefined' || typeof YQ === 'undefined' || typeof YQ2 === 'undefined') return;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* İstifadəçi daxil olub? (təsdiqli qeydiyyat sessiyası və ya köhnə kabinet) */
+  async function isLogged() {
+    try {
+      var k = YQ2.sess();
+      if (k) {
+        if (!YQ2.me) { var r = await YQ.find(k); if (r && r.status === 'approved') YQ2.me = r; }
+        if (YQ2.me && YQ2.me.fin) { DQ.saveCabinet({ name: YQ2.me.name, fin: YQ2.me.fin }); return true; }
+      }
+    } catch (e) {}
+    var c = DQ.cabinet();
+    return !!(c && c.fin);
+  }
+
+  function toggleCabBlocks(show) {
+    var s = $('exam-select-screen'); if (!s) return;
+    ['.cab-card', '.cab-tests'].forEach(function (q) {
+      var el = s.querySelector(q); if (el) el.style.display = show ? '' : 'none';
+    });
+  }
+
+  /* Daxil olmayan istifadəçi: eyni görünüşlü siyahı, hər kateqoriyada «Qeydiyyatdan keçmək üçün» */
+  function guestView() {
+    toggleCabBlocks(false);
+    var rows = ['BA', 'BB', 'AC'].map(function (c) {
+      return '<div class="cat-action-row" style="opacity:.85;background:#fff5f5;">' +
+        '<span class="cat-action-title" style="color:#64748b;">' + c + ' Kateqoriyası</span>' +
+        '<button type="button" class="btn btn-secondary btn-sm" style="background-color:#25D366;color:#fff;border:none;" onclick="YQ.open(\'reg\')">💬 Qeydiyyatdan keçmək üçün</button>' +
+        '</div>';
+    }).join('');
+    $('registered-exams-list').innerHTML =
+      '<div class="exam-item-card"><div class="exam-item-header"><span>Sınaq 1</span></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;">' + rows + '</div></div>';
+    showScreen('exam-select-screen');
+    scrollTo(0, 0);
+  }
+
+  async function openExamList() {
+    if (await isLogged()) {
+      toggleCabBlocks(true);
+      return DQ.openExams ? DQ.openExams() : DQ.openCabinet();   // iştirak et / cavab kartı / qeydiyyat — renderRegisteredExams özü seçir
+    }
+    guestView();
+  }
+
+  var oGo = V3.go;
+  V3.go = function (id) {
+    var it = V3.D && V3.D.items && V3.D.items[id];
+    if (id !== 'kab' && it && it.a === 'exam') return openExamList();   // «Sınaqlara Bax», «Sınaqlar» menyusu, SINAQLAR kartı
+    return oGo.apply(this, arguments);
+  };
+})();
+</script>
+<!-- ===== /DQ PATCH ===== -->
 
 </body>
     </html>
