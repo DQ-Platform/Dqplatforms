@@ -10331,6 +10331,114 @@ const SX = (() => {
 })();
 </script>
 <!-- ===== /DQ PATCH: MƏLUMAT ===== -->
+    <style>
+  .dz-static{position:relative;z-index:40}
+  .dz-static:not(.dz-img){pointer-events:none}
+  .dz-img{pointer-events:auto;touch-action:none;cursor:grab;transform-origin:center;user-select:none;-webkit-user-drag:none;box-shadow:0 4px 14px rgba(0,0,0,.25);background:#fff}
+  .dz-img.dz-on{cursor:grabbing;z-index:9999}
+  #dz-save{position:fixed;left:12px;bottom:12px;z-index:99999;display:none;background:#16a34a;color:#fff;border:0;border-radius:10px;padding:12px 16px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+</style>
+<script>
+(function(){
+  const SEL='#exam-screen .annotatable-wrap img.preview-img, #exam-screen .options .opt-preview-img';
+  const T='img_layouts';
+  const isAdmin=()=>{try{return isLiveEditMode===true}catch(e){return false}};
+  const keyOf=()=>{try{return String(selectedExamId)+'|'+userGroup}catch(e){return ''}};
+  const curQ=()=>{try{const q=allQuestions[currentQuestionIndex];return q?(q.id||currentQuestionIndex+1):null}catch(e){return null}};
+  let cache={},cacheKey='',loading=false;
+
+  const btn=document.createElement('button');
+  btn.id='dz-save'; btn.textContent='💾 Yerləşməni bazaya yaz';
+  document.body.appendChild(btn);
+
+  async function load(){
+    const k=keyOf(); if(!k||k===cacheKey||loading) return;
+    loading=true; cache={};
+    try{
+      const {data}=await _supabase.from(T).select('q_number,layout')
+        .eq('exam_id',String(selectedExamId)).eq('category',userGroup);
+      (data||[]).forEach(r=>cache[r.q_number]=r.layout||{});
+    }catch(e){console.warn('img_layouts',e)}
+    cacheKey=k; loading=false; scan();
+  }
+
+  const idOf=img=>{
+    if(img.classList.contains('opt-preview-img')){
+      const lb=img.closest('label');
+      return 'o'+[...img.closest('.options').querySelectorAll('label')].indexOf(lb);
+    }
+    return 'q';
+  };
+
+  function enable(img){
+    if(img.dataset.dz) return; img.dataset.dz=1;
+    const id=idOf(img), q=curQ();
+    const sv=(cache[q]||{})[id]||{};
+    const st={x:sv.x||0,y:sv.y||0,s:sv.s||1};
+    img._dz=st; img._dzid=id;
+    img.classList.add('dz-static'); img.draggable=false;
+    const apply=()=>img.style.transform=`translate(${st.x}%,${st.y}%) scale(${st.s})`;
+    apply();
+    if(!isAdmin()) return;                 // istifadəçilər yalnız nəticəni görür
+
+    img.classList.add('dz-img');
+    let moved=false,ptrs=new Map(),d0=0,s0=1;
+    img.addEventListener('pointerdown',e=>{
+      if(document.getElementById('annotation-canvas')) return;
+      img.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,e);
+      img.classList.add('dz-on'); moved=false;
+      if(ptrs.size==2){const [a,b]=[...ptrs.values()];d0=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);s0=st.s;}
+    });
+    img.addEventListener('pointermove',e=>{
+      if(!ptrs.has(e.pointerId)) return;
+      const p=ptrs.get(e.pointerId); ptrs.set(e.pointerId,e);
+      if(ptrs.size==2){
+        const [a,b]=[...ptrs.values()];
+        st.s=Math.min(6,Math.max(.3,s0*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/d0));
+      }else{
+        const dx=e.clientX-p.clientX, dy=e.clientY-p.clientY;
+        if(dx||dy) moved=true;
+        st.x+=dx/img.offsetWidth*100; st.y+=dy/img.offsetHeight*100;
+      }
+      apply();
+    });
+    const up=e=>{ptrs.delete(e.pointerId); if(!ptrs.size) img.classList.remove('dz-on');};
+    img.addEventListener('pointerup',up); img.addEventListener('pointercancel',up);
+    img.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false;}},true);
+    img.addEventListener('wheel',e=>{
+      e.preventDefault();
+      st.s=Math.min(6,Math.max(.3,st.s*(e.deltaY<0?1.1:.9))); apply();
+    },{passive:false});
+    img.addEventListener('dblclick',e=>{e.preventDefault();st.x=st.y=0;st.s=1;apply();});
+  }
+
+  function scan(){
+    if(cacheKey!==keyOf()){ load(); return; }   // əvvəlcə baza məlumatı gəlsin
+    const imgs=document.querySelectorAll(SEL);
+    imgs.forEach(enable);
+    btn.style.display=(isAdmin()&&imgs.length)?'block':'none';
+  }
+
+  btn.addEventListener('click',async()=>{
+    const q=curQ(); if(q==null) return;
+    const layout={};
+    document.querySelectorAll(SEL).forEach(i=>{
+      if(i._dz) layout[i._dzid]={x:+i._dz.x.toFixed(2),y:+i._dz.y.toFixed(2),s:+i._dz.s.toFixed(3)};
+    });
+    btn.disabled=true; btn.textContent='Yazılır...';
+    const {error}=await _supabase.from(T).upsert(
+      {exam_id:String(selectedExamId),category:userGroup,q_number:q,layout,updated_at:new Date().toISOString()},
+      {onConflict:'exam_id,category,q_number'});
+    btn.disabled=false; btn.textContent='💾 Yerləşməni bazaya yaz';
+    if(error){alert('Xəta: '+error.message);return;}
+    cache[q]=layout;
+    alert('Yadda saxlandı! İndi hamıda bu vəziyyətdə görünəcək.');
+  });
+
+  new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
+  scan();
+})();
+</script>
 
 </body>
     </html>
