@@ -11926,6 +11926,99 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
+    <!-- ===== DQ PATCH: İMTAHAN ELANLARINA «Qeydiyyatdan keç» DÜYMƏSİ — </body> teqindən dərhal əvvələ, ən sonda (bütün yamaqların altına) yapışdırın. Heç nə silinmir. =====
+     Düymə görünən yerlər: (1) «Xəbərlər və Elanlar» siyahı kartı («Ətraflı Oxu»nun yanında/altında)
+                           (2) elanın «Ətraflı» pəncərəsi  (3) ana səhifə slayderi və onun pəncərəsi
+     Yalnız kateqoriyası «İmtahan Elanları» / «Qeydiyyat Elanları» olan elanlarda çıxır.
+     Klik → qeydiyyat pəncərəsi (Ad Soyad + FIN + telefon/Gmail). Artıq daxil olmuş istifadəçi üçün → Sınaqlar (kabinet). -->
+<style id="dq-regbtn-css">
+.dq-regbtn{font:inherit;font-size:13px;font-weight:800;border:0;cursor:pointer;border-radius:999px;padding:9px 18px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  background:linear-gradient(135deg,#e0a93b,#c98a1b);color:#fff;box-shadow:0 6px 16px rgba(201,138,27,.35);transition:transform .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
+.dq-regbtn:hover,.dq-regbtn:active{transform:translateY(-2px);box-shadow:0 10px 22px rgba(201,138,27,.45)}
+.dq-regbtn.full{display:flex;width:100%;margin:16px 0 4px;padding:13px 18px;font-size:15px}
+.dq-actrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (max-width:560px){.dq-regbtn{font-size:12.5px;padding:8px 14px}.dq-regbtn.full{font-size:14.5px;padding:12px 16px}}
+</style>
+<script>
+(function () {
+  'use strict';
+  /* Hansı elanlarda düymə çıxsın: kateqoriya/növ mətnində «imtahan» və ya «qeydiyyat» varsa.
+     Yalnız «İmtahan Elanları» istəsəniz:  var EX = /mtahan/i;  */
+  var EX = /mtahan|qeyd/i;
+
+  function authed() {
+    try { return !!((typeof YQ2 !== 'undefined' && YQ2.sess && YQ2.sess()) || (typeof DQ !== 'undefined' && DQ.cabinet && DQ.cabinet())); }
+    catch (e) { return false; }
+  }
+  function label() { return authed() ? '🎓 Sınaqlara keç' : '📝 Qeydiyyatdan keç'; }
+  function mk(full) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'dq-regbtn' + (full ? ' full' : ''); b.textContent = label();
+    return b;
+  }
+  function itemByTitle(t) {
+    var L = (window.DQN && DQN.items) || [];
+    t = String(t || '').trim();
+    for (var i = 0; i < L.length; i++) if (String(L[i].title || '').trim() === t) return L[i];
+    return null;
+  }
+
+  function inject() {
+    /* 1) «Xəbərlər və Elanlar» siyahısı */
+    document.querySelectorAll('#nw-pub .nw-card').forEach(function (c) {
+      if (c.querySelector('.dq-regbtn')) return;
+      var tg = c.querySelector('.nw-meta .tg'), more = c.querySelector('.nw-more');
+      if (!tg || !more || !EX.test(tg.textContent)) return;
+      var row = document.createElement('div'); row.className = 'dq-actrow';
+      more.parentNode.insertBefore(row, more); row.appendChild(more); row.appendChild(mk());
+    });
+    /* 2) Elanın «Ətraflı» pəncərəsi */
+    document.querySelectorAll('#nw-det .nw-dc').forEach(function (c) {
+      if (c.querySelector('.dq-regbtn')) return;
+      var tg = c.querySelector('.nw-meta .tg'), sh = c.querySelector('.nw-sh');
+      if (!tg || !sh || !EX.test(tg.textContent)) return;
+      sh.parentNode.insertBefore(mk(true), sh);
+    });
+    /* 3) Ana səhifə slayderi */
+    document.querySelectorAll('#yq-news .dqn-slide').forEach(function (s) {
+      if (s.querySelector('.dq-regbtn')) return;
+      var n = window.DQN && DQN.items && DQN.items[+s.getAttribute('data-i')], act = s.querySelector('.dqn-act');
+      if (n && act && EX.test(n.kind || '')) act.appendChild(mk());
+    });
+    /* 4) Slayderin «Ətraflı oxu» pəncərəsi */
+    var mc = document.querySelector('#dqn-ov .dqn-mc');
+    if (mc && !mc.querySelector('.dq-regbtn')) {
+      var h = mc.querySelector('h2'), sh2 = mc.querySelector('.dqn-sh'), n2 = h && itemByTitle(h.textContent);
+      if (n2 && sh2 && EX.test(n2.kind || '')) sh2.parentNode.insertBefore(mk(true), sh2);
+    }
+    /* daxil olub-olmamağa görə yazını yenilə */
+    var t = label();
+    document.querySelectorAll('.dq-regbtn').forEach(function (b) { if (b.textContent !== t) b.textContent = t; });
+  }
+
+  function closeNews() {
+    ['nw-pub', 'nw-det'].forEach(function (id) { var el = document.getElementById(id); if (el) el.remove(); });
+    try { if (window.DQN && DQN.close) DQN.close(); } catch (e) {}
+  }
+
+  /* klik (capture: slayderin öz «kartı aç» kliki işləməsin) */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.dq-regbtn'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    closeNews();
+    if (authed()) { try { DQ.openCabinet(); return; } catch (x) {} }
+    try { YQ.open('reg'); }
+    catch (x) { try { registerViaWhatsApp(); } catch (y) {} }
+  }, true);
+
+  var q = false;
+  function later() { if (q) return; q = true; requestAnimationFrame(function () { q = false; try { inject(); } catch (e) {} }); }
+  new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+  later();
+})();
+</script>
+<!-- ===== /DQ PATCH: İmtahan elanı → Qeydiyyatdan keç ===== -->
+
 <!-- ===== PDF YAMAĞININ SONU ===== -->
 
 <!-- ===== MASAÜSTÜ REJİM YAMAĞININ SONU ===== -->
