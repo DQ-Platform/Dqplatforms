@@ -12041,6 +12041,176 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   later();
 })();
 </script>
+    <!-- ===== DQ PATCH v2: İMTAHAN ELANI → «Qeydiyyatdan keç» → «Sınaqlar» ekranı, elan olunan kateqoriya üzrə — </body> teqindən dərhal əvvələ, ən sonda yapışdırın.
+     ƏVVƏLKİ «İMTAHAN ELANLARINA Qeydiyyatdan keç DÜYMƏSİ» yamağını silin (bu blok onu əvəz edir, ikisi birlikdə qalmasın). Başqa heç nə silinmir.
+     • Düymə: «İmtahan Elanları» / «Qeydiyyat Elanları» elanlarında (siyahı kartı, ətraflı pəncərə, ana səhifə slayderi).
+     • Elanın başlığında/mətnində BA, BB və ya AC (təkcə biri) yazılıbsa → düymə «BB üzrə qeydiyyatdan keç» olur,
+       «Sınaqlar» ekranı açılır və yalnız həmin kateqoriya göstərilir («Bütün kateqoriyalar» linki ilə hamısı açılır).
+       Kateqoriya yazılmayıbsa → «Sınaqlar» ekranı bütün kateqoriyalarla açılır.
+     • Elanda «Sınaq 2» kimi nömrə varsa həmin sınaq göstərilir, yoxdursa hamısı.
+     • Qeydiyyatsız istifadəçi sətirdəki düyməyə basanda qeydiyyat formu açılır; təsdiq mesajına kateqoriya da əlavə olunur. -->
+<style id="dq-regbtn-css">
+.dq-regbtn{font:inherit;font-size:13px;font-weight:800;border:0;cursor:pointer;border-radius:999px;padding:9px 18px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  background:linear-gradient(135deg,#e0a93b,#c98a1b);color:#fff;box-shadow:0 6px 16px rgba(201,138,27,.35);transition:transform .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
+.dq-regbtn:hover,.dq-regbtn:active{transform:translateY(-2px);box-shadow:0 10px 22px rgba(201,138,27,.45)}
+.dq-regbtn.full{display:flex;width:100%;margin:16px 0 4px;padding:13px 18px;font-size:15px}
+.dq-actrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dq-wbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#fff8e6;border:1px solid #f0d08a;color:#7a5200;font-size:13.5px;text-align:left}
+.dq-wbar a{color:#1e4fa3;font-weight:700;text-decoration:underline;cursor:pointer;white-space:nowrap}
+.cat-action-row.dq-want{outline:2px solid #d9a23a;box-shadow:0 6px 18px rgba(217,162,58,.3)}
+@media (max-width:560px){.dq-regbtn{font-size:12.5px;padding:8px 14px}.dq-regbtn.full{font-size:14.5px;padding:12px 16px}}
+</style>
+<script>
+(function () {
+  'use strict';
+  var EX = /mtahan|qeyd/i;           /* yalnız «İmtahan Elanları» üçün:  /mtahan/i  */
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- elan mətnindən kateqoriya (BA/BB/AC) və sınaq nömrəsi ---------- */
+  function parse(txt) {
+    txt = String(txt || '');
+    var seen = {}, m, re = /(^|[^A-Za-zƏəİıÖöÜüĞğŞşÇç0-9])(BA|BB|AC)(?![A-Za-zƏəİıÖöÜüĞğŞşÇç0-9])/g;
+    while ((m = re.exec(txt))) seen[m[2]] = 1;
+    var cats = Object.keys(seen), ex = /Sınaq\s*(\d+)/i.exec(txt) || /(\d+)\s*-?\s*(?:ci|cı|cu|cü)\s+sınaq/i.exec(txt);
+    return { cat: cats.length === 1 ? cats[0] : '', exam: ex ? ex[1] : '' };
+  }
+  function mk(info, full) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'dq-regbtn' + (full ? ' full' : '');
+    b.setAttribute('data-cat', info.cat); b.setAttribute('data-exam', info.exam);
+    b.textContent = info.cat ? '📝 ' + info.cat + ' üzrə qeydiyyatdan keç' : '📝 Qeydiyyatdan keç';
+    return b;
+  }
+  function itemByTitle(t) {
+    var L = (window.DQN && DQN.items) || []; t = String(t || '').trim();
+    for (var i = 0; i < L.length; i++) if (String(L[i].title || '').trim() === t) return L[i];
+    return null;
+  }
+  function nText(n) { return n ? [n.title, n.sum, n.body].join(' \n ') : ''; }
+
+  /* ---------- düymələri elanlara əlavə et ---------- */
+  function inject() {
+    document.querySelectorAll('#nw-pub .nw-card').forEach(function (c) {
+      if (c.querySelector('.dq-regbtn')) return;
+      var tg = c.querySelector('.nw-meta .tg'), more = c.querySelector('.nw-more');
+      if (!tg || !more || !EX.test(tg.textContent)) return;
+      var n = null; try { n = DQ_NEWS[+more.getAttribute('data-i')]; } catch (e) {}
+      var t = n ? nText(n) : ((c.querySelector('h3') || {}).textContent + ' ' + (c.querySelector('p') || {}).textContent);
+      var row = document.createElement('div'); row.className = 'dq-actrow';
+      more.parentNode.insertBefore(row, more); row.appendChild(more); row.appendChild(mk(parse(t)));
+    });
+    document.querySelectorAll('#nw-det .nw-dc').forEach(function (c) {
+      if (c.querySelector('.dq-regbtn')) return;
+      var tg = c.querySelector('.nw-meta .tg'), sh = c.querySelector('.nw-sh');
+      if (!tg || !sh || !EX.test(tg.textContent)) return;
+      var t = ''; c.querySelectorAll('h2,p').forEach(function (x) { t += ' \n ' + x.textContent; });
+      sh.parentNode.insertBefore(mk(parse(t), true), sh);
+    });
+    document.querySelectorAll('#yq-news .dqn-slide').forEach(function (s) {
+      if (s.querySelector('.dq-regbtn')) return;
+      var n = window.DQN && DQN.items && DQN.items[+s.getAttribute('data-i')], act = s.querySelector('.dqn-act');
+      if (n && act && EX.test(n.kind || '')) act.appendChild(mk(parse(nText(n))));
+    });
+    var mc = document.querySelector('#dqn-ov .dqn-mc');
+    if (mc && !mc.querySelector('.dq-regbtn')) {
+      var h = mc.querySelector('h2'), sh2 = mc.querySelector('.dqn-sh'), n2 = h && itemByTitle(h.textContent);
+      if (n2 && sh2 && EX.test(n2.kind || '')) sh2.parentNode.insertBefore(mk(parse(nText(n2)), true), sh2);
+    }
+  }
+
+  /* ---------- «Sınaqlar» ekranında elan olunan kateqoriyanı göstər ---------- */
+  var W = null, tick = null;
+  function rows(card) { return card.querySelectorAll('.cat-action-row'); }
+  function isWanted(row) { return new RegExp('^\\s*' + W.cat + '(?![A-Za-z])').test((row.querySelector('.cat-action-title') || row).textContent); }
+  function restore() {
+    var bar = $('dq-want-bar'); if (bar) bar.remove();
+    var l = $('registered-exams-list'); if (!l) return;
+    l.querySelectorAll('.exam-item-card,.cat-action-row').forEach(function (x) { x.style.display = ''; x.classList.remove('dq-want'); });
+  }
+  function stopWant() { clearInterval(tick); tick = null; W = null; restore(); }
+  function apply() {
+    if (!W) return;
+    var scr = $('exam-select-screen'); if (!scr) return stopWant();
+    if (scr.classList.contains('active')) W.seen = true;
+    else { if (W.seen || Date.now() - W.t0 > 8000) stopWant(); return; }
+    var list = $('registered-exams-list'); if (!list) return;
+    var cards = list.querySelectorAll('.exam-item-card'); if (!cards.length) return;
+    var any = false, examHit = false;
+    cards.forEach(function (c) {
+      var m = /(\d+)/.exec((c.querySelector('.exam-item-header') || {}).textContent || '');
+      if (W.exam && m && m[1] === W.exam) examHit = true;
+    });
+    cards.forEach(function (c) {
+      var m = /(\d+)/.exec((c.querySelector('.exam-item-header') || {}).textContent || ''),
+          skip = W.exam && examHit && m && m[1] !== W.exam;
+      c.style.display = skip ? 'none' : '';
+      rows(c).forEach(function (r) { if (!skip && isWanted(r)) any = true; });
+    });
+    if (!any) { restore(); return; }                       /* həmin kateqoriya tapılmadısa hamısı qalsın */
+    cards.forEach(function (c) { rows(c).forEach(function (r) { var w = isWanted(r); r.style.display = w ? '' : 'none'; r.classList.toggle('dq-want', w); }); });
+    if (!$('dq-want-bar')) {
+      var bar = document.createElement('div'); bar.id = 'dq-want-bar'; bar.className = 'dq-wbar';
+      bar.innerHTML = '<span>📢 Elan olunan kateqoriya: <b>' + W.cat + '</b></span><a id="dq-want-all">Bütün kateqoriyalar</a>';
+      list.parentNode.insertBefore(bar, list);
+      $('dq-want-all').onclick = function () { stopWant(); };
+    }
+  }
+  function startWant(info) {
+    clearInterval(tick); restore(); W = null;
+    if (!info.cat) return;
+    W = { cat: info.cat, exam: info.exam, t0: Date.now(), seen: false };
+    tick = setInterval(apply, 250); apply();
+  }
+
+  /* ---------- qeydiyyat mesajına kateqoriya əlavə et (qeydiyyatsız istifadəçi üçün) ---------- */
+  function remember(info) { try { sessionStorage.setItem('dq_want_cat', JSON.stringify({ cat: info.cat, exam: info.exam || '1', t: Date.now() })); } catch (e) {} }
+  function recall() { try { var o = JSON.parse(sessionStorage.getItem('dq_want_cat') || 'null'); return o && Date.now() - o.t < 2 * 3600e3 ? o : null; } catch (e) { return null; } }
+  try {
+    if (typeof YQ !== 'undefined' && YQ.state) {
+      var oState = YQ.state;
+      YQ.state = function (r) {
+        var out = oState.apply(this, arguments), w = recall();
+        try {
+          if (w && w.cat && r && r.status === 'pending') {
+            var a = document.querySelector('#yq-m a[href*="wa.me"]');
+            if (a) {
+              var t = 'Salam mən ' + r.name + ' (' + (r.fin ? 'FIN: ' + r.fin + ', ' : '') + r.contact + ') saytda qeydiyyatdan keçdim. Sınaq ' + w.exam + ' - ' + w.cat + ' kateqoriyası üçün təsdiq edə bilərsizmi?';
+              a.href = 'https://wa.me/' + (YQ.WA || '994504305162') + '?text=' + encodeURIComponent(t);
+            }
+          }
+        } catch (e) {}
+        return out;
+      };
+    }
+  } catch (e) {}
+
+  /* ---------- klik ---------- */
+  function closeNews() {
+    ['nw-pub', 'nw-det'].forEach(function (id) { var el = $(id); if (el) el.remove(); });
+    try { if (window.DQN && DQN.close) DQN.close(); } catch (e) {}
+  }
+  function examKey() {
+    try { var it = V3.D.items; for (var k in it) if (it[k] && it[k].a === 'exam') return k; } catch (e) {}
+    return null;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.dq-regbtn'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var info = { cat: b.getAttribute('data-cat') || '', exam: b.getAttribute('data-exam') || '' };
+    closeNews(); remember(info);
+    var k = examKey();
+    if (k) { startWant(info); try { V3.go(k); return; } catch (x) {} }
+    try { YQ.open('reg'); } catch (x) { try { registerViaWhatsApp(); } catch (y) {} }
+  }, true);
+
+  var q = false;
+  function later() { if (q) return; q = true; requestAnimationFrame(function () { q = false; try { inject(); } catch (e) {} }); }
+  new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+  later();
+})();
+</script>
+<!-- ===== /DQ PATCH v2 ===== -->
+
 <!-- ===== /DQ PATCH: İmtahan elanı → Qeydiyyatdan keç ===== -->
 
 <!-- ===== /DQ PATCH: İmtahan elanı → Qeydiyyatdan keç ===== -->
