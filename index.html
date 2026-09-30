@@ -11942,6 +11942,22 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
 <script>
 (function () {
   'use strict';
+  <!-- ===== DQ PATCH: İMTAHAN ELANLARINA «Qeydiyyatdan keç» DÜYMƏSİ — </body> teqindən dərhal əvvələ, ən sonda (bütün yamaqların altına) yapışdırın. Heç nə silinmir. =====
+     Düymə görünən yerlər: (1) «Xəbərlər və Elanlar» siyahı kartı («Ətraflı Oxu»nun yanında/altında)
+                           (2) elanın «Ətraflı» pəncərəsi  (3) ana səhifə slayderi və onun pəncərəsi
+     Yalnız kateqoriyası «İmtahan Elanları» / «Qeydiyyat Elanları» olan elanlarda çıxır.
+     Klik → «Sınaqlar» ekranı (BA / BB / AC — «Sınaqlara Bax» düyməsinin açdığı eyni ekran). -->
+<style id="dq-regbtn-css">
+.dq-regbtn{font:inherit;font-size:13px;font-weight:800;border:0;cursor:pointer;border-radius:999px;padding:9px 18px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  background:linear-gradient(135deg,#e0a93b,#c98a1b);color:#fff;box-shadow:0 6px 16px rgba(201,138,27,.35);transition:transform .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
+.dq-regbtn:hover,.dq-regbtn:active{transform:translateY(-2px);box-shadow:0 10px 22px rgba(201,138,27,.45)}
+.dq-regbtn.full{display:flex;width:100%;margin:16px 0 4px;padding:13px 18px;font-size:15px}
+.dq-actrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (max-width:560px){.dq-regbtn{font-size:12.5px;padding:8px 14px}.dq-regbtn.full{font-size:14.5px;padding:12px 16px}}
+</style>
+<script>
+(function () {
+  'use strict';
   /* Hansı elanlarda düymə çıxsın: kateqoriya/növ mətnində «imtahan» və ya «qeydiyyat» varsa.
      Yalnız «İmtahan Elanları» istəsəniz:  var EX = /mtahan/i;  */
   var EX = /mtahan|qeyd/i;
@@ -11950,7 +11966,7 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
     try { return !!((typeof YQ2 !== 'undefined' && YQ2.sess && YQ2.sess()) || (typeof DQ !== 'undefined' && DQ.cabinet && DQ.cabinet())); }
     catch (e) { return false; }
   }
-  function label() { return authed() ? '🎓 Sınaqlara keç' : '📝 Qeydiyyatdan keç'; }
+  function label() { return '📝 Qeydiyyatdan keç'; }
   function mk(full) {
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'dq-regbtn' + (full ? ' full' : ''); b.textContent = label();
@@ -12001,14 +12017,22 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
     try { if (window.DQN && DQN.close) DQN.close(); } catch (e) {}
   }
 
+  /* «Sınaqlara Bax» düyməsinin açdığı eyni «Sınaqlar» ekranı */
+  function openExamList() {
+    try {
+      var items = (V3.D && V3.D.items) || {}, keys = Object.keys(items), id = null;
+      for (var i = 0; i < keys.length; i++) if (items[keys[i]] && items[keys[i]].a === 'exam') { id = keys[i]; break; }
+      if (id !== null) { V3.go(id); return; }
+    } catch (e) {}
+    try { if (typeof showScreen === 'function') showScreen('v3-home'); YQ.open('reg'); } catch (e) {}
+  }
+
   /* klik (capture: slayderin öz «kartı aç» kliki işləməsin) */
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('.dq-regbtn'); if (!b) return;
     e.preventDefault(); e.stopPropagation();
     closeNews();
-    if (authed()) { try { DQ.openCabinet(); return; } catch (x) {} }
-    try { YQ.open('reg'); }
-    catch (x) { try { registerViaWhatsApp(); } catch (y) {} }
+    openExamList();
   }, true);
 
   var q = false;
@@ -12017,6 +12041,8 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   later();
 })();
 </script>
+<!-- ===== /DQ PATCH: İmtahan elanı → Qeydiyyatdan keç ===== -->
+
 <!-- ===== /DQ PATCH: İmtahan elanı → Qeydiyyatdan keç ===== -->
 
 <!-- ===== PDF YAMAĞININ SONU ===== -->
