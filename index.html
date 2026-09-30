@@ -11439,6 +11439,285 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
+    <!-- ===== DQ POSTER YAMAĞI: poster kitabxanası + avtomatik ölçü + qapaq şəklini çıxar =====
+     </body> teqindən dərhal əvvələ, ən sonda (bütün yamaqların altına) yapışdırın. Heç nə silinmir. ===== -->
+<style id="dqp-css">
+/* ---- İdarə V2: Qapaq şəkli seçimi (2-ci şəkildəki kimi) ---- */
+.dqp-pv{width:min(100%,260px);margin:0 0 14px;border-radius:18px;overflow:hidden;background:#eef3fc;box-shadow:0 6px 18px rgba(15,45,107,.15);display:flex;align-items:center;justify-content:center;min-height:110px}
+.dqp-pv img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain}
+.dqp-pv.off{border:2px dashed #cbd5e1;background:#f8fafc;box-shadow:none;padding:22px 12px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
+.dqp-gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:560px}
+.dqp-th{position:relative;padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background:#e2e8f0;cursor:pointer;aspect-ratio:3/2;transition:transform .2s,border-color .2s}
+.dqp-th:hover{transform:translateY(-2px)}
+.dqp-th img{width:100%;height:100%;object-fit:cover;object-position:center 38%;display:block}
+.dqp-th.on{border-color:#1e1b4b;box-shadow:inset 0 0 0 2px #fff}
+.dqp-th i{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:rgba(15,23,42,.72);color:#fff;font-style:normal;font-size:15px;line-height:26px;text-align:center}
+.dqp-th.on i{display:block}
+.dqp-th b{position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:rgba(220,38,38,.92);color:#fff;font-size:12px;line-height:20px;text-align:center}
+.dqp-ac{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.dqp-ac label{font-size:12.5px;color:#475569;display:flex;gap:6px;align-items:center;cursor:pointer}
+.dqp-hint{font-size:12px;color:#64748b;margin-top:8px;max-width:560px;line-height:1.5}
+/* ---- Saytda: poster tam görünür, ölçü şəklə uyğunlaşır (kəsilmir) ---- */
+.dqn-img{min-height:clamp(260px,40vw,400px)!important}
+.dqn-img img{object-fit:contain!important;z-index:1}
+.dqn-img .dqp-bg{object-fit:cover!important;filter:blur(16px) saturate(1.1);transform:scale(1.2);opacity:.9;z-index:0}
+.dqn-mh{aspect-ratio:auto!important;max-height:none!important;height:300px}
+.nw-card img.im{aspect-ratio:auto!important;height:auto!important;max-height:340px;object-fit:contain!important;align-self:flex-start;background:#eef3fc}
+.nw-card div.im,.nw-rc .ph{display:none!important}
+.nw-dc>img{max-height:78vh!important;height:auto;object-fit:contain!important;background:#eef3fc}
+img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;object-fit:contain!important;background:#eef3fc}
+@media (max-width:560px){.dqp-gr{gap:7px}}
+</style>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (i) { return document.getElementById(i); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function uri(svg) { return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))); }
+  var F = 'font-family="Arial,Helvetica,sans-serif"';
+
+  /* ================= İKONLAR ================= */
+  var IC = {
+    scales: '<path d="M0 -28v52M-14 26h28M-26 -16h52"/><path d="M-26 -16l-10 22h20zM26 -16l-10 22h20z"/>',
+    cal: '<rect x="-26" y="-20" width="52" height="46" rx="6"/><path d="M-26 -6h52M-14 -28v12M14 -28v12"/><path d="M-14 8h.1M0 8h.1M14 8h.1M-14 18h.1M0 18h.1" stroke-width="6"/>',
+    userplus: '<circle cx="-6" cy="-14" r="10"/><path d="M-27 26a21 18 0 0 1 42 0"/><path d="M23 -12v18M14 -3h18"/>',
+    card: '<rect x="-28" y="-20" width="56" height="40" rx="6"/><circle cx="-12" cy="-4" r="6"/><path d="M-22 13a10 8 0 0 1 20 0M6 -8h16M6 2h16"/>',
+    check: '<path d="M-22 0l12 12l24 -26"/>',
+    bell: '<path d="M0 -26c-13 0 -18 9 -18 20v9l-6 8h48l-6 -8v-9c0 -11 -5 -20 -18 -20z"/><path d="M-6 24a6 6 0 0 0 12 0"/>',
+    clock: '<circle r="22"/><path d="M0 -12v12l9 6"/>',
+    pin: '<path d="M0 26c-16 -18 -20 -26 -20 -36a20 20 0 0 1 40 0c0 10 -4 18 -20 36z"/><circle cy="-10" r="7"/>',
+    book: '<path d="M-26 -20h22q6 0 6 6v34q0 -6 -6 -6h-22zM26 -20h-22q-6 0 -6 6v34q0 -6 6 -6h22z"/>',
+    user: '<circle cy="-12" r="11"/><path d="M-24 26a24 20 0 0 1 48 0"/>',
+    pencil: '<path d="M-22 22l4 -14l26 -26l10 10l-26 26z"/>'
+  };
+  function ic(n, sw) { return '<g fill="none" stroke="#fff" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round">' + IC[n] + '</g>'; }
+  var DEFS = '<defs><linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c3d8f8"/><stop offset="1" stop-color="#8fb3ee"/></linearGradient>' +
+    '<linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6b9be6"/><stop offset="1" stop-color="#2f63bd"/></linearGradient>' +
+    '<linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2358b0"/><stop offset="1" stop-color="#0b3382"/></linearGradient>' +
+    '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6f0fd"/><stop offset="1" stop-color="#a9c6f2"/></linearGradient>' +
+    '<filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#0f2d6b" flood-opacity=".22"/></filter></defs>';
+  function dia(x, y, z, g) { return '<rect x="' + (x - z / 2) + '" y="' + (y - z / 2) + '" width="' + z + '" height="' + z + '" rx="' + Math.round(z * .2) + '" fill="url(#' + g + ')" transform="rotate(45 ' + x + ' ' + y + ')" filter="url(#s)"/>'; }
+  function fit(t, max, w, k) { return Math.min(max, Math.floor(w / (t.length * k))); }
+
+  /* ================= POSTERLƏR (2:3, DQ Platform üslubu) ================= */
+  function poster(p) {
+    var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200">' + DEFS + '<rect width="800" height="1200" fill="#f3f7fd"/>';
+    [[90, 110, 250, 'gl'], [710, 100, 230, 'gd'], [770, 430, 200, 'gl'], [30, 540, 190, 'gl'], [110, 990, 200, 'gm'], [730, 910, 250, 'gl'], [660, 1150, 150, 'gd']].forEach(function (q) { s += dia(q[0], q[1], q[2], q[3]); });
+    s += '<circle cx="70" cy="64" r="28" fill="url(#gd)"/><text x="70" y="73" ' + F + ' font-size="22" font-weight="900" fill="#fff" text-anchor="middle">DQ</text><text x="110" y="73" ' + F + ' font-size="26" font-weight="800" fill="#0f2d6b">DQ PLATFORM</text>';
+    s += '<rect x="56" y="150" width="570" height="84" rx="16" fill="#b9d0f5"/><text x="90" y="208" ' + F + ' font-size="46" font-weight="800" fill="#0b2a66">DÖVLƏT QULLUĞU</text>';
+    var y = 290;
+    p.l.forEach(function (l) { var z = fit(l, 118, 690, .72); y += z; s += '<text x="60" y="' + y + '" ' + F + ' font-size="' + z + '" font-weight="900" fill="#0b2a66">' + l + '</text>'; y += 10; });
+    p.s.forEach(function (l) { y += 44; s += '<text x="62" y="' + y + '" ' + F + ' font-size="30" font-weight="700" fill="#1e4fa3">' + l + '</text>'; });
+    s += dia(400, 800, 240, 'gd') + '<circle cx="400" cy="800" r="92" fill="none" stroke="#d9a23a" stroke-width="5" stroke-dasharray="90 490" transform="rotate(-70 400 800)"/><circle cx="478" cy="722" r="11" fill="#d9a23a"/>' +
+      '<g transform="translate(400 800) scale(2.7)">' + ic(p.i, 4) + '</g>';
+    p.c.forEach(function (c, k) {
+      var x = 40 + k * 245;
+      s += '<rect x="' + x + '" y="1000" width="230" height="100" rx="20" fill="#fff" filter="url(#s)"/><circle cx="' + (x + 115) + '" cy="1034" r="20" fill="url(#gm)"/><g transform="translate(' + (x + 115) + ' 1034) scale(.46)">' + ic(c[0], 6) + '</g>' +
+        '<text x="' + (x + 115) + '" y="1083" ' + F + ' font-size="20" font-weight="700" fill="#0f2d6b" text-anchor="middle">' + c[1] + '</text>';
+    });
+    s += '<rect x="40" y="1124" width="720" height="56" rx="28" fill="#0f2d6b"/><text x="400" y="1160" ' + F + ' font-size="25" font-weight="700" fill="#fff" text-anchor="middle">exam.dqplatform.workers.dev</text></svg>';
+    return uri(s);
+  }
+
+  /* ================= İLLÜSTRASİYALAR (3:2) ================= */
+  function scene(k) {
+    var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">' + DEFS + '<rect width="900" height="600" fill="url(#bg)"/>';
+    s += dia(80, 90, 200, 'gm') + dia(830, 520, 240, 'gd') + dia(840, 80, 120, 'gl') + dia(60, 540, 150, 'gl');
+    if (k === 'justice') {
+      var pan = function (x) { return '<path d="M' + x + ' 198L' + (x - 55) + ' 360M' + x + ' 198L' + (x + 55) + ' 360" stroke="#0f2d6b" stroke-width="4" fill="none"/><path d="M' + (x - 85) + ' 360h170a85 50 0 0 1 -170 0z" fill="#0f2d6b"/>'; };
+      s += '<rect x="380" y="500" width="140" height="36" rx="8" fill="#0f2d6b"/><rect x="410" y="468" width="80" height="36" rx="6" fill="#1e4fa3"/><rect x="438" y="190" width="24" height="290" rx="10" fill="#d9a23a"/><rect x="200" y="182" width="500" height="16" rx="8" fill="#d9a23a"/><circle cx="450" cy="170" r="22" fill="#d9a23a" stroke="#fff" stroke-width="4"/>' + pan(240) + pan(660);
+    } else if (k === 'books') {
+      var cols = ['#1e4fa3', '#2f63bd', '#d9a23a', '#0b3382', '#6b9be6', '#ffffff', '#8fb3ee'];
+      s += '<rect x="96" y="70" width="16" height="480" rx="6" fill="#0f2d6b"/><rect x="788" y="70" width="16" height="480" rx="6" fill="#0f2d6b"/>';
+      for (var r = 0; r < 3; r++) {
+        var yb = 230 + r * 150, x = 124, i = 0;
+        while (x < 760) { var w = 30 + ((i * 7 + r * 3) % 4) * 10, h = 80 + ((i * 5 + r * 2) % 5) * 12; s += '<rect x="' + x + '" y="' + (yb - h) + '" width="' + w + '" height="' + h + '" rx="3" fill="' + cols[(i + r * 2) % 7] + '" stroke="#0f2d6b" stroke-width="2"/>'; x += w + 4; i++; }
+        s += '<rect x="96" y="' + yb + '" width="708" height="14" rx="4" fill="#0f2d6b"/>';
+      }
+    } else if (k === 'open') {
+      s += '<path d="M450 210Q320 170 150 215V430Q320 392 450 440Z" fill="#fff" stroke="#0f2d6b" stroke-width="4"/><path d="M450 210Q580 170 750 215V430Q580 392 450 440Z" fill="#fff" stroke="#0f2d6b" stroke-width="4"/><path d="M450 210V440" stroke="#0f2d6b" stroke-width="4"/>';
+      for (var j = 0; j < 6; j++) { var d = j * 28; s += '<path d="M190 ' + (250 + d) + 'Q320 ' + (235 + d) + ' 420 ' + (262 + d) + '" stroke="#8fb3ee" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M710 ' + (250 + d) + 'Q580 ' + (235 + d) + ' 480 ' + (262 + d) + '" stroke="#8fb3ee" stroke-width="6" fill="none" stroke-linecap="round"/>'; }
+      s += '<g transform="rotate(-35 700 500)"><rect x="560" y="487" width="200" height="26" rx="4" fill="#d9a23a"/><path d="M560 487l-36 13l36 13z" fill="#f3d9a0"/><rect x="740" y="487" width="24" height="26" fill="#0f2d6b"/></g>';
+    } else {
+      s += '<rect x="250" y="110" width="400" height="270" rx="16" fill="#0f2d6b"/><rect x="268" y="128" width="364" height="234" rx="8" fill="#f3f7fd"/><text x="450" y="166" ' + F + ' font-size="26" font-weight="800" fill="#0f2d6b" text-anchor="middle">01:23:45</text>';
+      for (var m = 0; m < 4; m++) { s += '<circle cx="300" cy="' + (214 + m * 36) + '" r="9" fill="' + (m === 2 ? '#2f63bd' : 'none') + '" stroke="#0f2d6b" stroke-width="3"/><rect x="322" y="' + (208 + m * 36) + '" width="' + (150 + (m * 37) % 90) + '" height="12" rx="6" fill="#c3d8f8"/>'; }
+      s += '<rect x="560" y="328" width="56" height="26" rx="8" fill="#2f63bd"/><path d="M200 380h500l44 44H156z" fill="#1e4fa3"/><rect x="380" y="380" width="140" height="10" rx="5" fill="#0b3382"/>';
+    }
+    return uri(s + '<text x="40" y="578" ' + F + ' font-size="20" font-weight="800" fill="#0f2d6b" letter-spacing="1">DQ PLATFORM</text></svg>');
+  }
+
+  /* ================= KİTABXANA (baza) ================= */
+  var LIB = [
+    { id: 'p-law', n: 'Qanunda dəyişiklik', t: 'Qanunda dəyişiklik', c: 'Qanunda Dəyişikliklər', s: poster({ l: ['QANUNDA', 'DƏYİŞİKLİK'], s: ['Dövlət qulluğu üzrə yeni qaydalar', 'və normativ aktlar'], i: 'scales', c: [['book', 'Yeni maddələr'], ['check', 'Rəsmi mənbə'], ['bell', 'Xəbərdarlıq']] }) },
+    { id: 'p-date', n: 'İmtahanın tarixi', t: 'Dövlət qulluğu imtahanının tarixi', c: 'İmtahan Elanları', s: poster({ l: ['İMTAHANIN', 'TARİXİ'], s: ['Dövlət qulluğuna qəbul', 'imtahanının təqvimi'], i: 'cal', c: [['cal', 'Gün və saat'], ['clock', 'Başlama vaxtı'], ['bell', 'Xatırlatma']] }) },
+    { id: 'p-reg', n: 'Qeydiyyat', t: 'İmtahana qeydiyyat', c: 'Qeydiyyat Elanları', s: poster({ l: ['İMTAHANA', 'QEYDİYYAT'], s: ['Ad, soyad və FİN ilə', 'qeydiyyatdan keçin'], i: 'userplus', c: [['pencil', 'Ad və soyad'], ['card', 'FİN kod'], ['check', 'Təsdiq']] }) },
+    { id: 'p-pass', n: 'Buraxılış vərəqi', t: 'Buraxılış vərəqi', c: 'İmtahan Elanları', s: poster({ l: ['BURAXILIŞ', 'VƏRƏQİ'], s: ['İmtahana giriş üçün', 'əsas sənəd'], i: 'card', c: [['user', 'Şəxsiyyət'], ['clock', 'Vaxt'], ['pin', 'Məkan']] }) },
+    { id: 's-justice', n: 'Ədalət tərəzisi', s: scene('justice') },
+    { id: 's-books', n: 'Kitab rəfi', s: scene('books') },
+    { id: 's-open', n: 'Açıq kitab', s: scene('open') },
+    { id: 's-laptop', n: 'Onlayn sınaq', s: scene('laptop') }
+  ];
+  var AUTO = [[/buraxılış|vərəq/i, 'p-pass'], [/qeydiyyat/i, 'p-reg'], [/qanun|dəyişiklik|normativ/i, 'p-law'], [/tarix|təqvim|cədvəl/i, 'p-date']];
+  function autoPoster(n) {
+    var t = (n.title || '') + ' ' + (n.sum || '');
+    for (var i = 0; i < AUTO.length; i++) if (AUTO[i][0].test(t)) return LIB.filter(function (x) { return x.id === AUTO[i][1]; })[0].s;
+    return '';
+  }
+
+  /* ================= ŞƏKLİ ÖLÇÜYƏ GÖRƏ SIXMA (kəsmir, nisbət qorunur) ================= */
+  function fitImage(file) {
+    return new Promise(function (ok, no) {
+      var fr = new FileReader(); fr.onerror = no;
+      fr.onload = function () {
+        var im = new Image(); im.onerror = no;
+        im.onload = function () {
+          var k = Math.min(1, 1400 / Math.max(im.naturalWidth, im.naturalHeight)), q = .88, d;
+          for (var t = 0; t < 4; t++) {
+            var w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k), c = document.createElement('canvas'); c.width = w; c.height = h;
+            var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(im, 0, 0, w, h);
+            d = c.toDataURL('image/jpeg', q); if (d.length < 900000) break; q = Math.max(.6, q - .1); k *= .8;
+          }
+          ok(d);
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+
+  /* ================= İdarə V2: qapaq şəkli bölməsi ================= */
+  var DQP = window.DQP = { active: false, noimg: false, keep: '', user: [], more: false, raw: false, lib: LIB };
+  var tries = 0;
+
+  function render() {
+    var h = $('dqp-host'), NW = window.NW; if (!h || !NW) return;
+    var cur = NW.img || '', items = LIB.map(function (x) { return { k: x.id, n: x.n, s: x.s, u: 0 }; })
+      .concat(DQP.user.map(function (x) { return { k: 'u' + x._id, n: x.name || 'Şəkil', s: x.img, u: x._id }; }));
+    var extra = DQP.more ? (NW.pre || []).map(function (s, i) { return { k: 'b' + i, n: 'Brend ' + (i + 1), s: s, u: 0 }; }) : [];
+    function th(x) { return '<button type="button" class="dqp-th' + (cur && cur === x.s ? ' on' : '') + '" data-k="' + x.k + '" title="' + esc(x.n) + '"><img src="' + x.s + '" alt="" loading="lazy"><i>✓</i>' + (x.u ? '<b data-del="' + x.u + '" title="Kitabxanadan sil">×</b>' : '') + '</button>'; }
+    h.innerHTML = '<label>Qapaq Şəkli</label>' +
+      '<div class="dqp-pv' + (DQP.noimg || !cur ? ' off' : '') + '">' + (DQP.noimg ? 'Qapaq şəkli yoxdur<br><small>Xəbər yalnız mətnlə paylaşılacaq</small>' : cur ? '<img src="' + cur + '" alt="">' : 'Şəkil seçilməyib') + '</div>' +
+      '<div class="dqp-gr">' + items.concat(extra).map(th).join('') + '</div>' +
+      '<div class="dqp-ac"><button type="button" class="v2-b o s" data-a="up">📁 Kompüterdən / telefondan seç</button>' +
+      '<button type="button" class="v2-b o s" data-a="more">' + (DQP.more ? 'Brend şəkillərini gizlət' : 'Daha çox şəkil') + '</button>' +
+      (DQP.noimg ? '<button type="button" class="v2-b s" data-a="back">↩️ Qapaq şəklini qaytar</button>' : '<button type="button" class="v2-b r s" data-a="rm">🚫 Qapaq şəklini çıxar</button>') +
+      '<label><input type="checkbox" id="dqp-save" checked> Yüklənən şəkli kitabxanada saxla</label></div>' +
+      '<input type="file" id="dqp-file" accept="image/*" hidden>' +
+      '<div class="dqp-hint">Şəkil kəsilmir: poster və ya istənilən ölçülü şəkil saytda tam, səliqəli görünür. “Qapaq şəklini çıxar” seçilsə xəbər yalnız mətnlə dərc olunur.</div>';
+  }
+
+  function pick(img, meta) {
+    var NW = window.NW; NW.img = img; DQP.noimg = false; DQP.keep = img;
+    if (meta) {
+      var t = $('nw-t'), k = $('nw-k');
+      if (t && !t.value.trim() && meta.t) t.value = meta.t;
+      if (k && meta.c) for (var i = 0; i < k.options.length; i++) if (k.options[i].text === meta.c) k.selectedIndex = i;
+    }
+    render();
+  }
+
+  async function loadUser() { try { DQP.user = await V2.list('covers'); } catch (e) { DQP.user = []; } render(); }
+
+  function mount() {
+    var h = $('dqp-host'); if (!h) return; render(); loadUser();
+    h.onclick = async function (e) {
+      var NW = window.NW, d = e.target.closest('[data-del]');
+      if (d) { e.stopPropagation(); await V2.del('covers', d.getAttribute('data-del')); return; }
+      var t = e.target.closest('.dqp-th'), a = e.target.closest('[data-a]');
+      if (t) {
+        var k = t.getAttribute('data-k'), L = LIB.filter(function (x) { return x.id === k; })[0];
+        if (L) return pick(L.s, L);
+        if (k.charAt(0) === 'u') { var u = DQP.user.filter(function (x) { return 'u' + x._id === k; })[0]; if (u) pick(u.img); return; }
+        if (k.charAt(0) === 'b') return pick(NW.pre[+k.slice(1)]);
+      }
+      if (!a) return; a = a.getAttribute('data-a');
+      if (a === 'up') $('dqp-file').click();
+      else if (a === 'more') { DQP.more = !DQP.more; render(); }
+      else if (a === 'rm') { DQP.keep = NW.img || DQP.keep; DQP.noimg = true; NW.img = ''; render(); }
+      else if (a === 'back') { DQP.noimg = false; NW.img = DQP.keep || ''; render(); }
+    };
+    $('dqp-file').onchange = async function () {
+      var f = this.files && this.files[0]; if (!f) return; var keepIt = $('dqp-save').checked;
+      try {
+        var img = await fitImage(f); pick(img);
+        if (keepIt) { DQP.raw = true; await V2.put('covers', { img: img, name: f.name.replace(/\.[^.]+$/, '').slice(0, 30) }); DQP.raw = false; loadUser(); }
+      } catch (x) { DQP.raw = false; alert('Şəkil oxunmadı. Başqa fayl seçin.'); }
+      this.value = '';
+    };
+    /* siyahıda sürətli "qapaq şəklini çıxar / qaytar" düyməsi */
+    var rows = (window.NW && NW.rows) || [];
+    document.querySelectorAll('.nw-li').forEach(function (li, i) {
+      var r = rows[i], ac = li.querySelector('.ac'); if (!r || !ac || ac.querySelector('[data-tg]')) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'v2-b o s'; b.setAttribute('data-tg', r._id);
+      b.title = r.noimg ? 'Qapaq şəklini qaytar' : 'Qapaq şəklini çıxar'; b.textContent = r.noimg ? '🖼️↩' : '🖼️✕';
+      b.onclick = function () { toggleRow(r); }; ac.insertBefore(b, ac.firstChild);
+    });
+  }
+
+  async function toggleRow(r) {
+    var o = Object.assign({}, r); delete o._id;
+    if (r.noimg) { o.noimg = 0; o.img = r.img0 || ''; delete o.img0; } else { o.noimg = 1; o.img0 = r.img || ''; o.img = ''; }
+    DQP.raw = true; try { await V2.put('news', o, r._id); } finally { DQP.raw = false; }
+    V2.toast(o.noimg ? 'Qapaq şəkli çıxarıldı ✅' : 'Qapaq şəkli qaytarıldı ✅'); V2.go('news');
+  }
+
+  /* ================= SAYT: slayder + ətraflı pəncərə ================= */
+  function patchSlides() {
+    var D = window.DQN; if (!D || !D.el) return;
+    D.el.querySelectorAll('.dqn-slide').forEach(function (s) {
+      var n = D.items[+s.getAttribute('data-i')], box = s.querySelector('.dqn-img'); if (!n || !box) return;
+      if (n.noimg) { box.remove(); return; }
+      var im = box.querySelector('img:not(.dqp-bg)');
+      if (im && !box.querySelector('.dqp-bg')) { var b = im.cloneNode(); b.className = 'dqp-bg'; b.removeAttribute('loading'); b.alt = ''; box.insertBefore(b, im); }
+    });
+  }
+  function patchModal(ov) {
+    var D = window.DQN, h = ov.querySelector('h2'), mh = ov.querySelector('.dqn-mh'); if (!h || !mh || !D) return;
+    var n = D.items.filter(function (x) { return x.title === h.textContent; })[0];
+    if (n && n.noimg) { mh.remove(); return; }
+    var fg = mh.querySelector('.fg');
+    var go = function () { if (fg && fg.naturalWidth) mh.style.height = Math.max(200, Math.min(window.innerHeight * .78, mh.clientWidth * fg.naturalHeight / fg.naturalWidth)) + 'px'; };
+    if (fg) { if (fg.complete) go(); fg.addEventListener('load', go); }
+  }
+  function watchModal() {
+    new MutationObserver(function () {
+      var ov = $('dqn-ov'); if (!ov || ov.__dqp) return; ov.__dqp = 1; patchModal(ov);
+      new MutationObserver(function () { patchModal(ov); }).observe(ov, { childList: true });
+    }).observe(document.body, { childList: true });
+  }
+
+  /* ================= qoşulma ================= */
+  function boot() {
+    if (typeof V2 === 'undefined' || !window.NW) { if (tries++ < 120) return setTimeout(boot, 250); return; }
+    if (DQP.ready) return; DQP.ready = 1;
+    var oPut = V2.put, oGo = V2.go, oP = V2.p_news;
+    V2.put = function (c, obj, id) {
+      if (c === 'news' && DQP.active && !DQP.raw) { obj = Object.assign({}, obj, { noimg: DQP.noimg ? 1 : 0 }); if (DQP.noimg) obj.img = ''; }
+      return oPut.call(V2, c, obj, id);
+    };
+    V2.go = function (p) { DQP.active = (p === 'news'); return oGo.apply(this, arguments); };
+    V2.p_news = async function () {
+      var fresh = (NW.img === null), eid = NW.edit, cfg = await oP.apply(this, arguments);
+      if (fresh) { var cur = eid && (NW.rows || []).filter(function (r) { return r._id == eid; })[0]; DQP.noimg = !!(cur && cur.noimg); DQP.keep = cur ? (cur.img || cur.img0 || '') : ''; }
+      cfg.html = cfg.html.replace(/<div class="v2-f"><label>Qapaq Şəkli<\/label>[\s\S]*?Kompüterdən Seç<\/button><\/div>/, '<div class="v2-f v2-full" id="dqp-host"></div>');
+      var oa = cfg.after; cfg.after = function () { if (oa) oa(); mount(); };
+      return cfg;
+    };
+    if (window.DQN) {
+      var oR = DQN.render;
+      DQN.render = function (list) {
+        var l = (list || []).map(function (n) { if (n.noimg || n.img) return n; var a = autoPoster(n); return a ? Object.assign({}, n, { img: a }) : n; });
+        var r = oR.call(this, l); patchSlides(); return r;
+      };
+      patchSlides(); watchModal();
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+<!-- ===== POSTER YAMAĞININ SONU ===== -->
+
 <!-- ===== POSTER YAMAĞININ SONU ===== -->
 
 </body>
