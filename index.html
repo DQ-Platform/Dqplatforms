@@ -11716,6 +11716,98 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
+    <!-- ===== DQ MASAÜSTÜ REJİM YAMAĞI: sınaqda və kabinetdə "Masaüstü rejimə keç" düyməsi =====
+     </body> teqindən dərhal əvvələ, ən sonda yapışdırın. Heç nə silinmir. ===== -->
+<style id="dqdm-css">
+#dqdm{position:fixed;left:0;top:0;z-index:100001;transform-origin:0 0;display:none;align-items:center;gap:6px;border:0;border-radius:99px;padding:10px 16px;font:700 13px/1.2 system-ui,-apple-system,Arial,sans-serif;color:#fff;background:linear-gradient(135deg,#0f2d6b,#2f63bd);box-shadow:0 6px 18px rgba(15,45,107,.4);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+#dqdm.on{display:flex}
+#dqdm.d{background:linear-gradient(135deg,#b45309,#d9a23a)}
+#dqdm-t{position:fixed;left:0;top:0;z-index:100002;transform-origin:0 0;display:none;max-width:260px;padding:10px 14px;border-radius:12px;background:#0f2d6b;color:#fff;font:600 13px/1.4 system-ui,-apple-system,Arial,sans-serif;box-shadow:0 8px 22px rgba(0,0,0,.3);pointer-events:none}
+</style>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'dq_desktop_mode', WIDTH = 1280;
+  var btn, toast, orig = null, desk = false, ctx = null, tt;
+
+  function store(v) { try { if (v === undefined) return localStorage.getItem(KEY); localStorage.setItem(KEY, v); } catch (e) {} return null; }
+
+  /* yalnız telefon / kiçik planşetdə göstər (kompüterdə lazım deyil) */
+  function small() {
+    try { return (matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window) && Math.min(screen.width, screen.height) < 820; }
+    catch (e) { return false; }
+  }
+  /* sınaq və kabinet ekranları */
+  function inCtx() {
+    if (document.getElementById('dq-cab')) return true;
+    var a = document.querySelector('.screen.active'), id = a && a.id;
+    return id === 'exam-screen' || id === 'exam-select-screen' || id === 'result-screen';
+  }
+
+  function setViewport(content) {
+    var old = document.querySelector('meta[name="viewport"]');
+    if (orig === null) orig = old ? old.getAttribute('content') : 'width=device-width, initial-scale=1.0';
+    var m = document.createElement('meta'); m.name = 'viewport'; m.content = content;
+    if (old) old.parentNode.replaceChild(m, old); else document.head.appendChild(m);   /* yenidən yaratmaq brauzeri yeniləməyə məcbur edir */
+  }
+
+  function label() {
+    btn.className = (ctx ? 'on ' : '') + (desk ? 'd' : '');
+    btn.textContent = desk ? '📱 Mobil rejimə qayıt' : '🖥️ Masaüstü rejimə keç';
+  }
+
+  function apply(on, quiet) {
+    if (on === desk) { label(); place(); return; }
+    desk = on;
+    setViewport(on ? 'width=' + WIDTH + ', user-scalable=yes, maximum-scale=5' : orig);
+    label();
+    setTimeout(place, 60); setTimeout(place, 400);
+    if (!quiet) note(on ? 'Masaüstü rejim aktivdir. Ekranı iki barmaqla böyüdə bilərsiniz.' : 'Mobil rejimə qayıdıldı.');
+  }
+
+  function toggle() { var on = !desk; store(on ? '1' : '0'); apply(on); }
+
+  /* düyməni həmişə eyni ölçüdə, ekranın sol-altında saxla (masaüstü rejimdə səhifə kiçilsə də) */
+  function pos(el, bottomGap) {
+    var vv = window.visualViewport, s = 1, x = 12, y;
+    if (vv) { s = 1 / (vv.scale || 1); x = vv.offsetLeft + 12 * s; y = vv.offsetTop + vv.height - (el.offsetHeight + bottomGap) * s; }
+    else y = window.innerHeight - el.offsetHeight - bottomGap;
+    el.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+  }
+  function place() { if (btn.classList.contains('on')) pos(btn, 16); if (toast.style.display === 'block') pos(toast, 16 + btn.offsetHeight + 10); }
+
+  function note(t) {
+    toast.textContent = t; toast.style.display = 'block'; place();
+    clearTimeout(tt); tt = setTimeout(function () { toast.style.display = 'none'; }, 3200);
+  }
+
+  function tick() {
+    var c = small() && inCtx();
+    if (c !== ctx) {
+      ctx = c;
+      if (c) apply(store() === '1', true);      /* daxil olanda əvvəlki seçimi tətbiq et */
+      else { apply(false, true); toast.style.display = 'none'; }   /* çıxanda ana səhifə normal mobil görünsün */
+      label();
+    }
+    if (c) place();
+  }
+
+  function boot() {
+    if (document.getElementById('dqdm')) return;
+    btn = document.createElement('button'); btn.id = 'dqdm'; btn.type = 'button'; btn.onclick = toggle; document.body.appendChild(btn);
+    toast = document.createElement('div'); toast.id = 'dqdm-t'; document.body.appendChild(toast);
+    label();
+    window.addEventListener('resize', place); window.addEventListener('scroll', place, { passive: true });
+    if (window.visualViewport) { visualViewport.addEventListener('resize', place); visualViewport.addEventListener('scroll', place); }
+    setInterval(tick, 400); tick();
+    window.DQDM = { toggle: toggle, on: function () { store('1'); apply(true); }, off: function () { store('0'); apply(false); } };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+<!-- ===== MASAÜSTÜ REJİM YAMAĞININ SONU ===== -->
+
 <!-- ===== POSTER YAMAĞININ SONU ===== -->
 
 <!-- ===== POSTER YAMAĞININ SONU ===== -->
