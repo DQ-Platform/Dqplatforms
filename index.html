@@ -10606,6 +10606,192 @@ const SX = (() => {
   })();
 })();
 </script>
+<!-- ===== XƏBƏR / ELAN / DƏYİŞİKLİK MODULU — </body> teqindən dərhal əvvələ yapışdırın ===== -->
+<style id="nw-css">
+.nw-ov{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:99999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:14px 10px;user-select:text}
+.nw-box{background:#f8fafc;border-radius:18px;width:100%;max-width:640px;padding:16px;margin:auto 0}
+.nw-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:18px}
+.nw-hd button{border:0;background:#e2e8f0;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:15px}
+.nw-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.nw-chip{border:1px solid #cbd5e1;background:#fff;color:#334155;padding:6px 14px;border-radius:99px;font-size:13px;cursor:pointer;font-family:inherit}
+.nw-chip.on{background:#1e1b4b;color:#fff;border-color:#1e1b4b}
+.nw-s{width:100%;box-sizing:border-box;padding:10px 14px;border:1px solid #e2e8f0;border-radius:12px;font:inherit;font-size:14px;margin-bottom:12px;background:#fff}
+.nw-c{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:12px;text-align:left}
+.nw-row{display:flex;gap:12px}
+.nw-im{flex:0 0 96px;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#e2e8f0}
+.nw-im img{width:100%;height:100%;object-fit:cover;display:block}
+.nw-tx{flex:1;min-width:0}
+.nw-tg{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;margin-right:6px}
+.nw-Xəbər{background:#dbeafe;color:#1e40af}.nw-Elan{background:#fef3c7;color:#92400e}.nw-Dəyişiklik{background:#d1fae5;color:#065f46}
+.nw-tx small{color:#64748b;font-size:12px}
+.nw-tx h4{margin:6px 0 4px;font-size:16px;line-height:1.3;color:#0f172a}
+.nw-tx p{margin:0;font-size:13px;color:#475569;line-height:1.5}
+.nw-b{border:1px solid #cbd5e1;background:#fff;color:#1e1b4b;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;font-family:inherit}
+.nw-full{margin-top:12px;padding-top:12px;border-top:1px solid #f1f5f9;font-size:14px;line-height:1.7;color:#334155;white-space:pre-wrap}
+.nw-sh{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;white-space:normal}
+.nw-sh button{border:1px solid #cbd5e1;background:#fff;padding:6px 12px;border-radius:99px;font-size:12px;cursor:pointer;font-family:inherit}
+.nw-sh .wa{color:#15803d;border-color:#86efac}.nw-sh .tg{color:#0369a1;border-color:#7dd3fc}
+.nw-cv{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.nw-prev{width:130px;aspect-ratio:4/5;border-radius:12px;border:1px dashed #cbd5e1;background:#faf9f6;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;text-align:center}
+.nw-prev img{width:100%;height:100%;object-fit:cover}
+.nw-pre{display:grid;grid-template-columns:repeat(3,56px);gap:8px}
+.nw-pre img{width:56px;aspect-ratio:4/5;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid transparent}
+.nw-pre img:hover{border-color:#1e1b4b}
+.nw-ar{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f0eee8}
+.nw-ar img{width:40px;aspect-ratio:4/5;object-fit:cover;border-radius:6px}
+.nw-ar>div{flex:1;min-width:0}
+</style>
+
+<script>
+(function () {
+  var tries = 0;
+  function boot() {
+    if (!window.V2 || !window.HOME) { if (tries++ < 60) return setTimeout(boot, 250); return; }
+    if (window.NW) return;
+
+    var KINDS = ['Xəbər', 'Elan', 'Dəyişiklik'];
+    var esc = function (s) { return V2.esc(s == null ? '' : s); };
+    var $ = function (id) { return document.getElementById(id); };
+
+    function ps(bg, fg, em) {
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><rect width="400" height="500" fill="' + bg + '"/><circle cx="200" cy="250" r="120" fill="' + fg + '" opacity=".22"/><text x="200" y="290" font-size="120" text-anchor="middle">' + em + '</text></svg>');
+    }
+
+    var NW = window.NW = {
+      all: [], f: 'Hamısı', q: '', openId: null, cover: '', cur: null, eid: null, aq: '',
+      pre: [
+        ps('#1e3a8a', '#3b82f6', '📰'), ps('#92400e', '#f59e0b', '📢'), ps('#065f46', '#10b981', '⚖️'),
+        ps('#4c1d95', '#8b5cf6', '📚'), ps('#9f1239', '#f43f5e', '📝'), ps('#0f172a', '#d4af37', '🎓')
+      ],
+
+      kind: function (n) {
+        var k = (n && n.kind) || '';
+        if (/mtahan/i.test(k) || k === 'Elan') return 'Elan';
+        if (k === 'Dəyişiklik') return 'Dəyişiklik';
+        return 'Xəbər';
+      },
+      image: function (n) { return n.img || NW.pre[Math.max(0, KINDS.indexOf(NW.kind(n)))]; },
+      sum: function (n) { return n.sum || String(n.body || '').slice(0, 110) + (String(n.body || '').length > 110 ? '…' : ''); },
+      load: async function () {
+        try { NW.all = await V2.list('news'); } catch (x) { NW.all = []; }
+        NW.all.sort(function (a, b) { return String(b.pub || '').localeCompare(String(a.pub || '')) || b._id - a._id; });
+      },
+      find: function (id) { return NW.all.find(function (x) { return x._id == id; }); },
+
+      /* ---------- SAYT: siyahı pəncərəsi ---------- */
+      open: async function (f) {
+        NW.f = (f && f !== 'all') ? f : 'Hamısı'; NW.q = ''; NW.openId = null;
+        var old = $('nw-ov'); if (old) old.remove();
+        var o = document.createElement('div'); o.id = 'nw-ov'; o.className = 'nw-ov';
+        o.onclick = function (e) { if (e.target === o) o.remove(); };
+        o.innerHTML = '<div class="nw-box"><div class="nw-hd"><b>Xəbərlər və Elanlar</b><button aria-label="Bağla" onclick="document.getElementById(\'nw-ov\').remove()">✕</button></div><div class="nw-chips" id="nw-ch"></div><input class="nw-s" id="nw-sq" placeholder="Axtar…" oninput="NW.q=this.value;NW.list()"><div id="nw-ls"><p style="text-align:center;color:#64748b">Yüklənir…</p></div></div>';
+        document.body.appendChild(o);
+        await NW.load(); NW.list();
+      },
+      chips: function () {
+        $('nw-ch').innerHTML = ['Hamısı'].concat(KINDS).map(function (k) {
+          return '<button class="nw-chip' + (k === NW.f ? ' on' : '') + '" onclick="NW.setF(\'' + k + '\')">' + k + '</button>';
+        }).join('');
+      },
+      setF: function (k) { NW.f = k; NW.list(); },
+      list: function () {
+        if (!$('nw-ls')) return; NW.chips();
+        var q = NW.q.trim().toLowerCase();
+        var l = NW.all.filter(function (n) {
+          return (NW.f === 'Hamısı' || NW.kind(n) === NW.f) && (!q || (n.title + ' ' + n.body + ' ' + (n.sum || '')).toLowerCase().indexOf(q) > -1);
+        });
+        $('nw-ls').innerHTML = l.length ? l.map(function (n) {
+          var k = NW.kind(n), open = NW.openId == n._id;
+          return '<div class="nw-c"><div class="nw-row"><div class="nw-im"><img loading="lazy" src="' + NW.image(n) + '" alt=""></div><div class="nw-tx"><span class="nw-tg nw-' + k + '">' + k + '</span><small>' + esc(n.pub || n.date || '') + '</small><h4>' + esc(n.title) + '</h4><p>' + esc(NW.sum(n)) + '</p><button class="nw-b" onclick="NW.tog(' + n._id + ')">' + (open ? 'Bağla' : 'Ətraflı oxu →') + '</button></div></div>' +
+            (open ? '<div class="nw-full">' + esc(n.body) + '<div class="nw-sh"><button onclick="NW.share(' + n._id + ',\'cp\')">📋 Kopyala</button><button class="wa" onclick="NW.share(' + n._id + ',\'wa\')">WhatsApp</button><button class="tg" onclick="NW.share(' + n._id + ',\'tg\')">Telegram</button></div></div>' : '') + '</div>';
+        }).join('') : '<p style="text-align:center;color:#64748b;padding:20px 0">Bu bölmədə paylaşım yoxdur.</p>';
+      },
+      tog: function (id) { NW.openId = NW.openId == id ? null : id; NW.list(); },
+      share: function (id, how) {
+        var n = NW.find(id); if (!n) return;
+        var url = location.href.split('#')[0], t = n.title + '\n' + NW.sum(n);
+        if (how === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(t + '\n' + url), '_blank');
+        else if (how === 'tg') window.open('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(t), '_blank');
+        else { try { navigator.clipboard.writeText(t + '\n' + url); V2.toast('Kopyalandı ✅'); } catch (x) { prompt('Kopyalayın:', t + '\n' + url); } }
+      },
+
+      /* ---------- ADMİN: şəkil ---------- */
+      setCover: function (u) {
+        NW.cover = u || '';
+        var p = $('nw-prev'); if (p) p.innerHTML = NW.cover ? '<img src="' + NW.cover + '" alt="">' : '4:5 qapaq şəkli';
+      },
+      pick: function (inp) {
+        var file = inp.files && inp.files[0]; if (!file) return;
+        var fr = new FileReader();
+        fr.onload = function () {
+          var im = new Image();
+          im.onload = function () {
+            var W = 720, H = 900, c = document.createElement('canvas'); c.width = W; c.height = H;
+            var x = c.getContext('2d'), r = Math.max(W / im.width, H / im.height), w = im.width * r, h = im.height * r;
+            x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+            NW.setCover(c.toDataURL('image/jpeg', 0.8));
+          };
+          im.onerror = function () { alert('Şəkil oxunmadı. Başqa fayl seçin.'); };
+          im.src = fr.result;
+        };
+        fr.readAsDataURL(file); inp.value = '';
+      },
+
+      /* ---------- ADMİN: əməliyyatlar ---------- */
+      edit: function (id) { NW.eid = id; V2.go('news'); },
+      cancel: function () { NW.eid = null; V2.go('news'); },
+      save: async function () {
+        var t = $('nw-t').value.trim(), b = $('nw-b').value.trim(), er = $('nw-er');
+        if (!t || !b) { er.textContent = 'Başlıq və tam mətn məcburidir.'; return; }
+        var old = NW.cur ? NW.find(NW.cur) : null;
+        var obj = { title: t, kind: $('nw-k').value, pub: $('nw-d').value || V2.date(), sum: $('nw-s').value.trim(), body: b, img: NW.cover || '', date: old ? old.date : V2.date() };
+        await V2.put('news', obj, NW.cur || undefined);
+        NW.eid = null; V2.toast(old ? 'Yeniləndi ✅' : 'Paylaşıldı ✅'); V2.go('news');
+      },
+      del: async function (id) { NW.eid = null; await V2.del('news', id); },
+      filterAdmin: function (v) {
+        v = v.trim().toLowerCase();
+        document.querySelectorAll('.nw-ar').forEach(function (r) { r.style.display = !v || r.getAttribute('data-t').indexOf(v) > -1 ? '' : 'none'; });
+      }
+    };
+
+    /* ---------- ADMİN SƏHİFƏSİ (İdarəçi V2 → Xəbər / Elan) ---------- */
+    V2.p_news = async function () {
+      await NW.load();
+      var id = NW.eid; NW.eid = null; NW.cur = id;
+      var cur = id ? (NW.find(id) || {}) : {}, curKind = NW.kind(cur);
+      NW.cover = cur.img || '';
+      var html =
+        '<div class="v2-card"><h3>' + (id ? 'Redaktə' : 'Yeni paylaşım') + '</h3><div class="v2-grid">' +
+        '<div class="v2-f v2-full"><label>Başlıq</label><input class="v2-in" id="nw-t" value="' + esc(cur.title) + '" placeholder="Sınaq 6 tarixi elan olundu"></div>' +
+        '<div class="v2-f"><label>Kateqoriya</label><select class="v2-in" id="nw-k">' + KINDS.map(function (k) { return '<option' + (k === curKind ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select></div>' +
+        '<div class="v2-f"><label>Tarix</label><input type="date" class="v2-in" id="nw-d" value="' + esc(cur.pub || V2.date()) + '"></div>' +
+        '<div class="v2-f v2-full"><label>Qapaq şəkli (4:5)</label><div class="nw-cv"><div class="nw-prev" id="nw-prev">' + (NW.cover ? '<img src="' + NW.cover + '" alt="">' : '4:5 qapaq şəkli') + '</div>' +
+        '<div><div class="nw-pre">' + NW.pre.map(function (p, i) { return '<img src="' + p + '" alt="" onclick="NW.setCover(NW.pre[' + i + '])">'; }).join('') + '</div>' +
+        '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="v2-b o s" onclick="document.getElementById(\'nw-file\').click()">📁 Kompüterdən / telefondan seç</button><button type="button" class="v2-b r s" onclick="NW.setCover(\'\')">Şəkli sil</button></div>' +
+        '<input type="file" id="nw-file" accept="image/*" style="display:none" onchange="NW.pick(this)"></div></div></div>' +
+        '<div class="v2-f v2-full"><label>Qısa xülasə (siyahıda görünür)</label><input class="v2-in" id="nw-s" value="' + esc(cur.sum) + '" placeholder="Boş qalsa mətnin əvvəli götürülür"></div>' +
+        '<div class="v2-f v2-full"><label>Tam mətn</label><textarea class="v2-in" id="nw-b" rows="8">' + esc(cur.body) + '</textarea></div></div>' +
+        '<div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="v2-b" onclick="NW.save()">' + (id ? 'Yadda saxla' : '+ Paylaş') + '</button>' + (id ? '<button class="v2-b o" onclick="NW.cancel()">Ləğv et</button>' : '') + '<span id="nw-er" style="color:#dc2626;font-size:13px"></span></div></div>' +
+        '<div class="v2-card"><h3>Paylaşılmışlar (' + NW.all.length + ')</h3><input class="v2-in" style="margin-bottom:8px" placeholder="Xəbər axtar…" oninput="NW.filterAdmin(this.value)">' +
+        (NW.all.length ? NW.all.map(function (n) {
+          var k = NW.kind(n);
+          return '<div class="nw-ar" data-t="' + esc((n.title + ' ' + k).toLowerCase()) + '"><img src="' + NW.image(n) + '" alt=""><div><span class="nw-tg nw-' + k + '">' + k + '</span><small style="color:#64748b">' + esc(n.pub || '') + '</small><div style="font-weight:700;font-size:14px;margin-top:2px">' + esc(n.title) + '</div></div>' +
+            '<button class="v2-b o s" onclick="NW.edit(' + n._id + ')">✏️</button><button class="v2-b r s" onclick="NW.del(' + n._id + ')">🗑️</button></div>';
+        }).join('') : '<div class="v2-empty"><i class="fa-regular fa-folder-open"></i>Hələ paylaşım yoxdur</div>') + '</div>';
+      return { title: 'Xəbər / Elan / Dəyişiklik', html: html };
+    };
+
+    /* ---------- SAYT: mövcud düymələri bu modula yönləndir ---------- */
+    HOME.isExam = function (n) { return NW.kind(n) === 'Elan'; };
+    HOME.openNews = function () { NW.open('all'); };
+    HOME.openExam = function () { NW.open('Elan'); };
+    try { if ($('v3-home') && HOME.build) HOME.build(); } catch (x) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+<!-- ===== MODULUN SONU ===== -->
 
 </body>
     </html>
