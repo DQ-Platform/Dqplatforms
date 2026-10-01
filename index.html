@@ -13435,6 +13435,275 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
 })();
 
 </script>
+    <!-- ===== DQ PATCH v15 — (1) Gözləyən qeydiyyatda kateqoriyalar seçilməsin  (2) «Testlər V2» modulu (fənn + test № + copy/paste + düzgün cavablar)  (3) Hamar işləmə cilası.
+     </body> teqindən dərhal əvvələ, ən sonda yapışdırın. Heç nə silinmir. ===== -->
+<style id="dq-v15-css">
+html{scroll-behavior:smooth}
+.btn,.admin-nav-card,.pm-chip,.v3-b,.v3-cd,.v3-o{transition:transform .15s ease,box-shadow .2s ease,background-color .2s ease,opacity .2s ease,border-color .2s ease;-webkit-tap-highlight-color:transparent}
+.admin-nav-card:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,23,42,.18)}
+.admin-nav-card:active,.btn:active,.pm-chip:active{transform:scale(.97)}
+.btn:disabled,button:disabled{opacity:.55;cursor:not-allowed}
+:focus-visible{outline:3px solid rgba(59,130,246,.45);outline-offset:2px}
+.screen.active{animation:dq15in .25s ease}
+@keyframes dq15in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Testlər V2 */
+.tv2-ov{position:fixed;inset:0;z-index:100000;background:#f1f5f9;overflow:auto;display:none;-webkit-overflow-scrolling:touch;padding-top:env(safe-area-inset-top,0)}
+.tv2-ov.on{display:block;animation:dq15in .25s ease}
+.tv2-w{max-width:980px;margin:0 auto;padding:16px 14px 60px}
+.tv2-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.tv2-top h3{margin:0;text-align:left}
+.tv2-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(15,23,42,.05)}
+.tv2-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.tv2-g label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:4px}
+.tv2-ta{width:100%;min-height:150px;padding:10px;border:2px solid #cbd5e1;border-radius:8px;font:14px/1.5 inherit;resize:vertical;user-select:text}
+.tv2-in{width:100%;padding:9px 10px;border:2px solid #cbd5e1;border-radius:8px;font-size:14px;user-select:text}
+.tv2-in:focus,.tv2-ta:focus{border-color:#d4af37;outline:none}
+.tv2-b{border:0;border-radius:8px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer;color:#fff;background:#0f172a;font-family:inherit}
+.tv2-b.g{background:#10b981}.tv2-b.b{background:#3b82f6}.tv2-b.r{background:#ef4444}.tv2-b.s{background:#64748b}.tv2-b.o{background:#d97706}
+.tv2-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.tv2-q{border-left:4px solid #3b82f6}.tv2-q.bad{border-left-color:#ef4444;background:#fef2f2}
+.tv2-q .h{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}
+.tv2-o{display:flex;align-items:center;gap:8px;margin:5px 0}.tv2-o b{width:22px;text-align:center}
+.tv2-o input[type=radio]{width:20px;height:20px;accent-color:#10b981;flex:none}
+.tv2-msg{padding:9px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-top:10px}
+.tv2-msg.e{background:#fee2e2;color:#991b1b}.tv2-msg.k{background:#dcfce7;color:#166534}.tv2-msg.i{background:#e0f2fe;color:#075985}
+.tv2-li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #e2e8f0;flex-wrap:wrap}
+.tv2-pal{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.tv2-pal button{width:36px;height:36px;border-radius:8px;border:2px solid #cbd5e1;background:#fff;font-weight:700;cursor:pointer}
+.tv2-pal button.a{background:#3b82f6;border-color:#3b82f6;color:#fff}.tv2-pal button.c{outline:3px solid #d4af37}
+.tv2-ch{display:block;width:100%;text-align:left;padding:12px 14px;margin:7px 0;border:2px solid #cbd5e1;border-radius:10px;background:#fff;font-size:15px;cursor:pointer;font-family:inherit;color:#334155}
+.tv2-ch.on{border-color:#3b82f6;background:#eff6ff}.tv2-ch.ok{border-color:#10b981;background:#dcfce7}.tv2-ch.no{border-color:#ef4444;background:#fee2e2}
+.tv2-tm{font-weight:800;color:#b45309}
+</style>
+
+<script id="dq-v15-perm">
+/* (1) Gözləyən qeydiyyat: heç bir icazə seçili gəlmir — təsdiqi admin özü verir.
+   Səbəb: köhnə yamaq «window.YQ» yoxlayırdı, amma YQ «const»-dur (window-da yoxdur) — ona görə heç işləmirdi. */
+(function () {
+  'use strict';
+  var CATS = ['BA', 'BB', 'AC'];
+  var PENDING_TESTS_ON = false; /* true etsəniz: gözləyəndə yalnız «Fənn testləri» açıq gəlir */
+  try {
+    if (typeof YQ === 'undefined' || typeof YQ.permOf !== 'function') return;
+    YQ.permOf = function (r) {
+      var p = r.perms;
+      if (!p) return r.status === 'approved'
+        ? { tests: true, cats: CATS.slice(), exam: '1' }
+        : { tests: PENDING_TESTS_ON, cats: [], exam: '1' };
+      return { tests: p.tests !== false, cats: Array.isArray(p.cats) ? p.cats.slice() : [], exam: String(p.exam || '1') };
+    };
+    YQ.draft = {};
+    if (YQ.regs && typeof YQ.paintRegs === 'function') YQ.paintRegs();
+  } catch (e) { console.warn('dq-v15-perm', e); }
+})();
+</script>
+
+<script id="dq-v15-tv2">
+/* (2) TESTLƏR V2 */
+(function () {
+  'use strict';
+  var COL = 'tv2tests', LET = 'ABCDE', SUBJ = ['Azərbaycan dili', 'Qanunvericilik', 'İnformatika', 'Məntiq'];
+  var $ = function (i) { return document.getElementById(i); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var T = window.TV2 = { ed: null, list: [], busy: false, P: null, tick: null };
+
+  /* ---------- Parser: «1. Sual / A) ... E) / (istəyə görə: Cavab: B)» ---------- */
+  function parse(raw) {
+    var lines = String(raw || '').replace(/\r/g, '').split('\n'), qs = [], cur = null, last = null, m, i;
+    var reQ = /^\s*(\d{1,3})\s*[.)\-:]\s*(\S.*)$/, reO = /^\s*\(?([A-Ea-e])\s*[.)]\s*(.*)$/, reA = /^\s*(?:düzgün\s+)?cavab\s*[:\-–=]?\s*\(?([A-Ea-e])\)?\s*$/i;
+    lines.forEach(function (ln) {
+      if (!ln.trim()) return;
+      if (cur && (m = ln.match(reA))) { cur.c = LET.indexOf(m[1].toUpperCase()); return; }
+      if (cur && (m = ln.match(reO))) { i = LET.indexOf(m[1].toUpperCase()); if (i === cur.o.length) { cur.o.push(m[2].trim()); last = { o: i }; return; } }
+      if ((m = ln.match(reQ)) && (!cur || cur.o.length >= 2)) { cur = { q: m[2].trim(), o: [], c: -1 }; qs.push(cur); last = { q: 1 }; return; }
+      if (!cur) { cur = { q: ln.trim(), o: [], c: -1 }; qs.push(cur); last = { q: 1 }; return; }
+      if (last && last.q) cur.q += ' ' + ln.trim(); else if (last) cur.o[last.o] += ' ' + ln.trim();
+    });
+    return qs;
+  }
+  /* Cavab açarı: «1-A 2-B 3-C» və ya «ABCDA...» */
+  function parseKey(t) {
+    var out = [], m, re = /(\d{1,3})\s*[-.:)=]*\s*([A-Ea-e])(?![A-Za-zƏəŞşÇçĞğİıÖöÜü])/g;
+    t = String(t || '');
+    if (/\d/.test(t)) { while ((m = re.exec(t))) out[+m[1] - 1] = LET.indexOf(m[2].toUpperCase()); }
+    else (t.toUpperCase().match(/[A-E]/g) || []).forEach(function (l, i) { out[i] = LET.indexOf(l); });
+    return out;
+  }
+  T._parse = parse; T._parseKey = parseKey;
+
+  /* ---------- Yükləmə / saxlama ---------- */
+  T.load = async function () {
+    try { await V2.probe(); T.list = (await V2.list(COL)) || []; } catch (e) { T.list = []; }
+    T.list.sort(function (a, b) { return String(a.subject).localeCompare(String(b.subject), 'az') || (a.no - b.no); });
+  };
+  function msg(t, k) { var m = $('tv2-msg'); if (m) { m.className = 'tv2-msg ' + (k || 'i'); m.textContent = t; m.style.display = t ? 'block' : 'none'; } }
+
+  /* ---------- İdarəçi paneli ---------- */
+  function shell() {
+    if ($('tv2-root')) return;
+    var d = document.createElement('div'); d.id = 'tv2-root'; d.className = 'tv2-ov';
+    d.innerHTML = '<div class="tv2-w"><div class="tv2-top"><h3>🧪 Testlər V2</h3><button class="tv2-b r" data-a="close">✖ Bağla</button></div>'
+      + '<div class="tv2-card"><div class="tv2-g">'
+      + '<div><label>Fənn</label><input class="tv2-in" id="tv2-sub" list="tv2-subs" placeholder="Fənn seçin / yazın"><datalist id="tv2-subs">' + SUBJ.map(function (s) { return '<option value="' + esc(s) + '">'; }).join('') + '</datalist></div>'
+      + '<div><label>Test №</label><input class="tv2-in" id="tv2-no" type="number" min="1" value="1"></div>'
+      + '<div><label>Müddət (dəq, istəyə görə)</label><input class="tv2-in" id="tv2-min" type="number" min="0" placeholder="0 = limitsiz"></div></div>'
+      + '<label style="display:block;margin:12px 0 4px;font-size:12px;font-weight:700;color:#475569">Sualları bura yapışdırın (hamısı bir dəfəyə)</label>'
+      + '<textarea class="tv2-ta" id="tv2-raw" placeholder="1. Sual mətni?&#10;A) variant&#10;B) variant&#10;C) variant&#10;D) variant&#10;E) variant&#10;&#10;2. Növbəti sual..."></textarea>'
+      + '<div class="tv2-row"><button class="tv2-b b" data-a="parse">⚙️ Mətni suallara ayır</button><button class="tv2-b s" data-a="clear">🧹 Təmizlə</button></div>'
+      + '<label style="display:block;margin:12px 0 4px;font-size:12px;font-weight:700;color:#475569">Düzgün cavablar (məs: 1-A 2-C 3-B və ya ACBDE...)</label>'
+      + '<div class="tv2-row" style="margin-top:0"><input class="tv2-in" id="tv2-key" style="flex:1;min-width:200px" placeholder="1-A 2-B 3-C ..."><button class="tv2-b o" data-a="key">✔ Cavabları tətbiq et</button></div>'
+      + '<div id="tv2-msg" class="tv2-msg" style="display:none"></div></div>'
+      + '<div id="tv2-qs"></div><div class="tv2-row" id="tv2-sv" style="display:none"><button class="tv2-b g" data-a="save" id="tv2-save">💾 Testi yadda saxla</button><button class="tv2-b b" data-a="addq">➕ Sual əlavə et</button></div>'
+      + '<div class="tv2-card" style="margin-top:18px"><b>📚 Yaradılmış testlər</b><div id="tv2-list"><div class="tv2-msg i">Yüklənir...</div></div></div></div>';
+    document.body.appendChild(d);
+    d.addEventListener('click', onAdmin); d.addEventListener('input', onInput); d.addEventListener('change', onInput);
+  }
+  T.open = async function () {
+    shell(); $('tv2-root').classList.add('on'); document.body.style.overflow = 'hidden'; $('tv2-root').scrollTop = 0;
+    await T.load(); drawList(); if (!T.ed) newEd();
+  };
+  T.close = function () { var r = $('tv2-root'); if (r) r.classList.remove('on'); document.body.style.overflow = ''; };
+  function newEd() { T.ed = { id: null, qs: [] }; drawQs(); }
+  function drawList() {
+    var h = T.list.map(function (t) {
+      return '<div class="tv2-li"><div><b>' + esc(t.subject) + ' · Test ' + esc(t.no) + '</b><br><small>' + (t.qs || []).length + ' sual' + (t.min ? ' · ' + t.min + ' dəq' : '') + '</small></div>'
+        + '<div class="tv2-row" style="margin:0"><button class="tv2-b b" data-a="prev" data-id="' + esc(t._id) + '">👁 Bax</button><button class="tv2-b o" data-a="edit" data-id="' + esc(t._id) + '">✏️ Redaktə</button><button class="tv2-b r" data-a="del" data-id="' + esc(t._id) + '">🗑 Sil</button></div></div>';
+    }).join('');
+    $('tv2-list').innerHTML = h || '<div class="tv2-msg i">Hələ test yoxdur.</div>';
+  }
+  function drawQs() {
+    var qs = T.ed.qs, h = qs.map(function (q, n) {
+      var os = q.o.map(function (o, k) {
+        return '<div class="tv2-o"><b>' + LET[k] + ')</b><input class="tv2-in" data-n="' + n + '" data-k="' + k + '" value="' + esc(o) + '"><input type="radio" name="c' + n + '" data-n="' + n + '" data-c="' + k + '"' + (q.c === k ? ' checked' : '') + ' title="Düzgün cavab"></div>';
+      }).join('');
+      return '<div class="tv2-card tv2-q" id="tq' + n + '"><div class="h"><span>Sual ' + (n + 1) + '</span><span><button class="tv2-b s" data-a="addo" data-n="' + n + '" style="padding:5px 10px">+ Variant</button> <button class="tv2-b r" data-a="delq" data-n="' + n + '" style="padding:5px 10px">✖</button></span></div>'
+        + '<textarea class="tv2-ta" style="min-height:60px" data-n="' + n + '" data-qt="1">' + esc(q.q) + '</textarea>' + os + '</div>';
+    }).join('');
+    $('tv2-qs').innerHTML = h; $('tv2-sv').style.display = qs.length ? 'flex' : 'none';
+  }
+  function onInput(e) {
+    var t = e.target, n = t.dataset.n; if (n == null || !T.ed) return; var q = T.ed.qs[+n]; if (!q) return;
+    if (t.dataset.qt) q.q = t.value; else if (t.dataset.k != null) q.o[+t.dataset.k] = t.value; else if (t.dataset.c != null) { q.c = +t.dataset.c; var c = $('tq' + n); if (c) c.classList.remove('bad'); }
+  }
+  function validate() {
+    var e = T.ed, bad = [], s = $('tv2-sub').value.trim(), no = parseInt($('tv2-no').value, 10);
+    if (!s) return 'Fənni seçin.'; if (!(no > 0)) return 'Test nömrəsini düzgün yazın.'; if (!e.qs.length) return 'Sual yoxdur.';
+    e.qs.forEach(function (q, n) { var ok = q.q.trim() && q.o.filter(function (o) { return String(o).trim(); }).length >= 2 && q.c > -1 && q.o[q.c] && String(q.o[q.c]).trim(); var c = $('tq' + n); if (c) c.classList.toggle('bad', !ok); if (!ok) bad.push(n + 1); });
+    if (bad.length) { var f = $('tq' + (bad[0] - 1)); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' }); return 'Natamam suallar: ' + bad.join(', ') + ' (mətn, ən azı 2 variant və düzgün cavab lazımdır).'; }
+    return '';
+  }
+  async function onAdmin(e) {
+    var b = e.target.closest('[data-a]'); if (!b) return; var a = b.dataset.a, id = b.dataset.id;
+    if (a === 'close') return T.close();
+    if (a === 'clear') { $('tv2-raw').value = ''; $('tv2-key').value = ''; T.ed = { id: null, qs: [] }; drawQs(); return msg(''); }
+    if (a === 'parse') {
+      var qs = parse($('tv2-raw').value); if (!qs.length) return msg('Mətn oxunmadı. Format: «1. Sual» və altında A) B) C) D) E)', 'e');
+      T.ed.qs = qs; drawQs(); var k = parseKey($('tv2-key').value); if (k.length) applyKey(k);
+      var noans = qs.filter(function (q) { return q.c < 0; }).length; return msg(qs.length + ' sual ayrıldı.' + (noans ? ' ' + noans + ' sualın düzgün cavabını seçin.' : ''), noans ? 'i' : 'k');
+    }
+    if (a === 'key') { if (!T.ed.qs.length) return msg('Əvvəl sualları ayırın.', 'e'); var kk = parseKey($('tv2-key').value); if (!kk.length) return msg('Cavab açarı oxunmadı. Nümunə: 1-A 2-B 3-C', 'e'); return applyKey(kk, true); }
+    if (a === 'addq') { T.ed.qs.push({ q: '', o: ['', '', '', ''], c: -1 }); drawQs(); return $('tq' + (T.ed.qs.length - 1)).scrollIntoView({ behavior: 'smooth' }); }
+    if (a === 'delq') { T.ed.qs.splice(+b.dataset.n, 1); return drawQs(); }
+    if (a === 'addo') { var q = T.ed.qs[+b.dataset.n]; if (q.o.length >= 5) return msg('Maksimum 5 variant (A–E).', 'e'); q.o.push(''); return drawQs(); }
+    if (a === 'edit' || a === 'prev') {
+      var t = T.list.filter(function (x) { return String(x._id) === String(id); })[0]; if (!t) return;
+      if (a === 'prev') return T.play(t._id, true);
+      T.ed = { id: t._id, qs: JSON.parse(JSON.stringify(t.qs || [])) }; $('tv2-sub').value = t.subject; $('tv2-no').value = t.no; $('tv2-min').value = t.min || ''; $('tv2-raw').value = '';
+      drawQs(); msg('Redaktə rejimi: ' + t.subject + ' · Test ' + t.no, 'i'); return $('tv2-root').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (a === 'del') { await V2.del(COL, id); await T.load(); drawList(); return; }
+    if (a === 'save') {
+      if (T.busy) return; var er = validate(); if (er) return msg(er, 'e');
+      var s = $('tv2-sub').value.trim(), no = parseInt($('tv2-no').value, 10), min = Math.max(0, parseInt($('tv2-min').value, 10) || 0), eid = T.ed.id;
+      var dup = T.list.filter(function (x) { return x.subject === s && +x.no === no && String(x._id) !== String(eid); })[0];
+      if (dup) { if (!confirm(s + ' · Test ' + no + ' artıq var. Üzərinə yazılsın?')) return; eid = dup._id; }
+      T.busy = true; b.disabled = true; msg('Yadda saxlanılır...', 'i');
+      try {
+        var obj = { subject: s, no: no, min: min, qs: T.ed.qs.map(function (q) { return { q: q.q.trim(), o: q.o.map(function (o) { return String(o).trim(); }), c: q.c }; }) };
+        await V2.put(COL, obj, eid || undefined); await T.load(); drawList(); T.ed = { id: null, qs: [] }; drawQs(); $('tv2-raw').value = ''; $('tv2-key').value = '';
+        msg('✅ ' + s + ' · Test ' + no + ' yadda saxlanıldı (' + obj.qs.length + ' sual).', 'k');
+      } catch (x) { msg('Xəta: ' + (x && x.message || x), 'e'); }
+      T.busy = false; b.disabled = false;
+    }
+  }
+  function applyKey(k, say) {
+    var c = 0, miss = 0; T.ed.qs.forEach(function (q, n) { if (k[n] != null && k[n] > -1 && k[n] < q.o.length) { q.c = k[n]; c++; } else if (q.c < 0) miss++; });
+    drawQs(); if (say) msg(c + ' sualın cavabı tətbiq olundu.' + (miss ? ' ' + miss + ' sualda cavab hələ yoxdur.' : ''), miss ? 'i' : 'k');
+  }
+
+  /* ---------- İstifadəçi: test həlli ---------- */
+  function pshell() {
+    if ($('tv2-play')) return; var d = document.createElement('div'); d.id = 'tv2-play'; d.className = 'tv2-ov'; document.body.appendChild(d);
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-p]'); if (!b) return; var p = T.P; if (!p) return; var a = b.dataset.p;
+      if (a === 'x') return T.quit(); if (a === 'c') { p.a[p.i] = +b.dataset.k; return pdraw(); }
+      if (a === 'g') { p.i = +b.dataset.n; return pdraw(); } if (a === 'n') { p.i = Math.min(p.t.qs.length - 1, p.i + 1); return pdraw(); } if (a === 'b') { p.i = Math.max(0, p.i - 1); return pdraw(); }
+      if (a === 'f') { var em = p.t.qs.filter(function (_, n) { return p.a[n] == null; }).length; if (!em || confirm(em + ' sual cavabsızdır. Testi bitirək?')) T.finish(); }
+    });
+  }
+  T.play = async function (id, preview) {
+    if (!preview && typeof DQ !== 'undefined' && DQ.cabinet && !DQ.cabinet()) { alert('Əvvəlcə kabinetə daxil olun.'); return; }
+    if (!T.list.length) await T.load();
+    var t = T.list.filter(function (x) { return String(x._id) === String(id); })[0]; if (!t || !(t.qs || []).length) return alert('Test tapılmadı.');
+    pshell(); T.P = { t: t, i: 0, a: [], preview: !!preview, end: t.min ? Date.now() + t.min * 60000 : 0, done: false };
+    $('tv2-play').classList.add('on'); document.body.style.overflow = 'hidden'; $('tv2-play').scrollTop = 0; pdraw();
+    clearInterval(T.tick); if (T.P.end) T.tick = setInterval(ptick, 500);
+  };
+  function fmt(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  function ptick() { var p = T.P; if (!p || p.done) return clearInterval(T.tick); var el = $('tv2-tm'); if (el) el.textContent = '⏱ ' + fmt(p.end - Date.now()); if (Date.now() >= p.end) { alert('Vaxt bitdi.'); T.finish(); } }
+  function pdraw() {
+    var p = T.P, q = p.t.qs[p.i], n = p.t.qs.length;
+    $('tv2-play').innerHTML = '<div class="tv2-w"><div class="tv2-top"><h3>' + esc(p.t.subject) + ' · Test ' + esc(p.t.no) + '</h3><span class="tv2-tm" id="tv2-tm">' + (p.end ? '⏱ ' + fmt(p.end - Date.now()) : '') + '</span><button class="tv2-b r" data-p="x">✖ Çıx</button></div>'
+      + '<div class="tv2-pal">' + p.t.qs.map(function (_, k) { return '<button data-p="g" data-n="' + k + '" class="' + (p.a[k] != null ? 'a ' : '') + (k === p.i ? 'c' : '') + '">' + (k + 1) + '</button>'; }).join('') + '</div>'
+      + '<div class="tv2-card"><b>' + (p.i + 1) + '/' + n + '.</b> ' + esc(q.q) + q.o.map(function (o, k) { return o ? '<button class="tv2-ch ' + (p.a[p.i] === k ? 'on' : '') + '" data-p="c" data-k="' + k + '"><b>' + LET[k] + ')</b> ' + esc(o) + '</button>' : ''; }).join('') + '</div>'
+      + '<div class="tv2-row"><button class="tv2-b s" data-p="b"' + (p.i ? '' : ' disabled') + '>← Əvvəlki</button><button class="tv2-b b" data-p="n"' + (p.i < n - 1 ? '' : ' disabled') + '>Növbəti →</button><button class="tv2-b g" data-p="f" style="margin-left:auto">🏁 Testi bitir</button></div></div>';
+  }
+  T.finish = function () {
+    var p = T.P; if (!p || p.done) return; p.done = true; clearInterval(T.tick);
+    var ok = 0, no = 0, em = 0; p.t.qs.forEach(function (q, n) { if (p.a[n] == null) em++; else if (p.a[n] === q.c) ok++; else no++; });
+    var tot = p.t.qs.length, pc = Math.round(ok * 100 / tot);
+    $('tv2-play').innerHTML = '<div class="tv2-w"><div class="tv2-top"><h3>Nəticə · ' + esc(p.t.subject) + ' · Test ' + esc(p.t.no) + '</h3><button class="tv2-b r" data-p="x">✖ Bağla</button></div>'
+      + '<div class="tv2-card" style="text-align:center"><div style="font-size:34px;font-weight:800;color:' + (pc >= 50 ? '#10b981' : '#ef4444') + '">' + ok + ' / ' + tot + '</div><div>' + pc + '% · ✅ Düz: ' + ok + ' · ❌ Səhv: ' + no + ' · ⚪ Boş: ' + em + '</div></div>'
+      + p.t.qs.map(function (q, n) { return '<div class="tv2-card"><b>' + (n + 1) + '.</b> ' + esc(q.q) + q.o.map(function (o, k) { var c = k === q.c ? 'ok' : (p.a[n] === k ? 'no' : ''); return o ? '<div class="tv2-ch ' + c + '" style="cursor:default"><b>' + LET[k] + ')</b> ' + esc(o) + '</div>' : ''; }).join('') + '</div>'; }).join('')
+      + '<div class="tv2-row"><button class="tv2-b g" data-p="x">← Testlərə qayıt</button></div></div>';
+    $('tv2-play').scrollTop = 0;
+  };
+  T.quit = function () {
+    var p = T.P; if (p && !p.done && !p.preview && !confirm('Testdən çıxsanız nəticə itəcək. Çıxaq?')) return;
+    clearInterval(T.tick); T.P = null; $('tv2-play').classList.remove('on'); if (!($('tv2-root') && $('tv2-root').classList.contains('on'))) document.body.style.overflow = '';
+  };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (T.P) T.quit(); else if ($('tv2-root') && $('tv2-root').classList.contains('on')) T.close(); } });
+
+  /* ---------- Giriş nöqtələri ---------- */
+  var grid = document.querySelector('.admin-nav-grid');
+  if (grid && !$('tv2-card')) {
+    var c = document.createElement('div'); c.className = 'admin-nav-card'; c.id = 'tv2-card'; c.style.cssText = 'background:#0e7490;color:#fff';
+    c.innerHTML = '<span class="icon">🧪</span> Testlər V2'; c.onclick = function () { T.open(); }; grid.appendChild(c);
+  }
+  /* İstifadəçinin «Fənn testləri» ekranına Testlər V2 siyahısını əlavə et (mövcud siyahı toxunulmaz qalır) */
+  if (typeof V3 !== 'undefined' && typeof V3.showTests === 'function') {
+    var prev = V3.showTests;
+    V3.showTests = async function () {
+      var r = await prev.apply(V3, arguments), host = $('v3-tests');
+      try {
+        if (!host || !host.classList.contains('active')) return r;
+        await T.load(); if (!T.list.length) return r;
+        var by = {}; T.list.forEach(function (t) { (by[t.subject] = by[t.subject] || []).push(t); });
+        var box = document.createElement('div'); box.className = 'v3-t'; box.id = 'tv2-pub';
+        box.innerHTML = '<h2 style="margin-top:18px">🧪 Testlər V2</h2>' + Object.keys(by).map(function (s) {
+          return '<h3 style="text-align:left;margin:14px 0 8px">' + esc(s) + '</h3><div class="v3-cards">' + by[s].map(function (t) { return '<div class="v3-cd" data-tv2="' + esc(t._id) + '" style="cursor:pointer"><b>Test ' + esc(t.no) + '</b><small>' + t.qs.length + ' sual' + (t.min ? ' · ' + t.min + ' dəq' : '') + '</small></div>'; }).join('') + '</div>';
+        }).join('');
+        box.addEventListener('click', function (e) { var c = e.target.closest('[data-tv2]'); if (c) T.play(c.dataset.tv2); });
+        var old = $('tv2-pub'); if (old) old.remove(); host.appendChild(box);
+      } catch (e) { console.warn('tv2 list', e); }
+      return r;
+    };
+  }
+})();
+</script>
+
+    
 
 
 <!-- ===== İCAZƏ QALXANI SONU ===== -->
