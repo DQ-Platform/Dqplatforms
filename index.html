@@ -12651,7 +12651,184 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   if (YQ.regs && typeof YQ.paintRegs === "function") { YQ.draft = {}; YQ.paintRegs(); }
 })();
 </script>
-<!-- ===== YAMAQ SONU ===== -->
+    <!-- ===== DQ PLATFORM · İCAZƏ QALXANI v1 (icazəsiz iştirak qadağan) =====
+     Bunu index.html-də sonuncu </body> teqindən dərhal əvvələ yapışdırın.
+     Server tərəfi üçün dq_server_guard.sql faylını Supabase SQL Editor-də də icra edin. -->
+<script id="dq-access-guard">
+(function () {
+  "use strict";
+
+  var LOG_COLL = "acclog";
+  var norm = function (s) { return String(s || "").trim().replace(/\s+/g, " "); };
+  var up = function (s) { return String(s || "").trim().toUpperCase(); };
+  var isLive = function () { try { return typeof isLiveEditMode !== "undefined" && isLiveEditMode === true; } catch (e) { return false; } };
+
+  function catsOf(item) {
+    if (Array.isArray(item.categories)) return item.categories.map(up);
+    if (item.categories) return String(item.categories).replace(/[{}"\[\]]/g, "").split(",").map(up).filter(Boolean);
+    return ["BA"];
+  }
+
+  var WHY = {
+    "missing": "Ad, FİN və ya kateqoriya məlumatı tam deyil.",
+    "no-permission": "Admin tərəfindən ad, FİN və kateqoriyanız təsdiqlənməyib.",
+    "rejected": "Qeydiyyatınız rədd edilib.",
+    "registration-perms": "Qeydiyyatınızda bu kateqoriya üçün icazə verilməyib."
+  };
+
+  /* ---------- Jurnal (yalnız mərkəzi bazada; sakitcə) ---------- */
+  var seen = {};
+  async function audit(type, fin, name, exam, cat, why) {
+    try {
+      var k = [type, fin, exam, cat, why].join("|"), t = Date.now();
+      if (seen[k] && t - seen[k] < 60000) return; seen[k] = t;
+      if (typeof V2 === "undefined") return;
+      await V2.probe();
+      if (V2.mode !== "cloud") return;
+      await V2.put(LOG_COLL, { type: type, fin: fin, name: name, exam: String(exam), cat: cat, why: why || "", ts: new Date().toISOString(), ua: String(navigator.userAgent).slice(0, 90) });
+    } catch (e) { /* jurnal alınmasa da qərar dəyişmir */ }
+  }
+
+  /* ============ MƏRKƏZİ QAPI ============
+     Nəticə: { ok:true } | { ok:false, reason:"denied", why } | { ok:false, reason:"error" }
+     "error" = şəbəkə/server xətası (qərar verilmir); "denied" = icazə yoxdur. */
+  async function authorize(fin, name, examId, category) {
+    fin = up(fin); var cat = up(category);
+    if (!fin || !norm(name) || !cat) return { ok: false, reason: "denied", why: "missing" };
+
+    var rows;
+    try {
+      var r = await _supabase.from("allowed_students").select("*").eq("fin", fin);
+      if (r.error || !r.data) return { ok: false, reason: "error" };
+      rows = r.data;
+    } catch (e) { return { ok: false, reason: "error" }; }
+
+    /* 1) allowed_students: FİN + ad (tam uyğunluq) + sınaq № + kateqoriya */
+    var hit = rows.some(function (it) {
+      return norm(it.student_name) === norm(name) &&
+             String(it.exam_no || 1) === String(examId) &&
+             catsOf(it).indexOf(cat) !== -1;
+    });
+    if (!hit) return { ok: false, reason: "denied", why: "no-permission" };
+
+    /* 2) Qeydiyyat çarpaz yoxlaması: qeydiyyat varsa, o da icazə verməlidir */
+    try {
+      var regs = await V2.list("regs");
+      var mine = regs.filter(function (x) { return up(x.fin) === fin; });
+      if (mine.length) {
+        var approved = mine.filter(function (x) { return x.status === "approved"; });
+        if (!approved.length && mine.some(function (x) { return x.status === "rejected"; }))
+          return { ok: false, reason: "denied", why: "rejected" };
+        if (approved.length) {
+          var okReg = approved.some(function (x) {
+            return !(x.perms && Array.isArray(x.perms.cats)) || x.perms.cats.map(up).indexOf(cat) !== -1;
+          });
+          if (!okReg) return { ok: false, reason: "denied", why: "registration-perms" };
+        }
+      }
+    } catch (e) { /* qeydiyyat cədvəli oxunmadısa, əsas yoxlama (1) qüvvədə qalır */ }
+
+    return { ok: true };
+  }
+  window.dqAuthorize = authorize;
+
+  function denyMsg(examId, cat, why) {
+    return "Bu sınağa (Sınaq " + examId + ", " + up(cat) + ") iştirak icazəniz yoxdur.\n" + (WHY[why] || WHY["no-permission"]) +
+           "\nİcazə yalnız administrator tərəfindən verilir.";
+  }
+
+  /* ============ 1) SINAĞA BAŞLAMA ============ */
+  var _start = window.startExamSession;
+  if (typeof _start === "function") {
+    window.startExamSession = async function (examId, category) {
+      if (!isLive()) {
+        var cat = category || "BA";
+        var r = await authorize(currentActiveFin, currentStudentName, examId, cat);
+        if (!r.ok) {
+          if (r.reason === "denied") {
+            audit("deny-start", up(currentActiveFin), currentStudentName, examId, up(cat), r.why);
+            alert(denyMsg(examId, cat, r.why));
+          } else {
+            alert("Serverlə əlaqə qurulmadı. İcazə yoxlanıla bilmədi, bir az sonra yenidən cəhd edin.");
+          }
+          if (typeof renderRegisteredExams === "function") renderRegisteredExams();
+          return;
+        }
+        audit("start", up(currentActiveFin), currentStudentName, examId, up(cat), "");
+      }
+      return _start.apply(this, arguments);
+    };
+  }
+
+  /* ============ 2) NƏTİCƏNİN YAZILMASI ============
+     İcazəsiz nəticə nə bazaya yazılır, nə də gözləmə növbəsində saxlanır. */
+  var _persist = window.persistResult;
+  if (typeof _persist === "function") {
+    var warned = {};
+    window.persistResult = async function (payload) {
+      if (payload && !isLive()) {
+        var r = await authorize(payload.fin, payload.student_name, payload.exam_no, payload.category);
+        if (r.reason === "denied") {
+          try { if (typeof pendGet === "function") pendSet(pendGet().filter(function (x) { return pendKeyOf(x) !== pendKeyOf(payload); })); } catch (e) {}
+          audit("deny-save", up(payload.fin), payload.student_name, payload.exam_no, up(payload.category), r.why);
+          var k = pendKeyOf ? pendKeyOf(payload) : payload.fin;
+          if (!warned[k]) { warned[k] = 1; alert("İcazəniz təsdiqlənmədiyi üçün bu sınağın nəticəsi qeydə alınmadı."); }
+          return null;
+        }
+      }
+      return _persist.apply(this, arguments);
+    };
+  }
+
+  /* ============ 3) YARIMÇIQ İMTAHANIN BƏRPASI ============
+     Brauzer yaddaşındakı imtahan vəziyyəti saxtalaşdırılsa da, bərpadan əvvəl icazə yenidən yoxlanılır. */
+  var _restore = window.restoreSession;
+  if (typeof _restore === "function") {
+    window.restoreSession = function () {
+      var st = null;
+      try {
+        var s = localStorage.getItem("dq_exam_state"), e = localStorage.getItem("dq_exam_end_time");
+        if (s && e) st = JSON.parse(s);
+      } catch (e) { st = null; }
+      if (!st) return _restore.apply(this, arguments);
+      var self = this, args = arguments;
+      return (async function () {
+        var r = await authorize(st.fin, st.studentName, st.examId, st.userGroup || "BA");
+        if (r.reason === "denied") {
+          clearSessionStorage();
+          audit("deny-resume", up(st.fin), st.studentName, st.examId, up(st.userGroup || "BA"), r.why);
+          showScreen("login-screen");
+          alert(denyMsg(st.examId, st.userGroup || "BA", r.why));
+          return;
+        }
+        return _restore.apply(self, args);
+      })();
+    };
+  }
+
+  /* ============ 4) İMTAHAN ZAMANI TƏKRAR YOXLAMA ============
+     Admin icazəni imtahan gedərkən ləğv edərsə, imtahan dayandırılır və nəticə yazılmır. */
+  setInterval(async function () {
+    try {
+      if (isLive() || examFinished) return;
+      var scr = document.getElementById("exam-screen");
+      if (!scr || !scr.classList.contains("active")) return;
+      var r = await authorize(currentActiveFin, currentStudentName, selectedExamId, userGroup);
+      if (r.reason !== "denied") return;
+      clearInterval(timerInterval);
+      examFinished = true;
+      clearSessionStorage();
+      audit("deny-live", up(currentActiveFin), currentStudentName, selectedExamId, up(userGroup), r.why);
+      alert("İştirak icazəniz ləğv edildiyi üçün imtahan dayandırıldı.\n" + (WHY[r.why] || ""));
+      if (typeof goHome === "function") goHome(); else showScreen("login-screen");
+    } catch (e) { /* ignore */ }
+  }, 60000);
+})();
+</script>
+<!-- ===== İCAZƏ QALXANI SONU ===== -->
+
+<!-- =====
+    YAMAQ SONU ===== -->
 
 <!-- ===== YAMAQ v3 SONU ===== -->
 
