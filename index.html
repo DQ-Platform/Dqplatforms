@@ -13702,6 +13702,79 @@ html{scroll-behavior:smooth}
   }
 })();
 </script>
+    <!-- ===== DQ PATCH v17 — İMTAHAN ETİBARLILIĞI: yeniləmə/internet kəsilməsində davam, ekrandan çıxanda vaxt işləməyə davam edir və bitəndə avtomatik təhvil verilir,
+     «İmtahana qayıt» zolağı, yenidən başlatmaqla vaxtı sıfırlamağın qarşısı. v16-dan SONRA, </body>-dən əvvələ yapışdırın. Heç nə silinmir. ===== -->
+<style id="dq-v17-css">
+#dq17-bar{position:fixed;left:0;right:0;top:0;z-index:100001;display:none;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:#b45309;color:#fff;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#dq17-bar.on{display:flex}#dq17-bar b{font-variant-numeric:tabular-nums;letter-spacing:1px}
+#dq17-bar button{border:0;border-radius:999px;padding:7px 16px;font-weight:800;font-family:inherit;cursor:pointer;background:#fff;color:#b45309}
+</style>
+<script id="dq-v17">
+(function () {
+  'use strict';
+  var $ = function (i) { return document.getElementById(i); };
+  var endAt = function () { try { return parseInt(localStorage.getItem('dq_exam_end_time'), 10) || 0; } catch (e) { return 0; } };
+  var note = function (t) { try { if (window.V2 && V2.toast) V2.toast(t); } catch (e) {} };
+
+  /* Davam edən (təhvil verilməmiş, vaxtı bitməmiş) imtahan varmı? */
+  function active() {
+    try { return !!(currentActiveFin && !examFinished && !isLiveEditMode && allQuestions && allQuestions.length && endAt() > Date.now()); }
+    catch (e) { return false; }
+  }
+  function onExamScreen() { var s = $('exam-screen'); return !!(s && s.classList.contains('active')); }
+  function back() { try { showScreen('exam-screen'); loadNavGrid(); renderCurrentQuestion(); window.scrollTo(0, 0); } catch (e) { console.warn('v17 back', e); } }
+  function fmt(ms) { var s = Math.max(0, Math.floor(ms / 1000)); return ('0' + Math.floor(s / 3600)).slice(-2) + ':' + ('0' + Math.floor(s % 3600 / 60)).slice(-2) + ':' + ('0' + s % 60).slice(-2); }
+
+  /* «İmtahana qayıt» zolağı */
+  var bar = document.createElement('div'); bar.id = 'dq17-bar';
+  bar.innerHTML = '<span>⏱ İmtahan davam edir · qalan vaxt <b id="dq17-t">--:--:--</b></span><button type="button" id="dq17-bk">İmtahana qayıt ▶</button>';
+  document.body.appendChild(bar); $('dq17-bk').onclick = back;
+
+  /* Ekrandan çıxış: vəziyyət SİLİNMİR, vaxt işləməyə davam edir */
+  if (typeof goHome === 'function') {
+    var oHome = goHome;
+    goHome = function () {
+      if (active() && onExamScreen()) {
+        if (!confirm('İmtahan davam edir.\n\nÇıxsanız vaxt işləməyə davam edəcək və bitəndə nəticəniz AVTOMATİK təhvil veriləcək. İstənilən vaxt «İmtahana qayıt» düyməsi ilə geri dönə bilərsiniz.\n\nÇıxmaq istəyirsiniz?')) return;
+        try { saveSessionState(); } catch (e) {}
+        showScreen('v3-home'); return;
+      }
+      return oHome.apply(this, arguments);
+    };
+  }
+  /* Davam edən imtahan varkən yenidən başlatmaqla vaxtı sıfırlamaq olmaz */
+  if (typeof startExamSession === 'function') {
+    var oStart = startExamSession;
+    startExamSession = async function () {
+      if (active()) { note('Davam edən imtahanınız var — ona qayıdırsınız.'); back(); return; }
+      return oStart.apply(this, arguments);
+    };
+  }
+
+  /* Yadda saxlama: tab gizlənəndə / bağlananda (mobil brauzerlər beforeunload-a etibarlı deyil) */
+  function save() { try { if (currentActiveFin && !examFinished && !isLiveEditMode) saveSessionState(); } catch (e) {} }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) save(); });
+  window.addEventListener('pagehide', save);
+
+  /* İnternet kəsilməsi / bərpası */
+  window.addEventListener('offline', function () { if (active()) note('📡 Əlaqə kəsildi. Cavablarınız cihazda saxlanılır, imtahan davam edir.'); });
+  window.addEventListener('online', function () { if (active()) { save(); note('✅ Əlaqə bərpa olundu.'); } });
+
+  /* Gözətçi: vaxt bitibsə, istənilən ekrandan avtomatik təhvil ver; zolağı yenilə */
+  setInterval(function () {
+    try {
+      var run = active(), e = endAt();
+      if (!run && currentActiveFin && !examFinished && !isLiveEditMode && allQuestions && allQuestions.length && e && e <= Date.now()) {
+        note('⏰ Vaxt bitdi. Nəticə avtomatik göndərilir...'); finishExam(); return;
+      }
+      var show = run && !onExamScreen();
+      bar.classList.toggle('on', show);
+      if (show) $('dq17-t').textContent = fmt(e - Date.now());
+    } catch (x) {}
+  }, 1000);
+})();
+</script>
+
 
     
 
