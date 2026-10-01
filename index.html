@@ -12628,6 +12628,31 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   });
 })();
 </script>
+    <!-- ===== DQ PATCH: Qeydiyyat təsdiqində "Fənn testləri" susmaya görə aktiv, BA/BB/AC əl ilə ===== -->
+<script id="dq-perm-default-patch">
+(function () {
+  "use strict";
+  if (!window.YQ || typeof YQ.permOf !== "function") return;
+  var CATS = ["BA", "BB", "AC"];
+
+  /* Yeni qeydiyyat: Fənn testləri AÇIQ, sınaq kateqoriyaları (BA/BB/AC) BAĞLI — admin özü seçir.
+     İstisna: icazə məlumatı heç yazılmamış köhnə TƏSDİQLİ qeydlər əvvəlki kimi hamısı açıq qalır. */
+  YQ.permOf = function (r) {
+    var p = r.perms || {};
+    var legacyApproved = !r.perms && r.status === "approved";
+    return {
+      tests: p.tests !== false,
+      cats: Array.isArray(p.cats) ? p.cats.slice() : (legacyApproved ? CATS.slice() : []),
+      exam: String(p.exam || "1")
+    };
+  };
+
+  /* Cədvəl artıq yüklənibsə yenidən çək */
+  if (YQ.regs && typeof YQ.paintRegs === "function") { YQ.draft = {}; YQ.paintRegs(); }
+})();
+</script>
+<!-- ===== YAMAQ SONU ===== -->
+
 <!-- ===== YAMAQ v3 SONU ===== -->
 
     
