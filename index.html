@@ -15033,6 +15033,204 @@ html{scroll-behavior:smooth}
   }
 })();
 </script>
+    <!-- ===== DQ PATCH: «Təkrar İştirak İcazəsi» paneli — səhvən bitən imtahanı sıfırlayıb iştirakçıya yenidən imkan verir
+     </body> teqindən dərhal əvvələ, ən sonda yapışdırın. Heç nə silinmir.
+     • İdarə panelinə «🔁 Təkrar İştirak» kartı əlavə olunur.
+     • FİN və ya adla axtarış, «0 bal» filtri (səhvən girib bitirənləri tez tapmaq üçün).
+     • «Təkrar icazə ver» → nəticə bazadan silinir, iştirakçının kateqoriya icazəsi qalır, düymə yenidən «▶️ İştirak et» olur.
+     • Silinməzdən əvvəl nəticənin surəti «resets» jurnalına yazılır → «Son bərpalar» siyahısından «Geri qaytar» mümkündür.
+     • Təsadüfi basmaya qarşı iki mərhələli təsdiq (düyməyə iki dəfə basılır). -->
+<style id="dqrt-css">
+:root{--dqrt-ease:cubic-bezier(.22,.9,.24,1)}
+.dqrt-ov{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-start;justify-content:center;padding:max(14px,env(safe-area-inset-top)) 12px 14px;
+  background:rgba(15,23,42,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:auto;-webkit-overflow-scrolling:touch;
+  opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s linear .35s}
+.dqrt-ov.on{opacity:1;visibility:visible;transition:opacity .35s ease}
+.dqrt-w{width:100%;max-width:560px;margin:auto;background:#f8fafc;border-radius:24px;padding:18px 14px 16px;box-shadow:0 30px 70px -20px rgba(15,23,42,.5),0 0 0 1px rgba(15,23,42,.05);
+  transform:translateY(34px) scale(.97);opacity:0;transition:transform .6s var(--dqrt-ease),opacity .45s ease}
+.dqrt-ov.on .dqrt-w{transform:none;opacity:1}
+.dqrt-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:2px}
+.dqrt-top h3{margin:0;text-align:left;font-size:18px;color:#0f2d6b}
+.dqrt-x{width:34px;height:34px;border-radius:50%;border:0;background:#e8edf4;color:#475569;font-size:15px;cursor:pointer;transition:background .25s,transform .35s var(--dqrt-ease)}
+.dqrt-x:hover{background:#dbe3ee;transform:rotate(90deg)}
+.dqrt-sub{font-size:12.5px;color:#64748b;line-height:1.5;margin:0 0 12px}
+.dqrt-q{width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:14px;background:#fff;font-size:14.5px;outline:none;transition:border-color .25s,box-shadow .25s;box-sizing:border-box}
+.dqrt-q:focus{border-color:#0f766e;box-shadow:0 0 0 4px rgba(15,118,110,.12)}
+.dqrt-chips{display:flex;gap:6px;margin:10px 0 12px;flex-wrap:wrap}
+.dqrt-chip{border:1px solid #dbe3ee;background:#fff;color:#475569;border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .25s var(--dqrt-ease)}
+.dqrt-chip.on{background:#0f766e;border-color:#0f766e;color:#fff}
+.dqrt-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:16px;background:#fff;border:1px solid #e8edf4;margin-bottom:8px;
+  box-shadow:0 1px 2px rgba(15,23,42,.03);animation:dqrtIn .5s var(--dqrt-ease) both;animation-delay:calc(var(--i,0)*45ms)}
+.dqrt-card b{display:block;font-size:14px;color:#0f2d6b;line-height:1.3}
+.dqrt-card small{display:block;font-size:11.5px;color:#94a3b8;margin-top:2px}
+.dqrt-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px}
+.dqrt-pill{font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:#eef3fc;color:#1e4a9e}
+.dqrt-pill.z{background:#fee2e2;color:#b91c1c}.dqrt-pill.g{background:#dcfce7;color:#166534}
+.dqrt-btn{border:0;border-radius:12px;padding:10px 12px;font-weight:700;font-size:12.5px;cursor:pointer;color:#fff;background:linear-gradient(135deg,#0f766e,#14a094);white-space:nowrap;flex-shrink:0;
+  transition:transform .25s var(--dqrt-ease),box-shadow .3s,background .3s;box-shadow:0 6px 16px -8px rgba(15,118,110,.7)}
+.dqrt-btn:active{transform:scale(.96)}
+.dqrt-btn.arm{background:linear-gradient(135deg,#b91c1c,#ef4444);box-shadow:0 6px 16px -8px rgba(185,28,28,.7)}
+.dqrt-btn.ok{background:linear-gradient(135deg,#15803d,#22c55e)}
+.dqrt-btn[disabled]{pointer-events:none;opacity:.8}
+.dqrt-btn.u{background:#fff;color:#0f766e;border:1px solid #b6e0da;box-shadow:none}
+.dqrt-h{margin:16px 2px 8px;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#94a3b8;font-weight:800}
+.dqrt-empty{text-align:center;color:#94a3b8;font-size:13px;padding:22px 8px}
+.dqrt-toast{position:sticky;bottom:6px;margin-top:8px;padding:10px 14px;border-radius:12px;background:#0f172a;color:#fff;font-size:13px;font-weight:600;text-align:center;
+  opacity:0;transform:translateY(8px);transition:opacity .35s ease,transform .45s var(--dqrt-ease);pointer-events:none}
+.dqrt-toast.on{opacity:1;transform:none}.dqrt-toast.er{background:#991b1b}
+@keyframes dqrtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.dqrt-ov,.dqrt-w,.dqrt-btn,.dqrt-toast,.dqrt-chip{transition:none!important}.dqrt-card{animation:none}}
+</style>
+
+<script>
+(function () {
+  'use strict';
+  var LOG = 'resets', MAX = 40;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var S = { rows: [], logs: [], q: '', zero: false };
+  var armT = null, toastT = null;
+
+  function sb() { if (typeof _supabase === 'undefined') throw new Error('Baza bağlantısı tapılmadı'); return _supabase; }
+  function norm(s) { return String(s || '').toLocaleLowerCase('az').replace(/\s+/g, ' ').trim(); }
+  function dt(v) { try { return new Date(v).toLocaleString('az-AZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+
+  async function loadRows() {
+    var r = await sb().from('exam_results').select('id,student_name,fin,exam_no,category,score,correct_count,wrong_count,created_at').order('id', { ascending: false }).limit(500);
+    if (r.error) throw r.error;
+    S.rows = r.data || [];
+  }
+  async function loadLogs() {
+    try { S.logs = ((typeof V2 !== 'undefined' && await V2.list(LOG)) || []).filter(function (x) { return x && x.snap && !x.undone; }).slice(0, 5); }
+    catch (e) { S.logs = []; }
+  }
+
+  function shell() {
+    if ($('dqrt-root')) return;
+    var d = document.createElement('div'); d.id = 'dqrt-root'; d.className = 'dqrt-ov';
+    d.innerHTML = '<div class="dqrt-w" role="dialog" aria-label="Təkrar iştirak icazəsi">' +
+      '<div class="dqrt-top"><h3>🔁 Təkrar İştirak İcazəsi</h3><button class="dqrt-x" id="dqrt-close" aria-label="Bağla">✕</button></div>' +
+      '<p class="dqrt-sub">Səhvən girib bitirilən imtahanı sıfırlayın — iştirakçı həmin kateqoriyada yenidən iştirak edə biləcək. Əvvəlki nəticənin surəti jurnalda saxlanılır.</p>' +
+      '<input class="dqrt-q" id="dqrt-q" placeholder="FİN və ya ad soyad ilə axtar…" autocomplete="off">' +
+      '<div class="dqrt-chips"><button class="dqrt-chip on" data-f="all">Hamısı</button><button class="dqrt-chip" data-f="zero">0 bal (səhvən bitənlər)</button></div>' +
+      '<div id="dqrt-list"></div><div id="dqrt-logs"></div><div class="dqrt-toast" id="dqrt-toast"></div></div>';
+    document.body.appendChild(d);
+    d.addEventListener('click', function (e) {
+      if (e.target === d) return close();
+      var f = e.target.closest('[data-f]'); if (f) { S.zero = f.dataset.f === 'zero'; d.querySelectorAll('.dqrt-chip').forEach(function (c) { c.classList.toggle('on', c === f); }); return render(); }
+      var b = e.target.closest('[data-reset]'); if (b) return arm(b, function () { return doReset(+b.dataset.reset, b); });
+      var u = e.target.closest('[data-undo]'); if (u) return doUndo(u.dataset.undo, u);
+    });
+    $('dqrt-q').addEventListener('input', function () { S.q = this.value; render(); });
+    $('dqrt-close').onclick = close;
+  }
+
+  function arm(btn, run) {
+    if (btn.classList.contains('arm')) { clearTimeout(armT); return run(); }
+    document.querySelectorAll('.dqrt-btn.arm').forEach(function (x) { x.classList.remove('arm'); x.textContent = x.dataset.t; });
+    btn.dataset.t = btn.textContent; btn.classList.add('arm'); btn.textContent = 'Əminsiniz? Bəli';
+    clearTimeout(armT); armT = setTimeout(function () { btn.classList.remove('arm'); btn.textContent = btn.dataset.t; }, 3500);
+  }
+
+  function toast(t, err) {
+    var n = $('dqrt-toast'); if (!n) return;
+    clearTimeout(toastT); n.textContent = t; n.className = 'dqrt-toast on' + (err ? ' er' : '');
+    toastT = setTimeout(function () { n.classList.remove('on'); }, 3600);
+  }
+
+  function render() {
+    var q = norm(S.q), qf = q.toUpperCase().replace(/\s/g, '');
+    var rows = S.rows.filter(function (x) {
+      if (S.zero && (x.score || 0) !== 0) return false;
+      if (!q) return true;
+      return String(x.fin || '').toUpperCase().indexOf(qf) !== -1 || norm(x.student_name).indexOf(q) !== -1;
+    });
+    var shown = rows.slice(0, MAX);
+    $('dqrt-list').innerHTML = shown.length ? shown.map(function (x, i) {
+      var sc = x.score || 0;
+      return '<div class="dqrt-card" style="--i:' + i + '"><div style="min-width:0"><b>' + esc(x.student_name || '—') + '</b><small>FİN: ' + esc(x.fin) + ' · ' + esc(dt(x.created_at)) + '</small>' +
+        '<div class="dqrt-meta"><span class="dqrt-pill">Sınaq ' + esc(x.exam_no) + ' · ' + esc(x.category) + '</span><span class="dqrt-pill ' + (sc === 0 ? 'z' : 'g') + '">' + sc + ' bal</span>' +
+        '<span class="dqrt-pill g" style="background:#f1f5f9;color:#475569">✓ ' + (x.correct_count || 0) + ' · ✗ ' + (x.wrong_count || 0) + '</span></div></div>' +
+        '<button class="dqrt-btn" data-reset="' + x.id + '">🔁 Təkrar icazə ver</button></div>';
+    }).join('') + (rows.length > MAX ? '<div class="dqrt-empty">Daha çox nəticə var (' + rows.length + '). Axtarışı daraldın.</div>' : '')
+      : '<div class="dqrt-empty">' + (S.rows.length ? 'Uyğun nəticə tapılmadı.' : 'Hələ heç bir nəticə yoxdur.') + '</div>';
+
+    $('dqrt-logs').innerHTML = S.logs.length ? '<div class="dqrt-h">Son bərpalar</div>' + S.logs.map(function (l) {
+      return '<div class="dqrt-card"><div style="min-width:0"><b>' + esc(l.name || '—') + '</b><small>FİN: ' + esc(l.fin) + ' · Sınaq ' + esc(l.exam) + ' · ' + esc(l.cat) + ' · ' + esc(dt(l.ts)) + '</small></div>' +
+        '<button class="dqrt-btn u" data-undo="' + esc(l._id) + '">↩ Geri qaytar</button></div>';
+    }).join('') : '';
+  }
+
+  async function doReset(id, btn) {
+    btn.disabled = true; btn.classList.remove('arm'); btn.textContent = 'Sıfırlanır…';
+    try {
+      var g = await sb().from('exam_results').select('*').eq('id', id).maybeSingle();
+      if (g.error) throw g.error; if (!g.data) throw new Error('Nəticə tapılmadı (artıq silinib?)');
+      var row = g.data;
+      /* 1) jurnal (surət) */
+      try { await V2.put(LOG, { snap: row, ts: new Date().toISOString(), fin: row.fin, name: row.student_name || row.name || '', exam: String(row.exam_no), cat: row.category }, null); } catch (e) {}
+      /* 2) nəticəni sil */
+      var d = await sb().from('exam_results').delete().eq('id', id); if (d.error) throw d.error;
+      var chk = await sb().from('exam_results').select('id').eq('id', id).maybeSingle();
+      if (chk.data) throw new Error('Silinmədi — bazada silmə icazəsi (RLS) yoxdur.');
+      /* 3) canlı nəzarətdə qalan köhnə qeyd */
+      try {
+        if (V2.mode === 'cloud') {
+          var lv = await V2.list('live');
+          for (var i = 0; i < lv.length; i++) { var l = lv[i]; if (String(l.fin).toUpperCase() === String(row.fin).toUpperCase() && String(l.exam) === String(row.exam_no) && String(l.cat) === String(row.category)) await sb().from('dq_v2_store').delete().eq('id', l._id); }
+        }
+      } catch (e) {}
+      btn.classList.add('ok'); btn.textContent = '✓ Hazırdır';
+      S.rows = S.rows.filter(function (x) { return x.id !== id; });
+      await loadLogs();
+      setTimeout(render, 900);
+      toast((row.student_name || row.fin) + ' — Sınaq ' + row.exam_no + ' (' + row.category + ') üçün yenidən iştirak açıldı ✅');
+    } catch (e) {
+      btn.disabled = false; btn.textContent = btn.dataset.t || '🔁 Təkrar icazə ver';
+      toast('Xəta: ' + (e && e.message || e), true);
+    }
+  }
+
+  async function doUndo(logId, btn) {
+    var l = S.logs.filter(function (x) { return String(x._id) === String(logId); })[0]; if (!l) return;
+    btn.disabled = true; btn.textContent = 'Qaytarılır…';
+    try {
+      var snap = Object.assign({}, l.snap); delete snap.id;
+      var ex = await sb().from('exam_results').select('id').eq('fin', snap.fin).eq('exam_no', snap.exam_no).eq('category', snap.category).maybeSingle();
+      if (ex.data) throw new Error('Bu iştirakçının həmin kateqoriyada yeni nəticəsi artıq var.');
+      var r = await sb().from('exam_results').insert([snap]); if (r.error) throw r.error;
+      await V2.put(LOG, Object.assign({}, l, { undone: true }), l._id);
+      await Promise.all([loadRows(), loadLogs()]); render();
+      toast('Əvvəlki nəticə geri qaytarıldı ↩');
+    } catch (e) { btn.disabled = false; btn.textContent = '↩ Geri qaytar'; toast('Xəta: ' + (e && e.message || e), true); }
+  }
+
+  async function open() {
+    shell(); S.q = ''; S.zero = false; $('dqrt-q').value = '';
+    $('dqrt-root').querySelectorAll('.dqrt-chip').forEach(function (c) { c.classList.toggle('on', c.dataset.f === 'all'); });
+    $('dqrt-list').innerHTML = '<div class="dqrt-empty">Yüklənir…</div>'; $('dqrt-logs').innerHTML = '';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { $('dqrt-root').classList.add('on'); }); });
+    document.body.style.overflow = 'hidden';
+    try { await Promise.all([loadRows(), loadLogs()]); render(); }
+    catch (e) { $('dqrt-list').innerHTML = '<div class="dqrt-empty" style="color:#b91c1c">Yüklənmədi: ' + esc(e && e.message || e) + '</div>'; }
+  }
+  function close() { var r = $('dqrt-root'); if (r) r.classList.remove('on'); document.body.style.overflow = ''; }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+
+  function addCard() {
+    var grid = document.querySelector('.admin-nav-grid');
+    if (!grid || $('dqrt-card')) return;
+    var c = document.createElement('div'); c.className = 'admin-nav-card'; c.id = 'dqrt-card';
+    c.style.cssText = 'background:linear-gradient(135deg,#0f766e,#14a094);color:#fff';
+    c.innerHTML = '<span class="icon">🔁</span> Təkrar İştirak';
+    c.onclick = open; grid.appendChild(c);
+  }
+  function boot() { addCard(); setInterval(addCard, 1500); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+<!-- ===== /DQ PATCH: Təkrar İştirak İcazəsi ===== -->
+
 <!-- ===== /DQ PATCH: yeniləmə bildirişi düzəlişi ===== -->
 
 <!-- ===== /DQ PATCH: Qiymət İdarəsi ===== -->
