@@ -12359,6 +12359,277 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   } catch (e) { console.warn("İstifadəçi İcazələri modulu:", e); }
 })();
 </script>
+    <!-- ===== DQ PLATFORM · CAVAB KARTI YAMAĞI v5 (rəsmi DİM üslubu) ===== -->
+<style id="dq-answer-card-patch3-css">
+  #result-screen { color: #111827; }
+  #result-screen .dim-report-title {
+    font-size: 17px; font-weight: 800; line-height: 1.4; color: #111827; margin: 6px 6px 10px;
+  }
+  #result-screen .dim-student-name {
+    font-size: 17px; font-weight: 800; letter-spacing: .3px; margin: 0 0 14px; text-transform: uppercase; color: #111827;
+  }
+  /* Başlıq bloku (yamaq özü qurur, köhnə başlıq və ad gizlədilir) */
+  #result-screen .dim-report-title, #result-screen .dim-student-name { display: none !important; }
+  #dq-head .dq4-title { text-align: center; font-size: 17px; font-weight: 800; line-height: 1.4; color: #111827; margin: 6px 6px 10px; }
+  #dq-head .dq4-name { text-align: center; font-size: 17px; font-weight: 800; letter-spacing: .3px; margin: 0 0 14px; text-transform: uppercase; color: #111827; }
+  @media (max-width: 480px) { #dq-head .dq4-title { font-size: 15.5px; } }
+  /* Qrup / tarix / ünvan */
+  #dq-meta { max-width: 520px; margin: 0 auto 6px; padding: 0 4px; font-size: 13px; line-height: 1.65; color: #1f2937; }
+  #dq-meta div b { font-weight: 800; color: #111827; }
+
+  /* Fənn bölmələri */
+  #result-screen .dq3-section { margin: 20px 0 6px; }
+  #result-screen .dq3-title { font-size: 14px; font-weight: 800; color: #111827; margin: 0 0 6px; text-align: left; }
+  #result-screen .dq3-chunk { margin-bottom: 6px; }
+  #result-screen .dq3-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #result-screen table.dq3-tbl { width: auto; table-layout: auto; border-collapse: collapse; font-size: 13px; background: transparent; }
+  #result-screen table.dq3-tbl td { padding: 2px 1px; min-width: 22px; text-align: center; border: 1px solid #3345b8; line-height: 1.35; }
+  #result-screen table.dq3-tbl td.lbl {
+    border: 0; text-align: left; padding: 2px 8px 2px 0; min-width: 0; white-space: nowrap; font-weight: 500; color: #111827; font-size: 13px; position: sticky; left: 0; background: #fff; z-index: 1;
+  }
+  #result-screen table.dq3-tbl td.hd { font-weight: 800; color: #111827; padding: 4px 0; letter-spacing: .3px; }
+  #result-screen table.dq3-tbl td.ok { color: #1f2fa6; font-weight: 600; }
+  #result-screen table.dq3-tbl td.bad { color: #d12020; font-weight: 700; }
+  #result-screen table.dq3-tbl td.none { color: #6b7280; font-weight: 600; }
+  #result-screen table.dq3-tbl td.long { font-size: 11px; }
+  #result-screen table.dq3-tbl tr.sign td { font-weight: 800; }
+  #result-screen .dq3-sum { font-size: 12.5px; font-style: italic; color: #1f2937; margin: 6px 0 4px; line-height: 1.55; }
+  #result-screen .dq3-sum b { font-weight: 800; }
+  @media (max-width: 480px) {
+    #result-screen .dim-report-title { font-size: 15.5px; }
+    #result-screen table.dq3-tbl { font-size: 12px; }
+    #result-screen table.dq3-tbl td.lbl { font-size: 12px; }
+    #result-screen .dq3-sum { font-size: 11.5px; }
+  }
+
+  /* Ümumi say */
+  #result-screen .result-summary-lines {
+    background: transparent; border: 0; padding: 0; margin-top: 22px !important; font-style: italic;
+    font-size: 18px; font-weight: 600; line-height: 1.4; color: #111827; display: block;
+  }
+  #result-screen .result-summary-lines p { display: block; border: 0; padding: 0; margin: 0; font-size: inherit; }
+  #result-screen .result-summary-lines p span { color: inherit !important; font-weight: 800; font-size: inherit; }
+  @media (max-width: 480px) { #result-screen .result-summary-lines { font-size: 15.5px; } }
+
+  /* Yekun bal / nəticə qutuları */
+  #result-screen .dq3-final { margin-top: 14px; }
+  #result-screen .dq3-box {
+    background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 12px; margin-top: 12px;
+    text-align: center; font-style: italic; font-weight: 800; font-size: 19px; color: #b03a3a;
+  }
+  #result-screen .dq3-note { margin-top: 10px; text-align: center; font-size: 11.5px; color: #6b7280; line-height: 1.5; }
+  @media (max-width: 480px) { #result-screen .dq3-box { font-size: 16.5px; padding: 14px 10px; } }
+</style>
+
+<script id="dq-answer-card-patch3-js">
+(function () {
+  "use strict";
+
+  /* v2 yamağı tətbiq olunubsa, onun üslubunu söndür (v3 onu əvəz edir) */
+  var old = document.getElementById("dq-answer-card-patch-css");
+  if (old) old.remove();
+
+  /* ============ KEÇİD BALLARI ============
+     BA/AB : maks. 120 (80 qapalı x 1 + 20 açıq x 2) → 102 / 96 / 90 / 84
+     AC/BB : maks. 100                                → 80 / 75 / 70 / 65 */
+  window.PASS_THRESHOLDS = { AB: [102, 96, 90, 84], BA: [102, 96, 90, 84], AC: [80, 75, 70, 65], BB: [80, 75, 70, 65] };
+  window.PASS_MAX_SCORE  = { AB: 120, BA: 120, AC: 100, BB: 100 };
+
+  function normCat(c) { c = String(c || "").toUpperCase().trim(); return window.PASS_THRESHOLDS[c] ? c : "BB"; }
+  function pct(a, b) { return Math.round((a / b) * 100); }
+
+  window.getPassLevelInfo = function (category, score) {
+    var cat = normCat(category), th = window.PASS_THRESHOLDS[cat], max = window.PASS_MAX_SCORE[cat];
+    score = Number(score) || 0;
+    for (var i = 0; i < th.length; i++) {
+      if (score >= th[i]) return { level: i + 1, threshold: th[i], maxScore: max, percent: pct(th[i], max), passed: true };
+    }
+    var min = th[th.length - 1];
+    return { level: null, threshold: min, maxScore: max, percent: pct(min, max), passed: false };
+  };
+  window.buildPassStatusText = function (category, score) {
+    var cat = normCat(category), info = window.getPassLevelInfo(cat, score);
+    return info.passed
+      ? "Uyğun qrup: " + cat + info.level + " (Keçid balı: " + info.threshold + " bal / " + info.percent + "% və yuxarı)"
+      : "Uyğun qrup: Keçid balı toplanmadı (Minimum: " + info.threshold + " bal / " + cat + "4)";
+  };
+
+  /* ============ İMTAHAN TARİXİ ============ */
+  function two(n) { return (n < 10 ? "0" : "") + n; }
+  function fmtDate(d) {
+    if (!(d instanceof Date) || isNaN(d)) d = new Date();
+    return two(d.getDate()) + "." + two(d.getMonth() + 1) + "." + d.getFullYear() + " " + two(d.getHours()) + ":" + two(d.getMinutes());
+  }
+  window.__dqMeta = window.__dqMeta || null;
+
+  if (typeof window.finishExam === "function" && !window.finishExam.__dq3) {
+    var _fin = window.finishExam;
+    window.finishExam = function () {
+      if (!window.__finishing) window.__dqMeta = { date: new Date() };
+      return _fin.apply(this, arguments);
+    };
+    window.finishExam.__dq3 = true;
+  }
+  if (typeof window.viewAnswerCard === "function" && !window.viewAnswerCard.__dq3) {
+    var _view = window.viewAnswerCard;
+    window.viewAnswerCard = async function (examNo, category, fin) {
+      var meta = { date: null };
+      window.__dqMeta = meta;
+      try {
+        if (typeof _supabase !== "undefined") {
+          var r = await _supabase.from("exam_results").select("created_at")
+            .eq("fin", fin).eq("exam_no", examNo).eq("category", category).maybeSingle();
+          if (r && r.data && r.data.created_at) meta.date = new Date(r.data.created_at);
+        }
+      } catch (e) { /* tarix alınmasa cari vaxt göstəriləcək */ }
+      return _view.apply(this, arguments);
+    };
+    window.viewAnswerCard.__dq3 = true;
+  }
+
+  /* ============ CƏDVƏLLƏR ============ */
+  var LET = ["A", "B", "C", "D", "E"];
+  function isBA() { return String(userGroup || "").toUpperCase() === "BA"; }
+  function isOpenQ(id) { return isBA() && openQuestionIds.indexOf(id) !== -1; }
+  function right(q, ans, open) {
+    return open ? String(ans).trim().toUpperCase() === String(q.correct).trim().toUpperCase()
+                : parseInt(ans, 10) === parseInt(q.correct, 10);
+  }
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+
+  function layout(width, n) {
+    var labelW = width < 480 ? 74 : 86;
+    var cellMin = width < 520 ? 25 : 22;
+    var perRow = Math.max(6, Math.floor((width - labelW - 2) / cellMin));
+    var rows = Math.ceil(n / perRow);
+    return { labelW: labelW, per: n };
+  }
+
+  function buildHead(cat) {
+    var container = document.getElementById("tablesContainer");
+    if (!container || !container.parentNode) return;
+    var nm = (typeof currentStudentName !== "undefined" && currentStudentName) ? currentStudentName : "";
+    if (!nm) { var r = document.getElementById("res-name"); nm = r ? r.textContent.replace(/\s*\(FIN.*$/i, "") : ""; }
+    var d = window.__dqMeta && window.__dqMeta.date;
+    var stale = document.getElementById("dq-meta");
+    if (stale && !stale.closest("#dq-head")) stale.remove();
+    var host = document.getElementById("dq-head");
+    if (!host) { host = document.createElement("div"); host.id = "dq-head"; container.parentNode.insertBefore(host, container); }
+    host.innerHTML =
+      "<div class='dq4-title'>Dövlət qulluğu vəzifələri üzrə sınaq imtahanının nəticələri haqqında məlumat</div>" +
+      "<div class='dq4-name'>" + esc(nm) + "</div>" +
+      "<div id='dq-meta'>" +
+        "<div>Qrup: <b>" + esc(cat) + "</b></div>" +
+        "<div>İmtahanın tarixi və vaxtı: <b>" + fmtDate(d) + "</b></div>" +
+        "<div>İmtahanın keçirildiyi ünvan: <b>Dqplatform</b></div>" +
+      "</div>";
+  }
+
+  function renderFinal(score, cat) {
+    var host = document.querySelector("#result-screen .dq3-final, #result-screen .final-score-box");
+    if (!host) return;
+    var info = window.getPassLevelInfo(cat, score), th = window.PASS_THRESHOLDS[cat];
+    var verdict = info.passed ? "Yekun Nəticə : " + cat + info.level : "Test imtahanından müvəffəqiyyət əldə etməmisiniz.";
+    var note = cat + " üzrə keçid balları: " + th.map(function (t, i) { return cat + (i + 1) + " – " + t; }).join(" · ") +
+               " (maks. " + window.PASS_MAX_SCORE[cat] + ")";
+    var box = document.createElement("div");
+    box.className = "dq3-final";
+    box.innerHTML =
+      "<div class='dq3-box'><span id='finalScoreText'>YEKUN BAL: " + score + "</span></div>" +
+      "<div class='dq3-box'><span id='finalStatusText'>" + verdict + "</span></div>";
+    host.replaceWith(box);
+  }
+
+  window.renderDetailedResultTables = function () {
+    var container = document.getElementById("tablesContainer");
+    if (!container) return;
+    var cat = normCat(userGroup);
+    var width = container.clientWidth || Math.min(window.innerWidth - 40, 900);
+    container.setAttribute("data-w", Math.round(width));
+    var html = "";
+
+    examStructure.forEach(function (sec) {
+      var qs = allQuestions.filter(function (q) { return q.id >= sec.start && q.id <= sec.end; })
+                           .sort(function (a, b) { return a.id - b.id; });
+      if (!qs.length) return;
+
+      var cOK = 0, cOpen = 0, wrong = 0, none = 0, sOK = 0;
+      var cells = qs.map(function (q) {
+        var open = isOpenQ(q.id), ans = userAnswers[q.id], has = ans !== undefined && ans !== "";
+        var et = open ? String(q.correct || "-") : (LET[parseInt(q.correct, 10)] || "-");
+        var pa = "-", cls = "none", sign = "-";
+        if (has) {
+          pa = open ? String(ans).trim().toUpperCase() : (LET[parseInt(ans, 10)] || "-");
+          if (right(q, ans, open)) { cls = "ok"; sign = "+"; if (open) { cOpen++; sOK += 2; } else { cOK++; sOK += 1; } }
+          else { cls = "bad"; wrong++; }
+        } else { none++; }
+        return { id: q.id, et: et, pa: pa, cls: cls, sign: sign };
+      });
+
+      var lay = layout(width, cells.length);
+      html += "<div class='dq3-section'><div class='dq3-title'>" + sec.title + "</div>";
+
+      for (var s = 0; s < cells.length; s += lay.per) {
+        var part = cells.slice(s, s + lay.per);
+        function row(cls, label, fn) {
+          return "<tr" + (cls ? " class='" + cls + "'" : "") + "><td class='lbl'>" + label + "</td>" +
+            part.map(fn).join("") + "</tr>";
+        }
+        function cell(c, txt) {
+          var long = String(txt).length > 2 ? " long" : "";
+          return "<td class='" + c.cls + long + "'>" + esc(txt) + "</td>";
+        }
+        html += "<div class='dq3-chunk dq3-scroll'><table class='dq3-tbl'><tbody>" +
+          (s === 0 ? "<tr><td class='lbl'></td><td class='hd' colspan='" + part.length + "'>Testlər</td></tr>" : "") +
+          row("", "Sual №", function (c) { return cell(c, c.id); }) +
+          row("", "Doğru cavab", function (c) { return cell(c, c.et); }) +
+          row("", "Cavab", function (c) { return cell(c, c.pa); }) +
+          row("sign", "", function (c) { return cell(c, c.sign); }) +
+          "</tbody></table></div>";
+      }
+
+      html += "<div class='dq3-sum'>Doğru cavabların sayı: <b>" + (cOK + cOpen) + "(" + cOK + "+" + cOpen + ")</b>; " +
+              "Yanlış cavabların sayı: <b>" + wrong + "</b>; " +
+              "Cavablandırılmayan test tapşırıqlarının sayı: <b>" + none + "</b>; " +
+              "Topladığı bal: <b>" + sOK + "(" + cOK + "+" + (cOpen * 2) + ")</b></div></div>";
+    });
+
+    container.innerHTML = html;
+
+    var st = document.getElementById("finalScoreText");
+    var m = st && /(-?\d+)/.exec(st.textContent || "");
+    var score = m ? parseInt(m[1], 10) : 0;
+    buildHead(cat);
+    renderFinal(score, cat);
+  };
+
+  /* Nəticə ekranı açılanda real eni ölç, lazım gələrsə yenidən düz */
+  if (typeof window.showScreen === "function") {
+    var _show = window.showScreen;
+    window.showScreen = function (id) {
+      var r = _show.apply(this, arguments);
+      if (id === "result-screen") {
+        try { buildHead(normCat(userGroup)); } catch (e) {}
+        var c = document.getElementById("tablesContainer");
+        if (c && c.clientWidth && Math.abs(c.clientWidth - Number(c.getAttribute("data-w") || 0)) > 30 &&
+            allQuestions && allQuestions.length) window.renderDetailedResultTables();
+      }
+      return r;
+    };
+  }
+  var rt;
+  window.addEventListener("resize", function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () {
+      var scr = document.getElementById("result-screen"), c = document.getElementById("tablesContainer");
+      if (scr && scr.classList.contains("active") && c && allQuestions && allQuestions.length &&
+          Math.abs(c.clientWidth - Number(c.getAttribute("data-w") || 0)) > 30) window.renderDetailedResultTables();
+    }, 200);
+  });
+})();
+</script>
+<!-- ===== YAMAQ v3 SONU ===== -->
+
     
 <!-- ===== MODUL SONU ===== -->
 
