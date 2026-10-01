@@ -14205,6 +14205,166 @@ html{scroll-behavior:smooth}
   mountClassic(); mountV7(0);
 })();
 </script>
+    <!-- ===== DQ PATCH v16 — Testlər V2: PROFESSIONAL PARSER (tam yenidən yazılıb)
+     Yapışdırma yeri: </body> teqindən dərhal əvvələ, v15 yamağından SONRA. Heç nə silinmir. =====
+     Nələri düzəldir:
+      • a) b) c) kiçik hərfli siyahılar variant sayılmır (sualın mətni qalır); variantlar yalnız A) B) C) D) E)
+      • «A) ... B) ... C) ...» bir sətirdə olsa da düzgün bölünür
+      • Variant dəsti təkrar «A)» ilə başlayırsa — əvvəlki hissə sualın mətninə qaytarılır (uyğunluq tipli suallar)
+      • Sualın daxilindəki 1. 2. 3. alt-bəndlər yeni sual sayılmır (yalnız ardıcıl nömrə + tam variantlar olduqda yeni sual)
+      • Kiril oxşar hərflər (А В С Е), NBSP, görünməz simvollar, tək rəqəmli səhifə nömrələri təmizlənir
+      • Cavab açarı sual nömrəsinə görə tətbiq olunur; sual/cavab sayı uyğun deyilsə dəqiq xəbərdarlıq verir -->
+<style id="dq-v16-css">
+.tv2-card{white-space:pre-line}
+.tv2-card .tv2-o,.tv2-card .tv2-ch{white-space:normal}
+.tv2-ta,.tv2-in{white-space:pre-wrap}
+</style>
+<script id="dq-v16-tv2-parser">
+(function () {
+  'use strict';
+  var T = window.TV2; if (!T) { console.warn('dq-v16: TV2 tapılmadı (v15 yamağı əvvəldə olmalıdır)'); return; }
+  var LET = 'ABCDE', CY = { 'А': 'A', 'В': 'B', 'С': 'C', 'Е': 'E', 'а': 'a', 'в': 'b', 'с': 'c', 'е': 'e' };
+  var $ = function (i) { return document.getElementById(i); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var norm = function (c) { return CY[c] || c; };
+
+  /* ---------- Variant markerlərini sətirdə ardıcıl tapır ---------- */
+  function scan(line, next, ci, dotOK) {
+    var out = [], re = /(^|[\s.,;:!?])\(?\s?([A-EАВСЕ]|[a-eавсе])\s?(\)|\.(?=\s*\S))/g, m, ch, idx, isLow;
+    while ((m = re.exec(line))) {
+      ch = norm(m[2]); isLow = ch !== ch.toUpperCase(); idx = LET.indexOf(ch.toUpperCase());
+      if (isLow && !ci) { re.lastIndex = m.index + m[0].length - 1; continue; }
+      var start = m.index + m[1].length;
+      if (m[3] === '.' && !(dotOK && start === 0)) { re.lastIndex = m.index + m[0].length - 1; continue; }
+      if (idx === next || (idx === 0 && next > 0)) { out.push({ i: idx, s: start, e: m.index + m[0].length }); next = idx + 1; if (next > 4) next = 5; }
+      else re.lastIndex = m.index + m[0].length - 1;
+    }
+    return out;
+  }
+  var reAns = /(?:^|\s)(?:düzgün\s+)?cavab\s*[:=\-–]\s*\(?\s*([A-EАВСЕa-eавсе])\s*\)?\s*\.?\s*$/i;
+  var reSub = /^(\d{1,2}\s*[.)]|[a-eA-E]\s*\)|[-•*▪●])\s*\S/;
+
+  /* ---------- Bir sual blokunu (başlıq xətti daxil deyil) təhlil edir ---------- */
+  function parseBlock(lines, ci, dotOK) {
+    var stem = [], opts = [], cur = -1, ans = -1;
+    function put(t) { if (!t) return; if (cur >= 0) opts[cur] += ' ' + t; else stem.push(t); }
+    lines.forEach(function (ln) {
+      var am = ln.match(reAns);
+      if (am) { ans = LET.indexOf(norm(am[1]).toUpperCase()); ln = ln.slice(0, am.index).trim(); if (!ln) return; }
+      var ms = scan(ln, opts.length, ci, dotOK);
+      if (!ms.length) return put(ln);
+      put(ln.slice(0, ms[0].s).trim());
+      ms.forEach(function (m, k) {
+        var txt = ln.slice(m.e, k + 1 < ms.length ? ms[k + 1].s : ln.length).trim();
+        if (m.i === 0 && opts.length) { stem.push('\n' + opts.map(function (o, j) { return LET[j] + ') ' + o; }).join(' ')); opts = []; }
+        opts.push(txt); cur = opts.length - 1;
+      });
+    });
+    var q = '';
+    stem.forEach(function (s, i) { q += (i && (s.charAt(0) === '\n' || reSub.test(s)) ? '\n' : (i ? ' ' : '')) + s.replace(/^\n/, ''); });
+    return { q: q.replace(/[ \t]+/g, ' ').replace(/ ?\n ?/g, '\n').trim(), o: opts.map(function (o) { return o.replace(/\s+/g, ' ').trim(); }), c: ans };
+  }
+
+  /* ---------- Əsas parser ---------- */
+  var reH = /^(?:sual\s*|q\s*|№\s*)?(\d{1,3})\s*[.)\-:]\s*(?=\S)/i;
+  function parse(raw) {
+    var text = String(raw || '').replace(/\r\n?/g, '\n').replace(/[\u200B-\u200D\uFEFF\u00AD]/g, '').replace(/[\u00A0\u2007\u202F\t]/g, ' ').replace(/[）]/g, ')').replace(/[（]/g, '(');
+    var lines = text.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l && !/^\d{1,3}$/.test(l) && !/^[-–—_=*·.]{3,}$/.test(l); });
+    var blocks = [], cur = null, orphan = 0;
+    function complete(b) {
+      var dot = /^B\s*\./m.test(b.lines.join('\n'));
+      var u = parseBlock(b.lines, false, dot).o.length; if (u >= 2) return u;
+      return parseBlock(b.lines, true, dot).o.length >= 4 ? 4 : 0;
+    }
+    lines.forEach(function (ln) {
+      var m = ln.match(reH);
+      if (m) {
+        var n = +m[1], ok = false;
+        if (!cur) ok = true;
+        else { var c = complete(cur); ok = c >= 2 && (n === cur.n + 1 || (n > cur.n && n <= cur.n + 3 && c >= 4)); }
+        if (ok) { cur = { n: n, lines: [ln.slice(m[0].length).trim()] }; blocks.push(cur); return; }
+      }
+      if (!cur) { orphan++; return; }
+      cur.lines.push(ln);
+    });
+    if (!blocks.length) {            /* nömrəsiz mətn: boş sətirlə ayrılmış bloklar */
+      blocks = String(raw || '').replace(/\r/g, '').split(/\n\s*\n+/).map(function (b, i) {
+        return { n: i + 1, lines: b.split('\n').map(function (l) { return l.trim(); }).filter(Boolean) };
+      }).filter(function (b) { return b.lines.length; }); orphan = 0;
+    }
+    var qs = blocks.map(function (b) {
+      var dot = /^B\s*\./m.test(b.lines.join('\n'));
+      var r = parseBlock(b.lines, false, dot);
+      if (r.o.length < 2) { var r2 = parseBlock(b.lines, true, dot); if (r2.o.length >= 2) r = r2; }  /* ehtiyat: a) b) c) variantlı test */
+      return { q: r.q, o: r.o, c: r.c, n: b.n };
+    });
+    qs.orphan = orphan; return qs;
+  }
+
+  /* ---------- Cavab açarı ---------- */
+  function parseKey(t) {
+    var out = [], m, re = /(\d{1,3})\s*[-.:)=\s]*\(?\s*([A-Ea-e])\)?(?![A-Za-zƏəŞşÇçĞğİıÖöÜü])/g;
+    t = String(t || '').replace(/[АВСЕавсе]/g, norm);
+    if (/\d/.test(t)) { while ((m = re.exec(t))) out[+m[1] - 1] = LET.indexOf(m[2].toUpperCase()); }
+    else (t.toUpperCase().match(/[A-E]/g) || []).forEach(function (l, i) { out[i] = LET.indexOf(l); });
+    return out;
+  }
+  T._parse = parse; T._parseKey = parseKey;
+
+  /* ---------- Əsas panelə bağlantı ---------- */
+  function msg(t, k) { var m = $('tv2-msg'); if (m) { m.className = 'tv2-msg ' + (k || 'i'); m.textContent = t; m.style.display = t ? 'block' : 'none'; } }
+  function draw() {
+    var qs = T.ed.qs;
+    $('tv2-qs').innerHTML = qs.map(function (q, n) {
+      var os = q.o.map(function (o, k) {
+        return '<div class="tv2-o"><b>' + LET[k] + ')</b><input class="tv2-in" data-n="' + n + '" data-k="' + k + '" value="' + esc(o) + '"><input type="radio" name="c' + n + '" data-n="' + n + '" data-c="' + k + '"' + (q.c === k ? ' checked' : '') + ' title="Düzgün cavab"></div>';
+      }).join('');
+      return '<div class="tv2-card tv2-q' + (q.o.length < 2 ? ' bad' : '') + '" id="tq' + n + '"><div class="h"><span>Sual ' + (n + 1) + '</span><span><button class="tv2-b s" data-a="addo" data-n="' + n + '" style="padding:5px 10px">+ Variant</button> <button class="tv2-b r" data-a="delq" data-n="' + n + '" style="padding:5px 10px">✖</button></span></div>'
+        + '<textarea class="tv2-ta" style="min-height:60px" data-n="' + n + '" data-qt="1">' + esc(q.q) + '</textarea>' + os + '</div>';
+    }).join('');
+    $('tv2-sv').style.display = qs.length ? 'flex' : 'none';
+  }
+  function applyKey(k) {                       /* sual nömrəsinə görə; alınmasa — sıraya görə */
+    var qs = T.ed.qs, byNum = qs.length && qs.every(function (q) { return q.n; }) &&
+      qs.filter(function (q) { return k[q.n - 1] != null; }).length >= Math.ceil(qs.length / 2);
+    var hit = 0;
+    qs.forEach(function (q, i) {
+      var v = byNum ? k[q.n - 1] : k[i];
+      if (v != null && v > -1 && v < q.o.length) { q.c = v; hit++; }
+    });
+    return hit;
+  }
+  function report(qs, k) {
+    var w = [], few = [], none = [];
+    qs.forEach(function (q, i) { if (q.o.length < 2) few.push(i + 1); else if (q.o.length < 4) w.push(i + 1); if (q.c < 0) none.push(i + 1); });
+    var s = qs.length + ' sual ayrıldı.';
+    if (k && k.length) { var kc = k.filter(function (x) { return x != null && x > -1; }).length; if (kc !== qs.length) s += ' ⚠ Açarda ' + kc + ' cavab, mətndə ' + qs.length + ' sual var — yoxlayın.'; }
+    if (few.length) s += ' ⚠ Variantı tapılmayan: ' + few.join(', ') + '.';
+    if (w.length) s += ' ℹ 4-dən az variant: ' + w.join(', ') + '.';
+    if (qs.orphan) s += ' ℹ Başlıqsız ' + qs.orphan + ' sətir atıldı.';
+    if (none.length) s += ' Cavabsız: ' + none.join(', ') + '.';
+    return { t: s, k: (few.length || (k && k.length && s.indexOf('⚠') > -1)) ? 'e' : (none.length ? 'i' : 'k') };
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#tv2-root [data-a="parse"],#tv2-root [data-a="key"]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    T.ed = T.ed || { id: null, qs: [] };
+    var k = parseKey($('tv2-key').value);
+    if (b.dataset.a === 'parse') {
+      var qs = parse($('tv2-raw').value);
+      if (!qs.length) return msg('Mətn oxunmadı. Format: «1. Sual» və altında A) B) C) D) E)', 'e');
+      T.ed.qs = qs; if (k.length) applyKey(k); draw();
+      var r = report(qs, k); return msg(r.t, r.k);
+    }
+    if (!T.ed.qs.length) return msg('Əvvəl sualları ayırın.', 'e');
+    if (!k.length) return msg('Cavab açarı oxunmadı. Nümunə: 1-A 2-B 3-C', 'e');
+    var n = applyKey(k); draw(); var r2 = report(T.ed.qs, k);
+    msg(n + ' sualın cavabı tətbiq olundu. ' + r2.t.replace(/^\d+ sual ayrıldı\.\s*/, ''), r2.k);
+  }, true);
+})();
+</script>
+
 <!-- ===== /DQ PATCH: VAHİD İŞTİRAK İCAZƏ MODULU ===== -->
 
 
