@@ -13789,6 +13789,424 @@ html{scroll-behavior:smooth}
   }, 1000);
 })();
 </script>
+    <!-- ===== DQ PATCH: VAHİD İŞTİRAK İCAZƏ MODULU (DQX) =====
+     Bunu index.html-də sonuncu </body> teqindən dərhal əvvələ, bütün yamaqların ALTINA yapışdırın.
+     Heç nə silinmir. Bir yerdən (bu moduldan) verilən icazə həm "allowed_students", həm qeydiyyat (regs),
+     həm başlama vaxtı (sched), həm iştirak müddəti (permwin) üzrə avtomatik uyğunlaşdırılır. -->
+<style id="dqx-css">
+.dqx{max-width:980px;margin:0 auto;text-align:left;font-family:inherit;color:#0f172a}
+.dqx h3{margin:0 0 4px;font-size:20px}
+.dqx .sub{color:#64748b;font-size:13px;margin-bottom:14px;line-height:1.5}
+.dqx-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.dqx-in{padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;font-family:inherit;background:#fff;min-width:0}
+.dqx-in:focus{outline:none;border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+.dqx-b{border:0;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:#10b981;color:#fff}
+.dqx-b.o{background:#fff;color:#334155;border:1.5px solid #cbd5e1}
+.dqx-b.d{background:#ef4444}
+.dqx-b.s{padding:7px 12px;font-size:13px}
+.dqx-b:disabled{opacity:.6;cursor:wait}
+.dqx-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+.dqx-card.warn{border-color:#fcd34d;background:#fffbeb}
+.dqx-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.dqx-top small{display:block;color:#64748b;margin-top:2px}
+.dqx-bd{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;margin-left:6px;vertical-align:middle}
+.dqx-bd.ok{background:#d1fae5;color:#047857}.dqx-bd.pe{background:#fef3c7;color:#b45309}.dqx-bd.no{background:#fee2e2;color:#b91c1c}.dqx-bd.di{background:#e0f2fe;color:#0369a1}
+.dqx-ex{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:13px}
+.dqx-ln{font-weight:700;color:#475569;min-width:64px}
+.dqx-tag{background:#10b981;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+.dqx-none{color:#94a3b8;font-size:12px}
+.dqx-chip{border:1.5px solid #cbd5e1;background:#fff;color:#475569;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.dqx-chip.on{background:#10b981;border-color:#10b981;color:#fff}
+.dqx-chip.all{border-style:dashed}
+.dqx-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px}
+.dqx-g label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:4px}
+.dqx-g .dqx-in{width:100%;box-sizing:border-box}
+.dqx-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 0;border-top:1px solid #f1f5f9}
+.dqx-row .dqx-ln{min-width:70px}
+.dqx-row .dqx-in{padding:7px 9px;font-size:13px}
+.dqx-hint{font-size:12px;color:#64748b;line-height:1.5;margin:6px 0}
+.dqx-empty{text-align:center;color:#94a3b8;padding:24px 0}
+</style>
+<script id="dqx-js">
+(function () {
+  'use strict';
+  if (window.DQX) return;
+
+  var CATS = ['BA', 'BB', 'AC'];
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var up = function (s) { return String(s || '').trim().toUpperCase(); };
+  var norm = function (s) { return String(s || '').trim().replace(/\s+/g, ' '); };
+  var sb = function () { return _supabase; };
+  var uniq = function (a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); };
+  var toast = function (t) { try { V2.toast(t); } catch (e) { alert(t); } };
+  var catsOf = function (it) {
+    if (Array.isArray(it.categories)) return it.categories.map(up);
+    if (it.categories) return String(it.categories).replace(/[{}"\[\]]/g, '').split(',').map(up).filter(Boolean);
+    return ['BA'];
+  };
+  var genFin = function () { var a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = ''; for (var i = 0; i < 7; i++) s += a[Math.floor(Math.random() * a.length)]; return s; };
+  var toLocal = function (iso) {
+    if (!iso) return ''; var d = new Date(iso); if (isNaN(d)) return '';
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  };
+  var fmtDt = function (iso) { var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('az-AZ', { dateStyle: 'short', timeStyle: 'short' }); };
+  var fmtD = function (d) { var p = String(d || '').split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : d; };
+
+  var S = { host: '', people: [], pending: [], conflicts: 0, exams: 2, q: '', d: null };
+  var DQX = window.DQX = { busy: false, S: S };
+
+  /* ---------- məlumat qatı ---------- */
+  async function rawDel(coll, id) {
+    await V2.probe();
+    if (V2.mode === 'cloud') await sb().from('dq_v2_store').delete().eq('id', id);
+    else localStorage.setItem('dq_v2_' + coll, JSON.stringify((await V2.list(coll)).filter(function (x) { return x._id != id; })));
+  }
+
+  function needsSync(p) {
+    if (!p.reg) return false;
+    var allowed = []; Object.keys(p.exams).forEach(function (n) { allowed = allowed.concat(p.exams[n].cats); });
+    if (!allowed.length) return false;
+    var pr = p.reg.perms, have = pr && Array.isArray(pr.cats) ? pr.cats.map(up) : null;
+    return p.reg.status !== 'approved' || (have && !allowed.every(function (c) { return have.indexOf(c) > -1; }));
+  }
+
+  async function load() {
+    var r = await sb().from('allowed_students').select('*').order('id', { ascending: false });
+    if (r.error) throw r.error;
+    var rows = r.data || [], regs = [], sched = [], wins = [];
+    try { regs = await V2.list('regs'); } catch (e) {}
+    try { sched = await V2.list('sched'); } catch (e) {}
+    try { wins = await V2.list('permwin'); } catch (e) {}
+
+    var map = {}, order = [], maxNo = 2;
+    var P = function (fin) {
+      fin = up(fin); if (!fin) return null;
+      if (!map[fin]) { map[fin] = { fin: fin, name: '', exams: {}, ids: [], reg: null, start: {}, win: null }; order.push(fin); }
+      return map[fin];
+    };
+    rows.forEach(function (it) {
+      var p = P(it.fin); if (!p) return;
+      if (!p.name) p.name = norm(it.student_name);
+      var no = String(it.exam_no || 1); maxNo = Math.max(maxNo, parseInt(no) || 1);
+      var e = p.exams[no] || (p.exams[no] = { cats: [], ids: [] });
+      catsOf(it).forEach(function (c) { if (e.cats.indexOf(c) < 0) e.cats.push(c); });
+      e.ids.push(it.id); p.ids.push(it.id);
+    });
+    var pending = [];
+    regs.forEach(function (g) {
+      if (g.status === 'pending') pending.push(g);
+      if (g.fin) {
+        var fin = up(g.fin);
+        if (map[fin] || g.status === 'approved') { var p = P(fin); if (!p.reg) p.reg = g; if (!p.name) p.name = norm(g.name); }
+      }
+    });
+    sched.forEach(function (x) { var p = map[up(x.fin)]; if (p && x.start) p.start[String(x.exam_no)] = x.start; });
+    wins.forEach(function (w) { var p = map[up(w.fin)]; if (p) p.win = w; });
+
+    S.people = order.map(function (f) { return map[f]; }).sort(function (a, b) { return a.name.localeCompare(b.name, 'az'); });
+    S.people.forEach(function (p) { p.sync = needsSync(p); });
+    S.conflicts = S.people.filter(function (p) { return p.sync; }).length;
+    S.pending = pending;
+    var tec = (typeof totalExamsCount !== 'undefined' && totalExamsCount) || 2;
+    S.exams = Math.max(tec, maxNo, 2);
+  }
+
+  /* ---------- qeydiyyat ilə avtomatik uyğunlaşdırma ---------- */
+  async function reconcileFin(fin, force) {
+    fin = up(fin); if (!fin) return false;
+    var rs = await sb().from('allowed_students').select('*').eq('fin', fin);
+    if (rs.error || !rs.data || !rs.data.length) return false;
+    var union = [], minNo = null;
+    rs.data.forEach(function (it) {
+      union = union.concat(catsOf(it));
+      var n = parseInt(it.exam_no || 1) || 1; if (minNo === null || n < minNo) minNo = n;
+    });
+    union = uniq(union);
+    var regs = await V2.list('regs'), changed = false;
+    for (var i = 0; i < regs.length; i++) {
+      var g = regs[i]; if (up(g.fin) !== fin) continue;
+      if (g.status === 'rejected' && !force) continue;
+      var p = g.perms || {}, have = Array.isArray(p.cats) ? p.cats.map(up) : null;
+      if (g.status === 'approved' && have && union.every(function (c) { return have.indexOf(c) > -1; })) continue;
+      var r = Object.assign({}, g, { status: 'approved', perms: { tests: p.tests !== false, cats: uniq(union.concat(have || [])), exam: String(p.exam || minNo || 1) } });
+      await V2.put('regs', r, g._id); changed = true;
+    }
+    return changed;
+  }
+  async function reconcileAll(force) {
+    var r = await sb().from('allowed_students').select('fin');
+    var fins = uniq((r.data || []).map(function (x) { return up(x.fin); }).filter(Boolean)), ch = false;
+    for (var i = 0; i < fins.length; i++) if (await reconcileFin(fins[i], force)) ch = true;
+    return ch;
+  }
+
+  /* Köhnə yerlərdən (İdarə, Kod, Siyahı, İstifadəçilər…) verilən icazə də avtomatik sinxronlaşsın */
+  var pend = {}, anyPend = false, timer = null;
+  function queueSync(fins) {
+    if (fins && fins.length) fins.forEach(function (f) { pend[f] = 1; }); else anyPend = true;
+    clearTimeout(timer); timer = setTimeout(runQueue, 600);
+  }
+  async function runQueue() {
+    var fs = Object.keys(pend), a = anyPend, ch = false; pend = {}; anyPend = false;
+    try {
+      for (var i = 0; i < fs.length; i++) if (await reconcileFin(fs[i], true)) ch = true;
+      if (a && await reconcileAll(false)) ch = true;
+    } catch (e) {}
+    if (ch) toast('✅ Qeydiyyat icazələri avtomatik uyğunlaşdırıldı');
+  }
+  function hookSupabase() {
+    var c = sb(); if (!c || c.__dqxHooked) return;
+    var of = c.from.bind(c);
+    c.from = function (t) {
+      var b = of.apply(c, arguments);
+      if (t !== 'allowed_students') return b;
+      ['insert', 'update', 'upsert'].forEach(function (m) {
+        var orig = b[m]; if (typeof orig !== 'function') return;
+        b[m] = function (payload) {
+          var q = orig.apply(this, arguments);
+          var arr = Array.isArray(payload) ? payload : [payload];
+          var fins = arr.map(function (x) { return x && x.fin ? up(x.fin) : ''; }).filter(Boolean);
+          var th = q && q.then;
+          if (typeof th === 'function') q.then = function (ok, no) {
+            return th.call(q, function (res) {
+              try { if (res && !res.error && !DQX.busy) queueSync(fins); } catch (e) {}
+              return ok ? ok(res) : res;
+            }, no);
+          };
+          return q;
+        };
+      });
+      return b;
+    };
+    c.__dqxHooked = true;
+  }
+
+  /* ---------- görünüş ---------- */
+  function badge(p) {
+    if (!p.reg) return '<span class="dqx-bd di">Birbaşa icazə</span>';
+    return p.reg.status === 'approved' ? '<span class="dqx-bd ok">Qeydiyyat təsdiqli</span>'
+      : p.reg.status === 'rejected' ? '<span class="dqx-bd no">Qeydiyyat rədd</span>' : '<span class="dqx-bd pe">Gözləyir</span>';
+  }
+  function personCard(p) {
+    var nos = Object.keys(p.exams).filter(function (n) { return p.exams[n].cats.length; }).sort(function (a, b) { return a - b; });
+    var ex = nos.length ? nos.map(function (n) {
+      return '<div class="dqx-ex"><span class="dqx-ln">Sınaq ' + esc(n) + '</span>' +
+        p.exams[n].cats.map(function (c) { return '<span class="dqx-tag">' + esc(c) + '</span>'; }).join('') +
+        (p.start[n] ? '<span class="dqx-none">⏰ ' + esc(fmtDt(p.start[n])) + '</span>' : '') + '</div>';
+    }).join('') : '<div class="dqx-ex"><span class="dqx-none">Sınaq icazəsi yoxdur</span></div>';
+    var extra = (p.win ? '<div class="dqx-ex"><span class="dqx-none">🕒 İştirak müddəti: ' + esc(fmtD(p.win.from)) + ' – ' + esc(fmtD(p.win.to)) + '</span></div>' : '') +
+      (p.reg && p.reg.perms && p.reg.perms.tests === false ? '<div class="dqx-ex"><span class="dqx-none">📝 Fənn testlərinə icazə bağlıdır</span></div>' : '');
+    return '<div class="dqx-card' + (p.sync ? ' warn' : '') + '"><div class="dqx-top"><div><b>' + esc(p.name || '—') + '</b>' + badge(p) +
+      '<small>FİN: ' + esc(p.fin) + (p.reg && p.reg.contact ? ' · ' + esc(p.reg.contact) : '') + '</small></div>' +
+      '<div><button class="dqx-b s" onclick="DQX.edit(' + esc(JSON.stringify(p.fin)) + ')">✏️ İdarə et</button></div></div>' + ex + extra +
+      (p.sync ? '<div class="dqx-hint">⚠️ Qeydiyyat statusu / kateqoriyaları bu icazə ilə uyğun deyil. «İdarə et» → «Yadda saxla» ilə düzəlir.</div>' : '') + '</div>';
+  }
+  function listHtml() {
+    var q = S.q.toLowerCase();
+    var ps = S.people.filter(function (p) { return !q || (p.name + ' ' + p.fin).toLowerCase().indexOf(q) > -1; });
+    var h = '';
+    if (S.conflicts) h += '<div class="dqx-card warn"><b>⚠️ ' + S.conflicts + ' nəfərdə icazə ilə qeydiyyat uyğunsuzluğu var.</b><div class="dqx-hint">Bu şəxslər icazəli görünsə də, qeydiyyat yoxlaması səbəbindən sınağa girə bilməyə bilər.</div><button class="dqx-b s" onclick="DQX.syncAll()">🔄 Hamısını bir kliklə düzəlt</button></div>';
+    if (S.pending.length && !q) {
+      h += '<h4 style="margin:14px 0 8px">⏳ Gözləyən qeydiyyatlar (' + S.pending.length + ')</h4>' + S.pending.map(function (g, i) {
+        return '<div class="dqx-card"><div class="dqx-top"><div><b>' + esc(g.name) + '</b><small>' + esc(g.contact || '') + ' · ' + esc(String(g.ts || '').slice(0, 10)) + '</small></div>' +
+          '<div><button class="dqx-b s" onclick="DQX.fromReg(' + i + ')">✅ Təsdiq et və icazə ver</button></div></div></div>';
+      }).join('');
+    }
+    h += '<h4 style="margin:14px 0 8px">İcazəli iştirakçılar (' + ps.length + ')</h4>';
+    h += ps.length ? ps.map(personCard).join('') : '<div class="dqx-empty">İştirakçı tapılmadı.</div>';
+    return h;
+  }
+  function mainHtml() {
+    return '<h3>🎯 Vahid İştirak Modulu</h3><div class="sub">Sınaqda iştirak icazəsi yalnız buradan verilir: kateqoriya, başlama vaxtı, iştirak müddəti və qeydiyyat təsdiqi bir yerdə. Başqa yerdə ayrıca təsdiq lazım deyil.</div>' +
+      '<div class="dqx-bar"><input class="dqx-in" style="flex:1;min-width:180px" placeholder="🔎 Ad və ya FİN ilə axtar" value="' + esc(S.q) + '" oninput="DQX.find(this.value)">' +
+      '<button class="dqx-b" onclick="DQX.add()">➕ Yeni iştirakçı</button><button class="dqx-b o" onclick="DQX.refresh()">🔄</button></div><div id="dqx-list">' + listHtml() + '</div>';
+  }
+  function editorHtml() {
+    var d = S.d, nos = Object.keys(d.exams).sort(function (a, b) { return a - b; });
+    var rows = nos.map(function (n) {
+      var e = d.exams[n], all = CATS.every(function (c) { return e.cats.indexOf(c) > -1; });
+      return '<div class="dqx-row"><span class="dqx-ln">Sınaq ' + esc(n) + '</span>' +
+        CATS.map(function (c) { return '<button type="button" class="dqx-chip' + (e.cats.indexOf(c) > -1 ? ' on' : '') + '" onclick="DQX.tg(\'' + n + '\',\'' + c + '\')">' + c + '</button>'; }).join('') +
+        '<button type="button" class="dqx-chip all' + (all ? ' on' : '') + '" onclick="DQX.tg(\'' + n + '\',\'*\')">Hamısı</button>' +
+        '<input type="datetime-local" class="dqx-in" id="dqx-st-' + n + '" value="' + esc(e.start) + '" title="Bu şəxs üçün başlama vaxtı (boşdursa sınağın ümumi vaxtı işləyir)"></div>';
+    }).join('');
+    return '<h3>' + (d.orig ? '✏️ İcazələri idarə et' : '➕ Yeni iştirakçı') + '</h3>' +
+      '<div class="sub">Ad, istifadəçinin daxil edəcəyi ilə <b>eyni</b> olmalıdır (böyük/kiçik hərf fərqi önəmlidir). Yadda saxla düyməsi bütün yoxlamaları avtomatik uyğunlaşdırır.</div>' +
+      '<div class="dqx-card"><div class="dqx-g"><div><label>Ad Soyad</label><input class="dqx-in" id="dqx-name" value="' + esc(d.name) + '"></div>' +
+      '<div><label>FİN / İcazə kodu</label><div style="display:flex;gap:6px"><input class="dqx-in" id="dqx-fin" maxlength="7" style="text-transform:uppercase" value="' + esc(d.fin) + '"><button type="button" class="dqx-b o s" onclick="DQX.gen()">🎲</button></div></div>' +
+      (d.contact ? '<div><label>Əlaqə (qeydiyyatdan)</label><input class="dqx-in" value="' + esc(d.contact) + '" disabled></div>' : '') + '</div>' +
+      '<label style="font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center;margin-bottom:8px"><input type="checkbox" id="dqx-tests" ' + (d.tests ? 'checked' : '') + (d.reg ? '' : ' disabled') + '> 📝 Fənn testlərinə icazə' + (d.reg ? '' : ' <span class="dqx-none">(qeydiyyatsız şəxs üçün həmişə açıqdır)</span>') + '</label>' +
+      '<div style="font-weight:700;margin-top:6px">Sınaq və kateqoriyalar</div>' + rows +
+      '<div class="dqx-row"><button type="button" class="dqx-b o s" onclick="DQX.addExam()">➕ Sınaq əlavə et</button></div>' +
+      '<div class="dqx-g" style="margin-top:8px"><div><label>🕒 İştirak müddəti: başlanğıc (ixtiyari)</label><input type="date" class="dqx-in" id="dqx-from" value="' + esc(d.from) + '"></div>' +
+      '<div><label>Son tarix</label><input type="date" class="dqx-in" id="dqx-to" value="' + esc(d.to) + '"></div></div>' +
+      '<div class="dqx-hint">Müddət boş buraxılsa, məhdudiyyət olmur. Başlama vaxtı yalnız həmin sınağa aiddir.</div>' +
+      '<div class="dqx-bar" style="margin:12px 0 0"><button class="dqx-b" id="dqx-save" onclick="DQX.save()">💾 Yadda saxla</button><button class="dqx-b o" onclick="DQX.cancel()">Ləğv et</button>' +
+      (d.orig ? '<button class="dqx-b d" style="margin-left:auto" onclick="DQX.revoke()">🚫 Bütün icazələri ləğv et</button>' : '') + '</div></div>';
+  }
+  function render() {
+    var h = $(S.host); if (!h) return;
+    h.innerHTML = '<div class="dqx">' + (S.d ? editorHtml() : mainHtml()) + '</div>';
+  }
+  function readForm() {
+    var d = S.d; if (!d) return;
+    var v = function (id) { var e = $(id); return e ? e.value : null; };
+    if (v('dqx-name') !== null) d.name = v('dqx-name');
+    if (v('dqx-fin') !== null) d.fin = up(v('dqx-fin'));
+    if ($('dqx-tests')) d.tests = $('dqx-tests').checked;
+    if (v('dqx-from') !== null) d.from = v('dqx-from');
+    if (v('dqx-to') !== null) d.to = v('dqx-to');
+    Object.keys(d.exams).forEach(function (n) { var x = v('dqx-st-' + n); if (x !== null) d.exams[n].start = x; });
+  }
+  function blank(n) { var o = {}; for (var i = 1; i <= n; i++) o[i] = { cats: [], start: '' }; return o; }
+
+  /* ---------- əməliyyatlar ---------- */
+  DQX.open = async function (hostId) {
+    if (hostId) S.host = hostId; S.d = null; S.q = '';
+    var h = $(S.host); if (h) h.innerHTML = '<div class="dqx"><div class="dqx-empty">Yüklənir…</div></div>';
+    await DQX.refresh();
+  };
+  DQX.refresh = async function () {
+    try { await load(); } catch (e) { var h = $(S.host); if (h) h.innerHTML = '<div class="dqx"><div class="dqx-card warn">Xəta: ' + esc(e.message || e) + '</div></div>'; return; }
+    render();
+  };
+  DQX.find = function (v) { S.q = v || ''; var l = $('dqx-list'); if (l) l.innerHTML = listHtml(); };
+  DQX.add = function () { S.d = { orig: null, fin: genFin(), name: '', contact: '', reg: null, tests: true, exams: blank(S.exams), from: '', to: '' }; render(); };
+  DQX.fromReg = function (i) {
+    var g = S.pending[i]; if (!g) return;
+    S.d = { orig: null, fin: up(g.fin) || genFin(), name: norm(g.name), contact: g.contact || '', reg: g, tests: true, exams: blank(S.exams), from: '', to: '' }; render();
+  };
+  DQX.edit = function (fin) {
+    var p = S.people.filter(function (x) { return x.fin === fin; })[0]; if (!p) return;
+    var ex = blank(Math.max(S.exams, 1));
+    Object.keys(p.exams).forEach(function (n) { ex[n] = { cats: p.exams[n].cats.slice(), start: '' }; });
+    Object.keys(ex).forEach(function (n) { ex[n].start = toLocal(p.start[n]); });
+    S.d = { orig: p.fin, fin: p.fin, name: p.name, contact: p.reg ? p.reg.contact : '', reg: p.reg, tests: !(p.reg && p.reg.perms && p.reg.perms.tests === false),
+      exams: ex, from: p.win ? p.win.from : '', to: p.win ? p.win.to : '' };
+    render(); window.scrollTo && window.scrollTo(0, 0);
+  };
+  DQX.cancel = function () { S.d = null; render(); };
+  DQX.gen = function () { readForm(); S.d.fin = genFin(); render(); };
+  DQX.addExam = function () { readForm(); var n = Object.keys(S.d.exams).length + 1; if (n > 30) return; S.d.exams[n] = { cats: [], start: '' }; S.exams = Math.max(S.exams, n); render(); };
+  DQX.tg = function (n, c) {
+    readForm(); var e = S.d.exams[n]; if (!e) return;
+    if (c === '*') e.cats = CATS.every(function (x) { return e.cats.indexOf(x) > -1; }) ? [] : CATS.slice();
+    else { var k = e.cats.indexOf(c); k > -1 ? e.cats.splice(k, 1) : e.cats.push(c); }
+    render();
+  };
+
+  DQX.save = async function () {
+    readForm(); var d = S.d; if (!d) return;
+    var name = norm(d.name), fin = up(d.fin), nos = Object.keys(d.exams);
+    if (name.length < 3) return alert('Ad Soyad daxil edin.');
+    if (fin.length < 5 || !/^[A-Z0-9]+$/.test(fin)) return alert('FİN ən azı 5 simvol (hərf/rəqəm) olmalıdır.');
+    var union = []; nos.forEach(function (n) { union = union.concat(d.exams[n].cats); }); union = uniq(union);
+    if (!union.length && !(d.reg && d.tests)) return alert('Ən azı bir sınaq kateqoriyası seçin.');
+    if (d.from && d.to && d.to < d.from) return alert('Son tarix başlanğıcdan əvvəl ola bilməz.');
+    if (!!d.from !== !!d.to) return alert('İştirak müddəti üçün hər iki tarixi daxil edin (və ya ikisini də boş buraxın).');
+    if (S.people.some(function (p) { return p.fin === fin && p.fin !== d.orig; })) return alert('Bu FİN başqa iştirakçıda mövcuddur. Siyahıdan həmin şəxsi redaktə edin.');
+
+    var btn = $('dqx-save'); if (btn) btn.disabled = true;
+    DQX.busy = true;
+    try {
+      /* 1) allowed_students: əvvəl yenisini yaz, sonra köhnəni sil (yarımçıq qalmasın) */
+      var old = S.people.filter(function (p) { return p.fin === d.orig; })[0], oldIds = old ? old.ids.slice() : [];
+      var rowsNew = nos.filter(function (n) { return d.exams[n].cats.length; }).map(function (n) {
+        return { student_name: name, fin: fin, exam_no: String(n), categories: d.exams[n].cats.slice() };
+      });
+      if (rowsNew.length) { var ins = await sb().from('allowed_students').insert(rowsNew); if (ins.error) throw ins.error; }
+      if (oldIds.length) { var del = await sb().from('allowed_students').delete().in('id', oldIds); if (del.error) throw del.error; }
+
+      /* 2) qeydiyyat: təsdiq + icazələr eyni anda */
+      var firstNo = nos.filter(function (n) { return d.exams[n].cats.length; }).sort(function (a, b) { return a - b; })[0] || '1';
+      var g = d.reg;
+      if (g) {
+        var r = Object.assign({}, g, { name: name, fin: fin, status: 'approved', perms: { tests: !!d.tests, cats: union, exam: String(firstNo) } });
+        await V2.put('regs', r, g._id);
+      }
+
+      /* 3) şəxsə aid başlama vaxtları (sched) */
+      var sched = await V2.list('sched'), keep = {};
+      nos.forEach(function (n) { if (d.exams[n].cats.length && d.exams[n].start) keep[n] = new Date(d.exams[n].start).toISOString(); });
+      for (var i = 0; i < sched.length; i++) {
+        var x = sched[i], xf = up(x.fin);
+        if (xf && (xf === fin || xf === d.orig) && !(xf === fin && keep[String(x.exam_no)])) await rawDel('sched', x._id);
+      }
+      for (var k in keep) {
+        var ex = sched.filter(function (y) { return up(y.fin) === fin && String(y.exam_no) === String(k); })[0];
+        await V2.put('sched', { exam_no: String(k), fin: fin, start: keep[k] }, ex ? ex._id : undefined);
+      }
+
+      /* 4) iştirak müddəti (permwin) */
+      var wins = await V2.list('permwin');
+      var w = wins.filter(function (y) { return up(y.fin) === fin; })[0], wo = d.orig && d.orig !== fin ? wins.filter(function (y) { return up(y.fin) === d.orig; })[0] : null;
+      if (wo) await rawDel('permwin', wo._id);
+      if (d.from && d.to) await V2.put('permwin', { fin: fin, from: d.from, to: d.to }, w ? w._id : undefined);
+      else if (w) await rawDel('permwin', w._id);
+
+      toast('✅ İcazələr yadda saxlanıldı');
+      S.d = null; await load(); render();
+    } catch (e) {
+      alert('Xəta: ' + (e && e.message ? e.message : e));
+      if (btn) btn.disabled = false;
+    } finally { DQX.busy = false; }
+  };
+
+  DQX.revoke = async function () {
+    var d = S.d; if (!d || !d.orig) return;
+    if (!confirm('«' + d.name + '» üçün bütün sınaq icazələri ləğv edilsin? (Nəticələr silinmir)')) return;
+    DQX.busy = true;
+    try {
+      var del = await sb().from('allowed_students').delete().eq('fin', d.orig); if (del.error) throw del.error;
+      if (d.reg) await V2.put('regs', Object.assign({}, d.reg, { perms: { tests: d.tests !== false, cats: [], exam: String((d.reg.perms && d.reg.perms.exam) || '1') } }), d.reg._id);
+      var sc = (await V2.list('sched')).filter(function (x) { return up(x.fin) === d.orig; });
+      for (var i = 0; i < sc.length; i++) await rawDel('sched', sc[i]._id);
+      var wn = (await V2.list('permwin')).filter(function (x) { return up(x.fin) === d.orig; });
+      for (var j = 0; j < wn.length; j++) await rawDel('permwin', wn[j]._id);
+      toast('İcazələr ləğv edildi'); S.d = null; await load(); render();
+    } catch (e) { alert('Xəta: ' + (e && e.message ? e.message : e)); } finally { DQX.busy = false; }
+  };
+
+  DQX.syncAll = async function () {
+    DQX.busy = true;
+    try { var ch = false; for (var i = 0; i < S.people.length; i++) if (S.people[i].sync && await reconcileFin(S.people[i].fin, true)) ch = true;
+      toast(ch ? '✅ Uyğunsuzluqlar düzəldildi' : 'Düzəldiləcək bir şey tapılmadı'); await load(); render();
+    } catch (e) { alert('Xəta: ' + (e && e.message ? e.message : e)); } finally { DQX.busy = false; }
+  };
+
+  /* ---------- qoşulma: köhnə admin panel + yeni (V7) panel ---------- */
+  function mountClassic() {
+    try {
+      var grid = document.querySelector('.admin-nav-grid');
+      if (grid && !$('dqx-nav')) grid.insertAdjacentHTML('afterbegin', '<div id="dqx-nav" class="admin-nav-card" onclick="switchAdminTab(\'ishtirak\');DQX.open(\'dqx-host-c\')"><span class="icon">🎯</span> İştirak İcazələri (vahid)</div>');
+      var anchor = $('mod-suallar') || document.querySelector('.admin-module-block');
+      if (anchor && !$('mod-ishtirak')) anchor.insertAdjacentHTML('beforebegin', '<div id="mod-ishtirak" class="admin-module-block"><div id="dqx-host-c"></div></div>');
+    } catch (e) {}
+  }
+  function mountV7(tries) {
+    if (!window.V7 || typeof V7.go !== 'function') { if ((tries || 0) < 60) setTimeout(function () { mountV7((tries || 0) + 1); }, 250); return; }
+    if (V7.__dqx) return; V7.__dqx = true;
+    V7.t_ishtirak = async function () { return '<div id="dqx-host-v"></div>'; };
+    V7.a_ishtirak = function () { DQX.open('dqx-host-v'); };
+    var og = V7.go;
+    V7.go = async function (t) {
+      var r = await og.apply(this, arguments);
+      try {
+        var nav = document.querySelector('#v7 .q7-tabs');
+        if (nav && !nav.querySelector('[data-dqx]')) nav.insertAdjacentHTML('afterbegin', '<button data-dqx="1" class="v2-b ' + (t === 'ishtirak' ? '' : 'o ') + 's" onclick="V7.eid=null;V7.go(\'ishtirak\')"><i class="fa-solid fa-user-check"></i> İştirak</button>');
+      } catch (e) {}
+      return r;
+    };
+  }
+
+  try { hookSupabase(); } catch (e) {}
+  mountClassic(); mountV7(0);
+})();
+</script>
+<!-- ===== /DQ PATCH: VAHİD İŞTİRAK İCAZƏ MODULU ===== -->
+
 
 
     
