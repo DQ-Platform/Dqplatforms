@@ -15231,6 +15231,267 @@ html{scroll-behavior:smooth}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
+    <!-- ===== DQ PATCH: «İştirak et» düzəlişi — imtahana giriş həmişə nəticə verir (ya açılır, ya da səbəb göstərilir)
+     </body> teqindən dərhal əvvələ, ƏN SONDA (bütün yamaqların altına) yapışdırın. Heç nə silinmir.
+     Problem: giriş zəncirində bütün rədd/xəta mesajları alert() ilə verilir. WhatsApp/Telegram/Instagram daxili brauzerləri və bəzi
+     telefonlar alert()-i səssiz udur → istifadəçi düyməyə toxunur, heç nə olmur.
+     Həll:
+       1) alert() → səliqəli səhifədaxili pəncərə (hər brauzerdə görünür).
+       2) «İştirak et» təkrar toxunuşdan qorunur, düymə «Yüklənir…» göstərir.
+       3) Server 20 saniyə cavab verməsə, aydın mesaj çıxır (sonsuz gözləmə yoxdur).
+       4) Giriş səssiz alınmasa, səbəb avtomatik tapılıb göstərilir (giriş, icazə, sual yoxluğu, əvvəlki iştirak). -->
+<style id="dqlf-css">
+.dqlf-ov{position:fixed;inset:0;z-index:100005;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.5);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .3s ease}
+.dqlf-ov.on{opacity:1}
+.dqlf-box{width:100%;max-width:380px;background:#fff;border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 28px 60px -18px rgba(15,23,42,.5);
+  transform:translateY(22px) scale(.97);opacity:0;transition:transform .5s cubic-bezier(.22,.9,.24,1),opacity .35s ease}
+.dqlf-ov.on .dqlf-box{transform:none;opacity:1}
+.dqlf-ic{width:54px;height:54px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;background:#fff7e0}
+.dqlf-ic.ok{background:#dcfce7}.dqlf-ic.er{background:#fee2e2}
+.dqlf-t{margin:0 0 6px;font-size:17px;font-weight:800;color:#0f2d6b}
+.dqlf-m{margin:0 0 16px;font-size:14px;line-height:1.55;color:#475569;white-space:pre-line;word-break:break-word;max-height:46vh;overflow:auto}
+.dqlf-b{width:100%;border:0;border-radius:14px;padding:13px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(135deg,#0f2d6b,#1e4a9e);
+  box-shadow:0 8px 20px -8px rgba(15,45,107,.6);transition:transform .2s}
+.dqlf-b:active{transform:scale(.97)}
+.dqlf-busy{opacity:.75;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.dqlf-ov,.dqlf-box{transition:none!important}}
+</style>
+
+<script>
+(function () {
+  'use strict';
+  if (window.__dqLaunchFix) return; window.__dqLaunchFix = true;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var nativeAlert = window.alert;
+  var queue = [], showing = false, alertN = 0, lastMsg = '', lastAt = 0;
+
+  /* ---------- 1) alert() → səhifədaxili pəncərə ---------- */
+  function kind(t) {
+    if (/✅|uğurla|göndərildi|saxlanıldı/i.test(t)) return ['ok', '✅', 'Hazırdır'];
+    if (/xəta|alınmadı|yoxdur|qadağan|rədd|bitib|başlamayıb|artıq|ləğv|tapılmadı|dayandırıldı|çatmır|əlaqə/i.test(t)) return ['er', '⚠️', 'Diqqət'];
+    return ['', 'ℹ️', 'Məlumat'];
+  }
+  function next() {
+    if (showing || !queue.length) return;
+    showing = true;
+    var msg = queue.shift(), k = kind(msg);
+    var ov = document.createElement('div'); ov.className = 'dqlf-ov'; ov.setAttribute('role', 'alertdialog');
+    ov.innerHTML = '<div class="dqlf-box"><div class="dqlf-ic ' + k[0] + '">' + k[1] + '</div><h4 class="dqlf-t">' + k[2] + '</h4><p class="dqlf-m">' + esc(msg) + '</p><button type="button" class="dqlf-b">Başa düşdüm</button></div>';
+    document.body.appendChild(ov);
+    var done = false;
+    function close() {
+      if (done) return; done = true; ov.classList.remove('on');
+      document.removeEventListener('keydown', key, true);
+      setTimeout(function () { ov.remove(); showing = false; next(); }, 280);
+    }
+    function key(e) { if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); close(); } }
+    ov.querySelector('button').onclick = close;
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    document.addEventListener('keydown', key, true);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add('on'); var b = ov.querySelector('button'); if (b) b.focus(); }); });
+  }
+  window.alert = function (msg) {
+    try {
+      var t = String(msg == null ? '' : msg), now = Date.now();
+      alertN++;
+      if (t === lastMsg && now - lastAt < 700) return;         /* eyni mesajın ikiqat çıxmasının qarşısı */
+      lastMsg = t; lastAt = now;
+      queue.push(t); next();
+    } catch (e) { try { nativeAlert.call(window, msg); } catch (_) {} }
+  };
+
+  /* ---------- 4) Səbəbin avtomatik tapılması ---------- */
+  var WHY = {
+    'no-permission': 'Admin tərəfindən ad, FİN və kateqoriyanız təsdiqlənməyib. Adınız admin qeydində olduğu kimi (eyni yazılışla) olmalıdır.',
+    'registration-perms': 'Qeydiyyatınızda bu kateqoriya üçün icazə verilməyib.',
+    'rejected': 'Qeydiyyatınız rədd edilib.',
+    'missing': 'Ad, FİN və ya kateqoriya məlumatı tam deyil. Çıxıb yenidən daxil olun.'
+  };
+  function cur(n) { try { return n === 'name' ? currentStudentName : n === 'fin' ? currentActiveFin : ''; } catch (e) { return ''; } }
+  async function diagnose(examId, cat) {
+    try {
+      var fin = cur('fin'), name = cur('name');
+      if (!fin || !name) return 'Hesaba daxil olmamısınız. Səhifəni yeniləyib ad və FİN ilə yenidən daxil olun.';
+      if (typeof window.dqAuthorize === 'function') {
+        var a = await window.dqAuthorize(fin, name, examId, cat);
+        if (a && a.reason === 'denied') return 'Bu sınağa (Sınaq ' + examId + ', ' + cat + ') iştirak icazəniz yoxdur.\n' + (WHY[a.why] || WHY['no-permission']);
+        if (a && a.reason === 'error') return 'Serverlə əlaqə qurulmadı. İnternet bağlantınızı yoxlayıb yenidən cəhd edin.';
+      }
+      if (typeof _supabase !== 'undefined') {
+        var ex = await _supabase.from('exam_results').select('id').eq('fin', fin).eq('exam_no', examId).eq('category', cat).maybeSingle();
+        if (ex && ex.data) return 'Siz artıq Sınaq ' + examId + ' (' + cat + ') üzrə iştirak etmisiniz. Təkrar iştirak üçün admin ilə əlaqə saxlayın.';
+        var q = await _supabase.from('exam_questions').select('q_number', { count: 'exact', head: true }).eq('exam_id', examId).eq('category', cat);
+        if (!q.error && (q.count === 0)) return 'Sınaq ' + examId + ' (' + cat + ') üçün suallar hələ əlavə olunmayıb.';
+      }
+    } catch (e) {}
+    return 'Sınaq açılmadı. Səhifəni yeniləyib yenidən cəhd edin.\nProblem təkrarlanarsa, admin-ə bu kodu göndərin: DQ-' + Date.now().toString(36).toUpperCase();
+  }
+
+  /* ---------- 2) + 3) Başlatma qoruyucusu ---------- */
+  var busy = false;
+  function wrap() {
+    var orig = window.startExamSession;
+    if (typeof orig !== 'function' || orig.__dqLF) return;
+    var w = async function (examId, category) {
+      if (busy) return; busy = true;
+      var cat = category || 'BA', args = arguments, self = this, n0 = alertN, btn = null, label = '', timer = null, res = null;
+      try {
+        var ev = window.event, t = ev && ev.target; btn = t && t.closest ? t.closest('button') : null;
+        if (btn) { label = btn.innerHTML; btn.classList.add('dqlf-busy'); btn.innerHTML = '⏳ Yüklənir…'; }
+      } catch (e) {}
+      var to = new Promise(function (r) { timer = setTimeout(function () { r('timeout'); }, 20000); });
+      try {
+        res = await Promise.race([Promise.resolve(orig.apply(self, args)).then(function () { return 'done'; }), to]);
+      } catch (e) {
+        res = 'error'; window.alert('İmtahana giriş alınmadı: ' + (e && e.message || e));
+      } finally {
+        clearTimeout(timer); busy = false;
+        try { if (btn && btn.isConnected) { btn.classList.remove('dqlf-busy'); btn.innerHTML = label; } } catch (e) {}
+      }
+      if (res === 'timeout') { window.alert('Sınaq yüklənmədi: server cavab vermir. İnternet bağlantınızı yoxlayıb yenidən toxunun.'); return; }
+      if (res === 'done' && alertN === n0) {
+        var live = false; try { live = isLiveEditMode === true; } catch (e) {}
+        var scr = $('exam-screen');
+        if (!live && (!scr || !scr.classList.contains('active'))) window.alert(await diagnose(examId, String(cat).toUpperCase()));
+      }
+    };
+    w.__dqLF = true;
+    window.startExamSession = w;
+  }
+  wrap();
+  document.addEventListener('DOMContentLoaded', wrap);
+  setTimeout(wrap, 1500);   /* sonradan başqa yamaq funksiyanı əvəz edərsə, yenidən sarı */
+})();
+</script>
+    <!-- ===== DQ PATCH: Ekran qorunması — imtahan zamanı şəxsi su nişanı + kopya/çap/ekran görüntüsünə maneələr
+     </body> teqindən dərhal əvvələ, ən sonda yapışdırın. Heç nə silinmir.
+     DİQQƏT: veb-brauzerdə ekran görüntüsünü 100% bloklamaq mümkün deyil (telefon kamerası, Android/iOS sistem düymələri).
+     Bu yamaq (1) hər ekrana iştirakçının adı + FİN + saatı olan görünməz-yaxın su nişanı vurur — sızan hər şəkil kimdən çıxdığını göstərir,
+     (2) kopyalama, çap, saxlama, DevTools, PrintScreen qısayollarını bloklayır, (3) tətbiqdən çıxanda/pəncərə fokusu itəndə imtahanı bulanıq edir,
+     (4) cəhdləri «shotlog» jurnalına yazır (yalnız Supabase dq_v2_store varsa).
+     Yalnız imtahan ekranı aktiv olanda işləyir; admin «live edit» rejimində söndürülür. -->
+<style id="dqsec-css">
+#dqsec-wm{position:fixed;inset:0;z-index:99998;pointer-events:none;display:none;background-repeat:repeat}
+body.dqsec-on #dqsec-wm{display:block}
+body.dqsec-on #exam-screen{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+body.dqsec-on #exam-screen input,body.dqsec-on #exam-screen textarea,body.dqsec-on #exam-screen [contenteditable="true"]{-webkit-user-select:text;user-select:text}
+body.dqsec-on #exam-screen img{-webkit-user-drag:none}
+#exam-screen{transition:filter .25s ease}
+body.dqsec-hide #exam-screen{filter:blur(22px) brightness(.9);pointer-events:none}
+#dqsec-toast{position:fixed;left:50%;top:max(14px,env(safe-area-inset-top));z-index:100002;max-width:min(92vw,420px);padding:11px 16px;border-radius:14px;background:#0f172a;color:#fff;
+  font:600 13px/1.4 system-ui,sans-serif;text-align:center;box-shadow:0 14px 34px -10px rgba(15,23,42,.6);
+  opacity:0;transform:translate(-50%,-10px);transition:opacity .3s ease,transform .45s cubic-bezier(.22,.9,.24,1);pointer-events:none}
+#dqsec-toast.on{opacity:1;transform:translate(-50%,0)}
+@media print{#exam-screen,#dqsec-wm{display:none!important}body::before{content:"Çap qadağandır";display:block;padding:40px;font:700 22px system-ui,sans-serif}}
+@media (prefers-reduced-motion:reduce){#exam-screen,#dqsec-toast{transition:none!important}}
+</style>
+
+<script>
+(function () {
+  'use strict';
+  var SCREENS = ['exam-screen'];            /* su nişanı/qoruma olan ekranlar (lazım olsa 'result-screen' əlavə edin) */
+  var $ = function (id) { return document.getElementById(id); };
+  var lastToast = 0, hideT = null, logSeen = {};
+
+  function isLive() { try { return typeof isLiveEditMode !== 'undefined' && isLiveEditMode === true; } catch (e) { return false; } }
+  function active() {
+    if (isLive()) return false;
+    for (var i = 0; i < SCREENS.length; i++) { var s = $(SCREENS[i]); if (s && s.classList.contains('active')) return true; }
+    return false;
+  }
+  function who() {
+    var n = '', f = '', ex = '', ct = '';
+    try { n = currentStudentName || ''; } catch (e) {}
+    try { f = currentActiveFin || ''; } catch (e) {}
+    try { ex = selectedExamId || ''; } catch (e) {}
+    try { ct = userGroup || ''; } catch (e) {}
+    return { name: n, fin: f, exam: ex, cat: ct };
+  }
+  function xml(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  /* ---------- Şəxsi su nişanı ---------- */
+  var wmKey = '';
+  function paintWM() {
+    var w = $('dqsec-wm');
+    if (!w) { w = document.createElement('div'); w.id = 'dqsec-wm'; document.body.appendChild(w); }
+    var p = who(), d = new Date();
+    var t2 = 'FİN ' + p.fin + ' · ' + d.toLocaleDateString('az-AZ') + ' ' + d.toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' });
+    var key = p.name + '|' + t2;
+    if (key === wmKey) return; wmKey = key;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="190"><g transform="rotate(-24 150 95)" font-family="Arial,sans-serif" font-weight="700" fill="#0f172a" fill-opacity="0.10">' +
+      '<text x="150" y="88" font-size="17" text-anchor="middle">' + xml(p.name || 'DQ Platform') + '</text>' +
+      '<text x="150" y="112" font-size="13" text-anchor="middle">' + xml(t2) + '</text></g></svg>';
+    w.style.backgroundImage = 'url("data:image/svg+xml;utf8,' + encodeURIComponent(svg) + '")';
+  }
+  function sync() {
+    var on = active();
+    document.body.classList.toggle('dqsec-on', on);
+    if (on) paintWM(); else document.body.classList.remove('dqsec-hide');
+  }
+  setInterval(sync, 700);
+  document.addEventListener('DOMContentLoaded', sync);
+
+  /* ---------- Xəbərdarlıq + jurnal ---------- */
+  function toast(t) {
+    var now = Date.now(); if (now - lastToast < 2500) return; lastToast = now;
+    var n = $('dqsec-toast');
+    if (!n) { n = document.createElement('div'); n.id = 'dqsec-toast'; document.body.appendChild(n); }
+    n.textContent = t || '📵 Ekran görüntüsü və kopyalama qadağandır. Hər səhifə adınız və FİN ilə işarələnib.';
+    requestAnimationFrame(function () { n.classList.add('on'); });
+    setTimeout(function () { n.classList.remove('on'); }, 3200);
+  }
+  async function log(type) {
+    try {
+      var p = who(), k = type + '|' + p.fin, t = Date.now();
+      if (logSeen[k] && t - logSeen[k] < 60000) return; logSeen[k] = t;
+      if (typeof V2 === 'undefined') return;
+      await V2.probe(); if (V2.mode !== 'cloud') return;
+      await V2.put('shotlog', { type: type, fin: p.fin, name: p.name, exam: String(p.exam), cat: p.cat, ts: new Date().toISOString(), ua: String(navigator.userAgent).slice(0, 90) });
+    } catch (e) {}
+  }
+
+  /* ---------- Bulanıqlaşdırma (tətbiqdən çıxanda / fokus itəndə / çap) ---------- */
+  function hide() { if (active()) document.body.classList.add('dqsec-hide'); }
+  function show(delay) { clearTimeout(hideT); hideT = setTimeout(function () { if (!document.hidden) document.body.classList.remove('dqsec-hide'); }, delay || 250); }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) hide(); else show(300); });
+  window.addEventListener('blur', hide);
+  window.addEventListener('focus', function () { show(250); });
+  window.addEventListener('pagehide', hide);
+  window.addEventListener('beforeprint', function () { hide(); log('print'); });
+  window.addEventListener('afterprint', function () { show(400); });
+
+  /* ---------- Kopyalama / saxlama / DevTools / PrintScreen ---------- */
+  function editable(t) { return t && t.closest && t.closest('input,textarea,[contenteditable="true"]'); }
+  ['copy', 'cut', 'dragstart'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { if (active() && !editable(e.target)) { e.preventDefault(); toast(); log(ev); } }, true);
+  });
+  document.addEventListener('selectstart', function (e) { if (active() && !editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', function (e) { if (active()) { e.preventDefault(); } }, true);
+
+  function psHit() {
+    try { navigator.clipboard && navigator.clipboard.writeText(' '); } catch (e) {}
+    hide(); show(1600); toast(); log('printscreen');
+  }
+  document.addEventListener('keyup', function (e) { if (active() && e.key === 'PrintScreen') psHit(); }, true);
+  document.addEventListener('keydown', function (e) {
+    if (!active()) return;
+    var k = String(e.key || ''), c = e.ctrlKey || e.metaKey, kl = k.toLowerCase(), bad = false;
+    if (k === 'PrintScreen') { psHit(); e.preventDefault(); return; }
+    if (k === 'F12') bad = true;
+    if (c && !editable(e.target) && /^[cxpsua]$/.test(kl)) bad = true;
+    if (c && e.shiftKey && /^[ijc]$/.test(kl)) bad = true;
+    if (c && kl === 'u') bad = true;
+    if (e.metaKey && e.shiftKey && /^Digit[345]$/.test(e.code || '')) { bad = true; hide(); show(1600); log('screenshot-key'); }
+    if (bad) { e.preventDefault(); e.stopPropagation(); toast(); }
+  }, true);
+})();
+</script>
+<!-- ===== /DQ PATCH: Ekran qorunması ===== -->
+
+<!-- ===== /DQ PATCH: «İştirak et» düzəlişi ===== -->
+
 <!-- ===== /DQ PATCH: Təkrar İştirak İcazəsi ===== -->
 
 <!-- ===== /DQ PATCH: yeniləmə bildirişi düzəlişi ===== -->
