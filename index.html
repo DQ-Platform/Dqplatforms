@@ -12209,6 +12209,159 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   later();
 })();
 </script>
+    <!-- ===== DQ PLATFORM · İSTİFADƏÇİ İCAZƏLƏRİ MODULU (ad + kateqoriya) ===== -->
+<style id="dq-perm-users-css">
+  #mod-icazeler h3 { text-align: left; margin: 0 0 4px; font-size: 17px; }
+  #mod-icazeler .pu-sub { font-size: 12.5px; color: #64748b; margin: 0 0 12px; }
+  .pu-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .pu-search { flex: 1 1 200px; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .pu-search:focus { outline: none; border-color: #d4af37; }
+  .pu-refresh { padding: 10px 14px; border: 0; border-radius: 8px; background: #475569; color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .pu-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .pu-chip { padding: 5px 12px; border-radius: 99px; border: 1.5px solid #cbd5e1; background: #fff; font-size: 12.5px; font-weight: 700; color: #475569; cursor: pointer; }
+  .pu-chip.active { background: #0f172a; border-color: #0f172a; color: #d4af37; }
+  .pu-stats { font-size: 12.5px; font-weight: 700; color: #334155; background: #f1f5f9; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; }
+  .pu-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
+  .pu-main { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .pu-name { font-weight: 800; font-size: 14px; color: #0f172a; text-transform: uppercase; word-break: break-word; }
+  .pu-fin { font-size: 11.5px; color: #64748b; font-weight: 600; margin-top: 2px; }
+  .pu-cats { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
+  .pu-badge { padding: 4px 11px; border-radius: 6px; font-size: 12.5px; font-weight: 800; letter-spacing: .3px; background: #e0e7ff; color: #3730a3; }
+  .pu-badge.BA { background: #e0e7ff; color: #3730a3; }
+  .pu-badge.BB { background: #ccfbf1; color: #0f766e; }
+  .pu-badge.AC { background: #fef3c7; color: #b45309; }
+  .pu-badge.AB { background: #fce7f3; color: #be185d; }
+  .pu-exams { margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 6px; }
+  .pu-exam { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; font-size: 12.5px; color: #334155; }
+  .pu-exam .pu-badge { padding: 2px 8px; font-size: 11.5px; }
+  .pu-del { border: 0; background: #fee2e2; color: #b91c1c; border-radius: 6px; font-weight: 700; font-size: 12px; padding: 4px 10px; cursor: pointer; }
+  .pu-empty { text-align: center; color: #64748b; font-size: 13px; padding: 18px 0; }
+</style>
+
+<script id="dq-perm-users-js">
+(function () {
+  "use strict";
+  var state = { rows: [], q: "", cat: "ALL" };
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+  function catsOf(item) {
+    var c = item.categories;
+    if (Array.isArray(c)) return c.map(function (x) { return String(x).toUpperCase().trim(); }).filter(Boolean);
+    if (c) return String(c).split(/[,;\s]+/).map(function (x) { return x.toUpperCase(); }).filter(Boolean);
+    return ["BA"];
+  }
+  function uniq(a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); }
+  function norm(s) { return String(s || "").trim().replace(/\s+/g, " "); }
+
+  function group() {
+    var map = {};
+    state.rows.forEach(function (it) {
+      var key = String(it.fin || "").toUpperCase() + "|" + norm(it.student_name).toLocaleUpperCase("az");
+      var g = map[key] || (map[key] = { name: norm(it.student_name), fin: String(it.fin || "").toUpperCase(), items: [], cats: [] });
+      var cs = catsOf(it);
+      g.items.push({ id: it.id, exam: it.exam_no || 1, cats: cs });
+      g.cats = uniq(g.cats.concat(cs));
+    });
+    return Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, "az"); });
+  }
+
+  function render() {
+    var box = $("pu-list"); if (!box) return;
+    var groups = group();
+    var allCats = uniq([].concat.apply([], groups.map(function (g) { return g.cats; }))).sort();
+
+    var chips = $("pu-chips");
+    chips.innerHTML = ["ALL"].concat(allCats).map(function (c) {
+      return "<button type='button' class='pu-chip" + (state.cat === c ? " active" : "") + "' data-c='" + esc(c) + "'>" +
+        (c === "ALL" ? "Hamısı" : esc(c)) + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(chips.querySelectorAll(".pu-chip"), function (b) {
+      b.onclick = function () { state.cat = b.getAttribute("data-c"); render(); };
+    });
+
+    var q = norm(state.q).toLocaleLowerCase("az");
+    var list = groups.filter(function (g) {
+      if (state.cat !== "ALL" && g.cats.indexOf(state.cat) === -1) return false;
+      return !q || g.name.toLocaleLowerCase("az").indexOf(q) !== -1 || g.fin.toLowerCase().indexOf(q) !== -1;
+    });
+
+    var perms = list.reduce(function (n, g) { return n + g.items.length; }, 0);
+    $("pu-stats").textContent = list.length + " istifadəçi · " + perms + " icazə qeydi";
+
+    if (!list.length) { box.innerHTML = "<div class='pu-empty'>Uyğun istifadəçi tapılmadı.</div>"; return; }
+
+    box.innerHTML = list.map(function (g) {
+      var shown = state.cat === "ALL" ? g.cats : [state.cat];
+      return "<div class='pu-row'>" +
+        "<div class='pu-main'><div><div class='pu-name'>" + esc(g.name) + "</div><div class='pu-fin'>FİN: " + esc(g.fin) + "</div></div>" +
+        "<div class='pu-cats'>" + shown.map(function (c) { return "<span class='pu-badge " + esc(c) + "'>" + esc(c) + "</span>"; }).join("") + "</div></div>" +
+        "<div class='pu-exams'>" + g.items.map(function (it) {
+          return "<div class='pu-exam'><span>Sınaq " + esc(it.exam) + " → " +
+            it.cats.map(function (c) { return "<span class='pu-badge " + esc(c) + "'>" + esc(c) + "</span>"; }).join(" ") +
+            "</span><button type='button' class='pu-del' data-id='" + esc(it.id) + "'>Sil</button></div>";
+        }).join("") + "</div></div>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".pu-del"), function (b) {
+      b.onclick = function () { del(b.getAttribute("data-id")); };
+    });
+  }
+
+  async function load() {
+    var box = $("pu-list"); if (!box) return;
+    box.innerHTML = "<div class='pu-empty'>Yüklənir...</div>";
+    try {
+      var r = await _supabase.from("allowed_students").select("*");
+      if (r.error) throw r.error;
+      state.rows = r.data || [];
+      render();
+    } catch (e) {
+      box.innerHTML = "<div class='pu-empty' style='color:#b91c1c'>Məlumat yüklənmədi. İnternet bağlantısını yoxlayıb «Yenilə» düyməsinə basın.</div>";
+      console.error("icazələr:", e);
+    }
+  }
+
+  async function del(id) {
+    if (!confirm("Bu istifadəçinin həmin sınaq üzrə icazəsi ləğv edilsin?")) return;
+    try {
+      await _supabase.from("allowed_students").delete().eq("id", id);
+      if (typeof window.loadAllowedStudentsTable === "function") window.loadAllowedStudentsTable();
+    } catch (e) { alert("Silmə alınmadı."); console.error(e); }
+    load();
+  }
+
+  window.DQPU = { open: function () { switchAdminTab("icazeler"); load(); }, reload: load };
+
+  try {
+    var grid = document.querySelector(".admin-nav-grid");
+    if (grid && !$("pu-card")) {
+      var card = document.createElement("div");
+      card.id = "pu-card"; card.className = "admin-nav-card";
+      card.style.cssText = "background:#7c3aed;color:#fff";
+      card.onclick = function () { window.DQPU.open(); };
+      card.innerHTML = "<span class='icon'>👥</span> İstifadəçi İcazələri";
+      grid.appendChild(card);
+    }
+    var anchor = $("mod-suallar");
+    if (anchor && !$("mod-icazeler")) {
+      anchor.insertAdjacentHTML("beforebegin",
+        "<div id='mod-icazeler' class='admin-module-block'>" +
+        "<h3>👥 İstifadəçi İcazələri</h3>" +
+        "<p class='pu-sub'>İcazə verilmiş istifadəçilər və qarşılarında kateqoriyaları.</p>" +
+        "<div class='pu-tools'><input id='pu-search' class='pu-search' type='search' placeholder='Ad və ya FİN ilə axtar...'>" +
+        "<button type='button' class='pu-refresh' id='pu-refresh'>⟳ Yenilə</button></div>" +
+        "<div id='pu-chips' class='pu-chips'></div><div id='pu-stats' class='pu-stats'></div><div id='pu-list'></div></div>");
+      $("pu-search").addEventListener("input", function (e) { state.q = e.target.value; render(); });
+      $("pu-refresh").addEventListener("click", load);
+    }
+  } catch (e) { console.warn("İstifadəçi İcazələri modulu:", e); }
+})();
+</script>
+    
+<!-- ===== MODUL SONU ===== -->
+
 <!-- ===== /DQ PATCH v2 ===== -->
 
 <!-- ===== /DQ PATCH: İmtahan elanı → Qeydiyyatdan keç ===== -->
