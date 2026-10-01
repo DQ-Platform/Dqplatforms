@@ -14993,6 +14993,48 @@ html{scroll-behavior:smooth}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
+    <!-- ===== DQ PATCH: Yeniləyəndə çıxan «Bu sınağa (Sınaq 1, BA) iştirak icazəniz yoxdur» bildirişinin düzəlişi
+     </body> teqindən dərhal əvvələ, ən sonda yapışdırın. Heç nə silinmir.
+     Səbəb: səhifə yenilənəndə (beforeunload) sistem imtahan getməsə belə «yarımçıq imtahan» vəziyyətini saxlayırdı;
+     növbəti açılışda bu boş vəziyyət bərpa olunmağa çalışır və icazə qapısı bildiriş göstərirdi.
+     Həll: (1) vəziyyət yalnız imtahan ekranı aktiv olanda saxlanılır; (2) əvvəldən qalmış boş/admin vəziyyəti səssizcə təmizlənir.
+     Həqiqi gedən imtahanın bərpası və icazə yoxlaması olduğu kimi qalır. -->
+<script>
+(function () {
+  'use strict';
+
+  /* (2) Əvvəldən qalmış «boş» vəziyyəti, DOMContentLoaded-də restoreSession işləməzdən əvvəl təmizlə */
+  try {
+    var raw = localStorage.getItem('dq_exam_state');
+    if (raw) {
+      var st = null;
+      try { st = JSON.parse(raw); } catch (e) { st = null; }
+      var empty = !st || !Array.isArray(st.questions) || st.questions.length === 0;
+      var admin = st && /ADMIN\s*REDAKTOR/i.test(String(st.studentName || ''));
+      if (empty || admin) {
+        localStorage.removeItem('dq_exam_state');
+        localStorage.removeItem('dq_exam_end_time');
+      }
+    }
+  } catch (e) {}
+
+  /* (1) Yalnız həqiqətən imtahan gedəndə saxla */
+  var orig = window.saveSessionState;
+  if (typeof orig === 'function') {
+    window.saveSessionState = function () {
+      try {
+        var scr = document.getElementById('exam-screen');
+        var live = (typeof isLiveEditMode !== 'undefined' && isLiveEditMode === true);
+        if (live || !scr || !scr.classList.contains('active')) return;
+        if (typeof allQuestions !== 'undefined' && (!allQuestions || !allQuestions.length)) return;
+      } catch (e) { return; }
+      return orig.apply(this, arguments);
+    };
+  }
+})();
+</script>
+<!-- ===== /DQ PATCH: yeniləmə bildirişi düzəlişi ===== -->
+
 <!-- ===== /DQ PATCH: Qiymət İdarəsi ===== -->
 
 <!-- ===== MÖHÜR EFFEKTİ SONU ===== -->
