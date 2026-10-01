@@ -14364,6 +14364,140 @@ html{scroll-behavior:smooth}
   }, true);
 })();
 </script>
+    <!-- ===== QİYMƏT + ENDİRİM YAMAĞI (</body> teqindən əvvələ yapışdırın) ===== -->
+<style>
+  .dq-price{display:inline-flex;align-items:center;gap:6px;margin-right:10px;font-weight:700;font-size:14px;white-space:nowrap}
+  .dq-price .old{text-decoration:line-through;color:#9ca3af;font-weight:500}
+  .dq-price .now{color:#16a34a}
+  .dq-price .norm{color:#0f2a5c}
+  .dq-price .off{background:#fee2e2;color:#dc2626;font-size:11px;padding:2px 6px;border-radius:6px}
+  #dq-admin-btn{position:fixed;right:14px;bottom:14px;z-index:9998;background:#0f2a5c;color:#fff;border:0;border-radius:999px;padding:12px 16px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}
+  #dq-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:center;justify-content:center;padding:14px}
+  #dq-modal .box{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
+  #dq-modal h3{margin:0 0 12px;color:#0f2a5c}
+  #dq-modal .row{border:1px solid #e5e7eb;border-radius:10px;padding:10px;margin-bottom:10px}
+  #dq-modal label{display:block;font-size:12px;color:#6b7280;margin:6px 0 2px}
+  #dq-modal input{width:100%;box-sizing:border-box;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:15px}
+  #dq-modal button{border:0;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer;margin-top:8px}
+  .dq-disc{background:#f59e0b;color:#fff}
+  .dq-del{background:#fee2e2;color:#dc2626;margin-left:6px}
+  .dq-save{background:#16a34a;color:#fff;width:100%}
+  .dq-close{background:#e5e7eb;color:#111;width:100%}
+</style>
+
+<script>
+(function () {
+  // ---- AYARLAR ----
+  // Backend varsa endpoint yazın (GET -> JSON qaytarmalı, POST -> JSON qəbul etməli).
+  // Boş qalsa qiymətlər yalnız bu brauzerdə (localStorage) saxlanır.
+  var API_URL = ""; // məsələn: "/api/category-prices"
+  var IS_ADMIN = function () {
+    return window.IS_ADMIN === true || location.pathname.toLowerCase().indexOf("admin") > -1;
+  };
+  var KEY = "dq_prices_v1";
+  var CATS = ["BA", "BB", "AC"];
+  var DEFAULTS = { BA: { price: 15, discount: null }, BB: { price: 10, discount: null }, AC: { price: 20, discount: null } };
+  var prices = JSON.parse(JSON.stringify(DEFAULTS));
+
+  function merge(d) {
+    CATS.forEach(function (c) {
+      if (d && d[c]) prices[c] = { price: Number(d[c].price) || DEFAULTS[c].price, discount: d[c].discount ? Number(d[c].discount) : null };
+    });
+  }
+  function load() {
+    try { merge(JSON.parse(localStorage.getItem(KEY))); } catch (e) {}
+    if (!API_URL) return Promise.resolve();
+    return fetch(API_URL).then(function (r) { return r.json(); }).then(merge).catch(function () {});
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(prices)); } catch (e) {}
+    if (API_URL) {
+      return fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prices) }).catch(function () {});
+    }
+    return Promise.resolve();
+  }
+
+  // ---- İSTİFADƏÇİ TƏRƏFİ: qiymət yaşıl düymədən əvvəl ----
+  function priceHTML(c) {
+    var p = prices[c];
+    if (p.discount && p.discount < p.price) {
+      var pct = Math.round((1 - p.discount / p.price) * 100);
+      return '<span class="old">' + p.price + '₼</span><span class="now">' + p.discount + '₼</span><span class="off">-' + pct + '%</span>';
+    }
+    return '<span class="norm">' + p.price + '₼</span>';
+  }
+  function render() {
+    document.querySelectorAll("button, a, div, span").forEach(function (el) {
+      if (el.children.length > 1 || el.dataset.dqDone === "1") return;
+      if ((el.textContent || "").indexOf("Qeydiyyatdan keçmək üçün") === -1) return;
+      var row = el.parentElement, cat = null, guard = 0;
+      while (row && guard++ < 5 && !cat) {
+        var m = (row.textContent || "").match(/\b(BA|BB|AC)\s+Kateqoriyas/);
+        if (m) cat = m[1]; else row = row.parentElement;
+      }
+      if (!cat) return;
+      var old = el.parentElement.querySelector('.dq-price[data-cat="' + cat + '"]');
+      if (old) old.remove();
+      var s = document.createElement("span");
+      s.className = "dq-price"; s.dataset.cat = cat; s.innerHTML = priceHTML(cat);
+      el.parentElement.insertBefore(s, el);
+    });
+    document.querySelectorAll(".dq-price").forEach(function (s) { s.innerHTML = priceHTML(s.dataset.cat); });
+  }
+
+  // ---- ADMİN TƏRƏFİ ----
+  function buildAdmin() {
+    var btn = document.createElement("button");
+    btn.id = "dq-admin-btn"; btn.textContent = "💰 Qiymətlər";
+    var modal = document.createElement("div");
+    modal.id = "dq-modal";
+    document.body.appendChild(btn); document.body.appendChild(modal);
+
+    function open() {
+      var h = '<div class="box"><h3>Kateqoriya qiymətləri</h3>';
+      CATS.forEach(function (c) {
+        var p = prices[c], has = !!p.discount;
+        h += '<div class="row" data-c="' + c + '"><b>' + c + ' Kateqoriyası</b>' +
+          '<label>Qiymət (₼)</label><input type="number" min="0" step="0.01" class="pr" value="' + p.price + '">' +
+          '<div class="dw" style="display:' + (has ? "block" : "none") + '"><label>Endirimli qiymət (₼)</label>' +
+          '<input type="number" min="0" step="0.01" class="di" value="' + (p.discount || "") + '"></div>' +
+          '<button class="dq-disc" style="display:' + (has ? "none" : "inline-block") + '">Endirim tətbiq et</button>' +
+          '<button class="dq-del" style="display:' + (has ? "inline-block" : "none") + '">Endirimi sil</button></div>';
+      });
+      h += '<button class="dq-save">Yadda saxla</button><button class="dq-close">Bağla</button></div>';
+      modal.innerHTML = h; modal.style.display = "flex";
+
+      modal.querySelectorAll(".row").forEach(function (r) {
+        var dw = r.querySelector(".dw"), ab = r.querySelector(".dq-disc"), db = r.querySelector(".dq-del"), di = r.querySelector(".di");
+        ab.onclick = function () { dw.style.display = "block"; ab.style.display = "none"; db.style.display = "inline-block"; di.focus(); };
+        db.onclick = function () { di.value = ""; dw.style.display = "none"; ab.style.display = "inline-block"; db.style.display = "none"; };
+      });
+      modal.querySelector(".dq-close").onclick = function () { modal.style.display = "none"; };
+      modal.querySelector(".dq-save").onclick = function () {
+        var ok = true;
+        modal.querySelectorAll(".row").forEach(function (r) {
+          var c = r.dataset.c, pr = parseFloat(r.querySelector(".pr").value), dv = parseFloat(r.querySelector(".di").value);
+          if (isNaN(pr) || pr < 0) { ok = false; return; }
+          if (!isNaN(dv) && dv >= pr) { alert(c + ": endirimli qiymət əsas qiymətdən kiçik olmalıdır"); ok = false; return; }
+          prices[c] = { price: pr, discount: isNaN(dv) ? null : dv };
+        });
+        if (!ok) return;
+        save().then(function () { modal.style.display = "none"; render(); alert("Yadda saxlanıldı ✅"); });
+      };
+    }
+    btn.onclick = open;
+  }
+
+  // ---- START ----
+  load().then(function () {
+    render();
+    if (IS_ADMIN()) buildAdmin();
+    new MutationObserver(function () { render(); }).observe(document.body, { childList: true, subtree: true });
+  });
+})();
+</script>
+<!-- ===== YAMAĞIN SONU ===== -->
+
 
 </body>
     </html>
