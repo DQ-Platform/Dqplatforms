@@ -13153,6 +13153,289 @@ img.pic,.dq-nw>img{width:100%!important;height:auto!important;max-height:78vh;ob
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
+    <!-- ===== DQ V7 MODULU: admin paneldə Admin/Kod/Siyahı/İdarə/Suallar/Kabinet/Kontrol/Statistika/Pult/Operator =====
+     </body> teqindən dərhal əvvələ, ən sonda (bütün yamaqların altına) yapışdırın. Heç nə silinmir. ===== -->
+<style id="v7-css">
+.q7-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.q7-cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.q7-card{display:flex;gap:12px;align-items:center;background:#faf9f6;border:1px solid #ece9e2;border-radius:14px;padding:14px;color:#1e1b4b;text-decoration:none;transition:transform .15s}
+.q7-card:hover{transform:translateY(-2px);border-color:#1e1b4b}.q7-card i{font-size:20px;width:26px;text-align:center}
+.q7-card b{display:block;font-size:14px}.q7-card small{color:#64748b;font-size:11px}
+.q7-o{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.q7-o>.v2-in{flex:1;min-width:180px}
+.q7-im{max-height:120px;max-width:200px;border-radius:8px;border:1px solid #eee;margin:6px 8px 0 0;display:block}
+</style>
+<script id="v7-js">
+(function () {
+  var tries = 0;
+  (function boot() {
+    if (typeof V2 === 'undefined' || typeof _supabase === 'undefined' || !V2 || !V2.menu) { if (tries++ < 120) return setTimeout(boot, 250); return; }
+    init();
+  })();
+  function init() {
+    if (window.V7) return;
+    var $ = function (i) { return document.getElementById(i); }, E = function (s) { return V2.esc(s); }, S = function () { return _supabase; }, val = function (i) { return ($(i) || {}).value || ''; };
+    var CATS = ['BA', 'BB', 'AC'], L5 = 'ABCDE';
+    var thr = function (c) { return ((typeof PASS_THRESHOLDS !== 'undefined' && PASS_THRESHOLDS[c]) || [65]).slice(-1)[0]; };
+    var TABS = [['admin', 'fa-user-shield', 'Admin'], ['kod', 'fa-key', 'Kod'], ['siyahi', 'fa-list-check', 'Siyahı'], ['idare', 'fa-bars-progress', 'İdarə'], ['suallar', 'fa-circle-question', 'Suallar'], ['kabinet', 'fa-user-gear', 'Kabinet'], ['kontrol', 'fa-sliders', 'Kontrol'], ['stat', 'fa-chart-line', 'Statistika'], ['pult', 'fa-gamepad', 'Pult'], ['operator', 'fa-cubes', 'Operator']];
+    var V7 = window.V7 = { tab: 'operator', eid: null, timer: 0, rs: [], f: 'ALL', q: '', sc: 'ALL', sx: 'ALL', kf: '' };
+    var tbl = function (h, r) { return '<div class="v2-wrap"><table class="v2-tbl"><thead><tr>' + h.map(function (x) { return '<th>' + x + '</th>'; }).join('') + '</tr></thead><tbody>' + (r.join('') || '<tr><td colspan="' + h.length + '" class="v2-empty">Məlumat yoxdur</td></tr>') + '</tbody></table></div>'; };
+    var cnt = async function (t) { try { return (await S().from(t).select('id', { count: 'exact', head: true })).count || 0; } catch (e) { return 0; } };
+    var stus = async function () { var r = await S().from('allowed_students').select('*').order('id', { ascending: false }); return r.data || []; };
+    var cats = function (s) { return Array.isArray(s.categories) ? s.categories : (s.categories ? [s.categories] : []); };
+    var sname = function (s) { return s.student_name || s.name || '-'; };
+    var csv = function (name, rows) { var t = '\ufeff' + rows.map(function (r) { return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(';'); }).join('\n'); var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type: 'text/csv;charset=utf-8' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
+    var modal = function (h) { var d = document.createElement('div'); d.className = 'v2-modal'; d.onclick = function (e) { if (e.target === d) d.remove(); }; d.innerHTML = '<div style="max-width:760px;width:100%">' + h + '<div style="text-align:right;margin-top:14px"><button class="v2-b o" onclick="this.closest(\'.v2-modal\').remove()">Bağla</button></div></div>'; document.body.appendChild(d); };
+    var chips = function (a) { return a.map(function (c) { return '<span class="v2-tag" style="margin-right:4px">' + E(c) + '</span>'; }).join(''); };
+
+    /* ================= naviqasiya ================= */
+    V7.go = async function (t) {
+      clearInterval(V7.timer); V7.tab = t;
+      var box = $('v7'); if (!box) return;
+      var nav = '<div class="q7-tabs">' + TABS.map(function (x) { return '<button class="v2-b ' + (x[0] === t ? '' : 'o ') + 's" onclick="V7.eid=null;V7.go(\'' + x[0] + '\')"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</div><div id="v7-body"><div class="v2-empty">Yüklənir…</div></div>';
+      box.innerHTML = nav;
+      try { var h = await V7['t_' + t](); if (V7.tab === t && $('v7-body')) { $('v7-body').innerHTML = h; if (V7['a_' + t]) V7['a_' + t](); } }
+      catch (e) { if ($('v7-body')) $('v7-body').innerHTML = '<div class="v2-card" style="color:#dc2626">Xəta: ' + E(e.message || e) + '</div>'; }
+    };
+
+    /* ================= icazə formu (Admin / Kod / Siyahı) ================= */
+    var stuForm = function (p, cur, gen) {
+      var cs = cur ? cats(cur) : CATS, ex = cur ? String(cur.exam_no || 1) : '1';
+      return '<div class="v2-card"><h3>' + (cur ? '✏️ İcazəni redaktə et' : '➕ İştirakçıya icazə ver') + '</h3><div class="v2-grid">' +
+        '<div class="v2-f"><label>Ad və Soyad</label><input class="v2-in" id="' + p + '-n" value="' + E(cur && sname(cur)) + '"></div>' +
+        '<div class="v2-f"><label>FİN / İcazə kodu</label><div style="display:flex;gap:6px"><input class="v2-in" id="' + p + '-f" maxlength="7" style="text-transform:uppercase" value="' + E(cur && cur.fin) + '">' + (gen ? '<button type="button" class="v2-b o s" onclick="document.getElementById(\'' + p + '-f\').value=V7.gen()">🎲</button>' : '') + '</div></div>' +
+        '<div class="v2-f"><label>Sınaq</label><select class="v2-in" id="' + p + '-e">' + [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (i) { return '<option ' + (String(i) === ex ? 'selected' : '') + '>' + i + '</option>'; }).join('') + '</select></div>' +
+        '<div class="v2-f"><label>İcazəli kateqoriyalar</label><div>' + CATS.map(function (c) { return '<label style="margin-right:12px"><input type="checkbox" id="' + p + '-c' + c + '" ' + (cs.indexOf(c) > -1 ? 'checked' : '') + '> ' + c + '</label>'; }).join('') + '</div></div></div>' +
+        '<div style="margin-top:14px;display:flex;gap:8px"><button class="v2-b g" onclick="V7.saveStu(\'' + p + '\')">🔑 ' + (cur ? 'Yadda saxla' : 'İcazə ver') + '</button>' + (cur ? '<button class="v2-b o" onclick="V7.eid=null;V7.go(V7.tab)">Ləğv et</button>' : '') + '</div></div>';
+    };
+    V7.gen = function () { var c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = ''; for (var i = 0; i < 7; i++) s += c[Math.floor(Math.random() * c.length)]; return s; };
+    V7.saveStu = async function (p) {
+      var name = val(p + '-n').trim(), fin = val(p + '-f').trim().toUpperCase(), ex = val(p + '-e') || '1', cs = CATS.filter(function (c) { return $(p + '-c' + c) && $(p + '-c' + c).checked; });
+      if (!name || fin.length < 5 || !cs.length) return alert('Ad, FİN (ən azı 5 simvol) və ən azı bir kateqoriya daxil edin.');
+      var rows = await stus();
+      if (rows.some(function (r) { return r.fin === fin && String(r.exam_no || 1) === ex && r.id != V7.eid; })) return alert('Bu FİN bu sınaq üçün artıq mövcuddur.');
+      var o = { student_name: name, fin: fin, exam_no: ex, categories: cs };
+      var r = V7.eid ? await S().from('allowed_students').update(o).eq('id', V7.eid) : await S().from('allowed_students').insert([o]);
+      if (r.error) return alert('Xəta: ' + r.error.message);
+      V2.toast(V7.eid ? 'Yeniləndi ✅' : 'İcazə verildi ✅'); V7.eid = null; V7.go(V7.tab);
+    };
+    V7.edit = function (id) { V7.eid = id; V7.go(V7.tab); window.scrollTo(0, 0); var m = document.querySelector('.v2-main'); if (m) m.scrollTop = 0; };
+    V7.delStu = async function (id) { if (!confirm('İcazə ləğv edilsin?')) return; var r = await S().from('allowed_students').delete().eq('id', id); if (r.error) alert('Xəta: ' + r.error.message); else { V2.toast('Silindi'); V7.go(V7.tab); } };
+    V7.copy = function (t) { try { navigator.clipboard.writeText(t); V2.toast('Kopyalandı ✅'); } catch (e) { prompt('Kopyalayın:', t); } };
+
+    /* ================= ADMIN ================= */
+    V7.t_admin = async function () {
+      var rows = await stus(), cur = V7.eid && rows.filter(function (r) { return r.id == V7.eid; })[0], old = [];
+      try { old = JSON.parse(localStorage.getItem('yunisAllowedStudents') || '[]'); } catch (e) {}
+      return stuForm('a', cur) + (old.length ? '<div class="v2-card"><h3>Köhnə lokal siyahı (' + old.length + ')</h3><button class="v2-b o" onclick="V7.imp()">⬆️ Bazaya köçür</button></div>' : '') +
+        '<div class="v2-card"><h3>İcazə verilən şəxslər (' + rows.length + ')</h3>' + tbl(['Ad Soyad', 'FİN', 'Sınaq', 'Kateqoriya', ''], rows.map(function (s) { return '<tr><td><b>' + E(sname(s)) + '</b></td><td>' + E(s.fin) + '</td><td>' + E(s.exam_no || 1) + '</td><td>' + chips(cats(s)) + '</td><td style="white-space:nowrap"><button class="v2-b o s" onclick="V7.edit(' + s.id + ')">✏️</button> <button class="v2-b r s" onclick="V7.delStu(' + s.id + ')">🗑️</button></td></tr>'; })) + '</div>' +
+        '<div class="v2-card"><h3>Sistem modulları</h3>' + V7.cards(TABS.map(function (x) { return [x[2], x[0], x[1], "V7.go('" + x[0] + "')"]; })) + '</div>';
+    };
+    V7.imp = async function () {
+      var old = []; try { old = JSON.parse(localStorage.getItem('yunisAllowedStudents') || '[]'); } catch (e) {}
+      var have = (await stus()).map(function (r) { return r.fin; }), add = old.filter(function (o) { return o.fin && have.indexOf(String(o.fin).toUpperCase()) < 0; }).map(function (o) { return { student_name: o.name, fin: String(o.fin).toUpperCase(), exam_no: '1', categories: CATS }; });
+      if (add.length) { var r = await S().from('allowed_students').insert(add); if (r.error) return alert('Xəta: ' + r.error.message); }
+      localStorage.removeItem('yunisAllowedStudents'); V2.toast(add.length + ' nəfər köçürüldü ✅'); V7.go('admin');
+    };
+
+    /* ================= KOD ================= */
+    V7.t_kod = async function () {
+      var rows = await stus(), ses = []; try { ses = await V2.list('sessions'); } catch (e) {}
+      var cur = V7.eid && rows.filter(function (r) { return r.id == V7.eid; })[0];
+      return stuForm('k', cur, 1) + '<div class="v2-card"><h3>Aktiv giriş kodları və icazələr (' + rows.length + ')</h3>' + tbl(['Ad', 'FİN KOD', 'Sınaq №', 'Kateqoriyalar', ''], rows.map(function (s) { return '<tr><td>' + E(sname(s)) + '</td><td><b>' + E(s.fin) + '</b> <a href="#" onclick="V7.copy(\'' + E(s.fin) + '\');return false">📋</a></td><td>Sınaq ' + E(s.exam_no || 1) + '</td><td>' + chips(cats(s)) + '</td><td style="white-space:nowrap"><button class="v2-b o s" onclick="V7.edit(' + s.id + ')">✏️</button> <button class="v2-b r s" onclick="V7.delStu(' + s.id + ')">Sil</button></td></tr>'; })) + '</div>' +
+        (ses.length ? '<div class="v2-card"><h3>İmtahan sessiya kodları</h3>' + tbl(['Ad', 'Kod', 'Status'], ses.map(function (s) { return '<tr><td>' + E(s.name) + '</td><td><b>' + E(s.code) + '</b> <a href="#" onclick="V7.copy(\'' + E(s.code) + '\');return false">📋</a></td><td>' + E(s.status) + '</td></tr>'; })) + '</div>' : '');
+    };
+
+    /* ================= SİYAHI ================= */
+    V7.t_siyahi = async function () {
+      var rs = await Promise.all([stus(), S().from('exam_results').select('fin,score'), V2.list('v7block')]), rows = rs[0], best = {}, bl = {};
+      (rs[1].data || []).forEach(function (r) { if (best[r.fin] == null || (r.score || 0) > best[r.fin]) best[r.fin] = r.score || 0; });
+      rs[2].forEach(function (b) { if (b.blocked) bl[b.fin] = 1; });
+      var cur = V7.eid && rows.filter(function (r) { return r.id == V7.eid; })[0], q = V7.q.toLowerCase();
+      var list = rows.filter(function (s) { return (V7.f === 'ALL' || cats(s).indexOf(V7.f) > -1) && (!q || (sname(s) + ' ' + s.fin).toLowerCase().indexOf(q) > -1); });
+      V7._exp = list.map(function (s) { return [sname(s), s.fin, s.exam_no || 1, cats(s).join('+'), best[s.fin] == null ? '' : best[s.fin], bl[s.fin] ? 'Dayandırılıb' : 'Aktiv']; });
+      return stuForm('s', cur) + '<div class="v2-card"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' + ['ALL'].concat(CATS).map(function (c) { return '<button class="v2-b ' + (V7.f === c ? '' : 'o ') + 's" onclick="V7.f=\'' + c + '\';V7.go(\'siyahi\')">' + (c === 'ALL' ? 'HAMISI' : c) + '</button>'; }).join('') + '<input class="v2-in" style="max-width:240px" placeholder="Ad / FİN axtar…" value="' + E(V7.q) + '" onchange="V7.q=this.value;V7.go(\'siyahi\')"><button class="v2-b o s" onclick="csv7()">⬇️ CSV</button></div>' +
+        tbl(['Ad Soyad', 'FİN', 'Kateqoriya', 'Nəticə (bal)', 'Status', ''], list.map(function (s) { var b = bl[s.fin]; return '<tr><td><b>' + E(sname(s)) + '</b></td><td>' + E(s.fin) + '</td><td>' + chips(cats(s)) + '</td><td>' + (best[s.fin] == null ? 'İştirak etməyib' : best[s.fin] + ' bal') + '</td><td>' + (b ? '<span style="color:#dc2626;font-weight:700">⛔ Dayandırılıb</span>' : '<span style="color:#059669;font-weight:700">✅ Aktiv</span>') + '</td><td style="white-space:nowrap"><button class="v2-b o s" onclick="V7.blk(\'' + E(s.fin) + '\',' + (b ? 'false' : 'true') + ')">' + (b ? '▶️ İcazə ver' : '⏸️ Dayandır') + '</button> <button class="v2-b o s" onclick="V7.edit(' + s.id + ')">✏️</button> <button class="v2-b r s" onclick="V7.delStu(' + s.id + ')">🗑️</button></td></tr>'; })) + '</div>';
+    };
+    window.csv7 = function () { csv('istirakcilar.csv', [['Ad', 'FİN', 'Sınaq', 'Kateqoriya', 'Bal', 'Status']].concat(V7._exp || [])); };
+    V7.blk = async function (fin, b) { var l = await V2.list('v7block'), x = l.filter(function (y) { return y.fin === fin; })[0]; await V2.put('v7block', { fin: fin, blocked: b }, x ? x._id : undefined); V2.toast(b ? 'İştirak dayandırıldı' : 'İcazə bərpa olundu ✅'); V7.go('siyahi'); };
+
+    /* ================= SUAL REDAKTORU (İdarə + Suallar) ================= */
+    var Q = V7.Q = { ex: '1', cat: 'BA', n: 1, rows: {}, imgQ: null, opts: [], cor: 0, rich: false };
+    var subj = function (n) { return typeof getSubjectByNumber === 'function' ? getSubjectByNumber(n) : 'Ümumi'; };
+    var isOpen = function (n) { return Q.cat === 'BA' && typeof openQuestionIds !== 'undefined' && openQuestionIds.indexOf(n) > -1; };
+    var oT = function (o) { return o && typeof o === 'object' ? (o.text || '') : (o || ''); }, oI = function (o) { return o && typeof o === 'object' ? (o.image || null) : null; };
+    var fit = function (file) { return new Promise(function (ok, no) { var u = URL.createObjectURL(file), im = new Image(); im.onerror = function () { URL.revokeObjectURL(u); no(); }; im.onload = function () { var k = Math.min(1, 1000 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', .82)); }; im.src = u; }); };
+    Q.load = async function () { var r = await S().from('exam_questions').select('*').eq('exam_id', Q.ex).eq('category', Q.cat).order('q_number'); Q.rows = {}; (r.data || []).forEach(function (q) { Q.rows[q.q_number] = q; }); };
+    V7.qHtml = function (rich) {
+      Q.rich = rich; var st = typeof examStructure !== 'undefined' ? examStructure : [];
+      return '<div class="v2-card"><h3>' + (rich ? 'Sualların redaktəsi (şəkil və açıq suallar dəstəyi ilə)' : 'Sual tərtibatı (əlavə et / redaktə et)') + '</h3><div class="v2-grid">' +
+        '<div class="v2-f"><label>Sınaq</label><select class="v2-in" onchange="V7.qSet(\'ex\',this.value)">' + [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (i) { return '<option ' + (String(i) === Q.ex ? 'selected' : '') + '>' + i + '</option>'; }).join('') + '</select></div>' +
+        '<div class="v2-f"><label>Kateqoriya</label><select class="v2-in" onchange="V7.qSet(\'cat\',this.value)">' + CATS.map(function (c) { return '<option ' + (c === Q.cat ? 'selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>' +
+        (rich ? '<div class="v2-f"><label>Fənn (keçid)</label><select class="v2-in" onchange="V7.qSet(\'n\',+this.value)">' + st.map(function (s) { return '<option value="' + s.start + '">' + E(s.title) + ' (' + s.start + '–' + s.end + ')</option>'; }).join('') + '</select></div>' : '') +
+        '<div class="v2-f"><label>Sual nömrəsi (1–100)</label><input class="v2-in" id="q7-n" type="number" min="1" max="100" value="' + Q.n + '" onchange="V7.qSet(\'n\',+this.value)"></div></div>' +
+        '<p id="q7-info" style="margin:12px 0;font-weight:700"></p><div class="v2-f"><label>Sual mətni</label><textarea class="v2-in" id="q7-t" rows="4"></textarea></div>' +
+        (rich ? '<div class="v2-f" style="margin-top:10px"><label>📷 Sualın şəkli</label><input type="file" accept="image/*" onchange="V7.qImg(this)"><div id="q7-qi"></div></div>' : '') +
+        '<div id="q7-o" style="margin-top:12px"></div><div id="q7-op" style="margin-top:12px;display:none"><div class="v2-f"><label>Düzgün açıq cavab</label><input class="v2-in" id="q7-open"></div>' + (rich ? '<div style="margin-top:8px"><label>1–6 rəqəm seçimi: </label>' + [1, 2, 3, 4, 5, 6].map(function (i) { return '<label style="margin-right:8px"><input type="checkbox" class="q7-num" value="' + i + '" onchange="V7.numSel()"> ' + i + '</label>'; }).join('') + '</div>' : '') + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="v2-b o" onclick="V7.qStep(-1)">⬅ Əvvəlki</button><button class="v2-b g" onclick="V7.qSave()">💾 Sualı yadda saxla</button><button class="v2-b r" onclick="V7.qDel()">🗑️ Sil</button><button class="v2-b o" onclick="V7.qStep(1)">Növbəti ➡</button></div></div>' +
+        (rich ? '' : '<div class="v2-card"><h3>Canlı önbaxış</h3><div id="q7-pv"></div></div>') + '<div class="v2-card"><h3>Cavab kartı</h3><div id="q7-g" style="display:flex;flex-wrap:wrap;gap:5px"></div></div>';
+    };
+    V7.aQ = async function () { await Q.load(); V7.qShow(Q.n); };
+    V7.qShow = function (n) {
+      n = Math.max(1, Math.min(100, parseInt(n) || 1)); Q.n = n; var q = Q.rows[n], s = subj(n);
+      $('q7-n').value = n; $('q7-info').textContent = 'Sual ' + n + ' — ' + s + (q ? '' : ' (bazada yoxdur — saxlayanda yaradılacaq)');
+      $('q7-t').value = q ? (q.question || '') : ''; Q.imgQ = q ? (q.image_url || null) : null; V7.qiRen();
+      var open = isOpen(n); $('q7-o').style.display = open ? 'none' : 'block'; $('q7-op').style.display = open ? 'block' : 'none';
+      if (open) { $('q7-open').value = q && q.correct != null ? q.correct : ''; document.querySelectorAll('.q7-num').forEach(function (c) { c.checked = String($('q7-open').value).indexOf(c.value) > -1; }); }
+      else { var ops = q && Array.isArray(q.options) ? q.options : [], lim = Math.max(ops.length, s === 'Qanunvericilik' ? 4 : 5, 2); Q.opts = []; for (var i = 0; i < Math.min(lim, 5); i++) Q.opts.push({ text: oT(ops[i]), image: oI(ops[i]) }); var c = q ? parseInt(q.correct) : 0; Q.cor = isNaN(c) ? 0 : c; V7.oRen(); }
+      V7.gRen(); V7.pvRen();
+    };
+    V7.oRen = function () {
+      var el = $('q7-o'); if (!el) return;
+      el.innerHTML = Q.opts.map(function (o, i) { return '<div class="q7-o"><b>' + L5[i] + ')</b><input class="v2-in" value="' + E(o.text) + '" oninput="V7.Q.opts[' + i + '].text=this.value;V7.pvRen()"><label><input type="radio" name="q7c" ' + (Q.cor === i ? 'checked' : '') + ' onchange="V7.Q.cor=' + i + ';V7.pvRen()"> Düzgün</label>' + (Q.opts.length > 2 ? '<button class="v2-b r s" onclick="V7.oDel(' + i + ')">✕</button>' : '') + (Q.rich ? '<input type="file" accept="image/*" onchange="V7.oImg(' + i + ',this)">' : '') + (o.image ? '<img src="' + o.image + '" class="q7-im"><button class="v2-b o s" onclick="V7.Q.opts[' + i + '].image=null;V7.oRen()">Şəkli sil</button>' : '') + '</div>'; }).join('') + (Q.opts.length < 5 ? '<button class="v2-b o s" onclick="V7.oAdd()">+ Dinamik variant</button>' : '');
+      V7.pvRen();
+    };
+    V7.oAdd = function () { if (Q.opts.length < 5) { Q.opts.push({ text: '', image: null }); V7.oRen(); } };
+    V7.oDel = function (i) { Q.opts.splice(i, 1); if (Q.cor === i) Q.cor = 0; else if (Q.cor > i) Q.cor--; V7.oRen(); };
+    V7.oImg = async function (i, inp) { if (!inp.files[0]) return; try { Q.opts[i].image = await fit(inp.files[0]); V7.oRen(); } catch (e) { alert('Şəkil oxunmadı. JPG/PNG/WEBP seçin.'); } };
+    V7.qImg = async function (inp) { if (!inp.files[0]) return; try { Q.imgQ = await fit(inp.files[0]); V7.qiRen(); } catch (e) { alert('Şəkil oxunmadı. JPG/PNG/WEBP seçin.'); } inp.value = ''; };
+    V7.qiRen = function () { var el = $('q7-qi'); if (el) el.innerHTML = Q.imgQ ? '<img src="' + Q.imgQ + '" class="q7-im"><button class="v2-b o s" onclick="V7.Q.imgQ=null;V7.qiRen()">Şəkli sil</button>' : ''; };
+    V7.numSel = function () { $('q7-open').value = [].slice.call(document.querySelectorAll('.q7-num:checked')).map(function (c) { return c.value; }).join(''); };
+    V7.gRen = function () { var h = ''; for (var i = 1; i <= 100; i++) h += '<button class="v2-b s" style="min-width:36px;padding:6px;background:' + (i === Q.n ? '#1d4ed8' : Q.rows[i] ? '#dcfce7;color:#111' : '#fee2e2;color:#111') + '" onclick="V7.qShow(' + i + ')">' + i + '</button>'; $('q7-g').innerHTML = h; };
+    V7.pvRen = function () {
+      var el = $('q7-pv'); if (!el) return; var n = Q.n;
+      el.innerHTML = '<b>Sual ' + n + ' (' + E(subj(n)) + '):</b><p style="margin:8px 0;white-space:pre-wrap">' + E(val('q7-t') || '—') + '</p>' + (isOpen(n) ? '<i>Açıq sual</i>' : '<ul style="padding-left:20px">' + Q.opts.map(function (o, i) { return '<li style="' + (i === Q.cor ? 'color:#059669;font-weight:700' : '') + '">' + L5[i] + ') ' + E(o.text) + '</li>'; }).join('') + '</ul>');
+    };
+    V7.qSet = async function (k, v) { Q[k] = v; if (k !== 'n') await Q.load(); V7.qShow(Q.n); };
+    V7.qStep = function (d) { V7.qShow(Q.n + d); };
+    V7.qSave = async function () {
+      var n = Q.n, t = val('q7-t').trim(); if (!t && !Q.imgQ) return alert('Sual mətnini və ya şəklini daxil edin.');
+      var p = { question: t, subject: subj(n), image_url: Q.imgQ || null };
+      if (isOpen(n)) { p.correct = val('q7-open').trim().toUpperCase(); if (!p.correct) return alert('Düzgün açıq cavabı daxil edin.'); p.options = []; }
+      else { var ops = Q.opts.map(function (o) { return { text: (o.text || '').trim(), image: o.image || null }; }); if (ops.filter(function (o) { return o.text || o.image; }).length < 2) return alert('Ən azı 2 variantı doldurun.'); p.options = ops; p.correct = Q.cor; }
+      var old = Q.rows[n], r = old ? await S().from('exam_questions').update(p).eq('id', old.id) : await S().from('exam_questions').insert([Object.assign({ exam_id: Q.ex, category: Q.cat, q_number: n }, p)]);
+      if (r.error) return alert('Xəta: ' + r.error.message);
+      await Q.load(); V7.qShow(n); V2.toast('Sual ' + n + ' saxlanıldı ✅');
+    };
+    V7.qDel = async function () { var q = Q.rows[Q.n]; if (!q) return alert('Bu sual bazada yoxdur.'); if (!confirm('Sual ' + Q.n + ' silinsin?')) return; var r = await S().from('exam_questions').delete().eq('id', q.id); if (r.error) return alert('Xəta: ' + r.error.message); await Q.load(); V7.qShow(Q.n); V2.toast('Silindi'); };
+    V7.t_idare = async function () { return V7.qHtml(false); }; V7.a_idare = V7.aQ;
+    V7.t_suallar = async function () { return V7.qHtml(true); }; V7.a_suallar = V7.aQ;
+
+    /* ================= nəticə təfsilatı (Kabinet + Statistika) ================= */
+    V7.detail = async function (id) {
+      var r = V7.rs.filter(function (x) { return x.id == id; })[0]; if (!r) return;
+      var qs = (await S().from('exam_questions').select('*').eq('exam_id', r.exam_no).eq('category', r.category).order('q_number')).data || [], A = r.answers || {}, by = {}, wrong = [], ok = 0, bad = 0, blank = 0;
+      qs.forEach(function (q) {
+        var a = A[q.q_number], open = !Array.isArray(q.options) || !q.options.length, none = a === undefined || a === null || a === '', good = !none && (open ? String(a).trim().toUpperCase() === String(q.correct).trim().toUpperCase() : Number(a) === Number(q.correct));
+        if (none) blank++; else if (good) ok++; else { bad++; wrong.push(q.q_number); }
+        (by[q.subject || 'Ümumi'] = by[q.subject || 'Ümumi'] || []).push({ n: q.q_number, c: open ? q.correct : L5[q.correct], a: none ? '-' : (open ? a : L5[Number(a)] || a), s: none ? '-' : good ? '+' : '−' });
+      });
+      var h = '<h3>' + E(r.student_name || r.name) + ' (' + E(r.fin) + ')</h3><p style="margin:8px 0">Sınaq <b>' + E(r.exam_no) + '</b> · ' + E(r.category) + ' · Bal: <b>' + (r.score || 0) + '</b> · Doğru: <b style="color:#059669">' + (qs.length ? ok : r.correct_count || 0) + '</b> · Yanlış: <b style="color:#dc2626">' + (qs.length ? bad : r.wrong_count || 0) + '</b> · Boş: <b>' + (qs.length ? blank : r.unanswered_count || 0) + '</b></p>';
+      Object.keys(by).forEach(function (k) { var a = by[k], g = a.filter(function (x) { return x.s === '+'; }).length; h += '<h4 style="margin:14px 0 6px">' + E(k) + ' — ' + g + '/' + a.length + ' (' + Math.round(g * 100 / a.length) + '%)</h4><div class="v2-wrap"><table class="v2-tbl"><tr><th>№</th>' + a.map(function (x) { return '<td>' + x.n + '</td>'; }).join('') + '</tr><tr><th>Düzgün</th>' + a.map(function (x) { return '<td>' + E(x.c) + '</td>'; }).join('') + '</tr><tr><th>Cavab</th>' + a.map(function (x) { return '<td>' + E(x.a) + '</td>'; }).join('') + '</tr><tr><th>Nəticə</th>' + a.map(function (x) { return '<td style="font-weight:800;color:' + (x.s === '+' ? '#059669' : x.s === '−' ? '#dc2626' : '#64748b') + '">' + x.s + '</td>'; }).join('') + '</tr></table></div>'; });
+      if (!qs.length) h += '<p class="v2-sub">Bu sınaq/kateqoriya üçün suallar bazada tapılmadı, yalnız ümumi nəticə göstərilir.</p>';
+      h += '<div style="background:#fef2f2;border-radius:10px;padding:10px;margin-top:14px"><b>⚠️ Səhv cavablandırılan suallar:</b> ' + (wrong.length ? wrong.join(', ') : 'yoxdur') + '</div>'; modal(h);
+    };
+    V7.delRes = async function (id) { if (!confirm('Bu nəticə silinsin? İştirakçı yenidən imtahan verə biləcək.')) return; var r = await S().from('exam_results').delete().eq('id', id); if (r.error) return alert('Xəta: ' + r.error.message); V2.toast('Silindi'); V7.go(V7.tab); if (V7.tab === 'kabinet') V7.kFind(); };
+
+    /* ================= STATİSTİKA ================= */
+    V7.t_stat = async function () {
+      var r = await S().from('exam_results').select('*'); if (r.error) throw r.error; V7.rs = r.data || [];
+      var cs = []; V7.rs.forEach(function (x) { if (x.category && cs.indexOf(x.category) < 0) cs.push(x.category); });
+      var xs = []; V7.rs.forEach(function (x) { if (x.exam_no != null && xs.indexOf(String(x.exam_no)) < 0) xs.push(String(x.exam_no)); }); xs.sort(function (a, b) { return a - b; });
+      var l = V7.rs.filter(function (x) { return (V7.sc === 'ALL' || x.category === V7.sc) && (V7.sx === 'ALL' || String(x.exam_no) === V7.sx); }).sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
+      var pass = l.filter(function (x) { return (x.score || 0) >= thr(x.category); }).length, top = l.length ? Math.max.apply(null, l.map(function (x) { return x.score || 0; })) : 0, avg = l.length ? Math.round(l.reduce(function (s, x) { return s + (x.score || 0); }, 0) / l.length * 10) / 10 : 0;
+      V7._exp = l.map(function (x, i) { return [i + 1, x.student_name || x.name, x.fin, x.exam_no, x.category, x.score, x.correct_count, x.wrong_count]; });
+      var sel = function (k, arr, lab) { return '<select class="v2-in" style="max-width:200px" onchange="V7.' + k + '=this.value;V7.go(\'stat\')"><option value="ALL">' + lab + '</option>' + arr.map(function (c) { return '<option value="' + E(c) + '" ' + (V7[k] === c ? 'selected' : '') + '>' + E(c) + '</option>'; }).join('') + '</select>'; };
+      return '<div class="v2-stats"><div class="v2-card v2-stat"><span>Ümumi iştirakçı</span><b>' + l.length + '</b></div><div class="v2-card v2-stat"><span>Keçənlər</span><b style="color:#059669">' + pass + '</b></div><div class="v2-card v2-stat"><span>Ən yüksək bal</span><b style="color:#0284c7">' + top + '</b></div><div class="v2-card v2-stat"><span>Orta bal</span><b>' + avg + '</b></div></div>' +
+        '<div class="v2-card"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' + sel('sc', cs, 'Bütün kateqoriyalar') + sel('sx', xs, 'Bütün sınaqlar') + '<button class="v2-b o s" onclick="csv(\'statistika.csv\',[[\'Sıra\',\'Ad\',\'FİN\',\'Sınaq\',\'Kateqoriya\',\'Bal\',\'Doğru\',\'Yanlış\']].concat(V7._exp))">⬇️ CSV</button></div>' +
+        tbl(['Sıra', 'Ad Soyad', 'FİN', 'Sınaq', 'Kateqoriya', 'Bal', 'Status', ''], l.map(function (x, i) { var p = (x.score || 0) >= thr(x.category); return '<tr><td><b>' + (i + 1) + '</b></td><td><b>' + E(x.student_name || x.name || '-') + '</b></td><td>' + E(x.fin || '-') + '</td><td>' + E(x.exam_no) + '</td><td>' + E(x.category || '-') + '</td><td><b>' + (x.score || 0) + '</b></td><td style="font-weight:700;color:' + (p ? '#059669' : '#dc2626') + '">' + (p ? 'Keçdi' : 'Keçmədi') + '</td><td style="white-space:nowrap"><button class="v2-b o s" onclick="V7.detail(' + x.id + ')">🔍 Ətraflı</button> <button class="v2-b r s" onclick="V7.delRes(' + x.id + ')">🗑️</button></td></tr>'; })) + '</div>';
+    };
+    window.csv = csv;
+
+    /* ================= KABİNET (iştirakçı kabineti) ================= */
+    V7.t_kabinet = async function () {
+      return '<div class="v2-card"><h3>Şəxsi kabinet — iştirakçını FİN ilə tap</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><input class="v2-in" id="kb-f" style="max-width:260px;text-transform:uppercase" placeholder="FİN kod" value="' + E(V7.kf) + '" onkeydown="if(event.key===\'Enter\')V7.kFind()"><button class="v2-b" onclick="V7.kFind()">🔍 Tap</button><button class="v2-b o" onclick="V2.close()">📝 İmtahan girişi səhifəsinə keç</button></div></div><div id="kb-out"></div>';
+    };
+    V7.a_kabinet = function () { if (V7.kf) V7.kFind(); };
+    V7.kFind = async function () {
+      var fin = val('kb-f').trim().toUpperCase(); V7.kf = fin; if (!fin) return;
+      var rs = await Promise.all([S().from('allowed_students').select('*').eq('fin', fin), S().from('exam_results').select('*').eq('fin', fin).order('id', { ascending: false })]), al = rs[0].data || [], res = rs[1].data || []; V7.rs = res;
+      var name = al[0] ? sname(al[0]) : (res[0] ? (res[0].student_name || res[0].name) : '');
+      if (!al.length && !res.length) { $('kb-out').innerHTML = '<div class="v2-card v2-empty">Bu FİN üçün icazə və ya nəticə tapılmadı.</div>'; return; }
+      $('kb-out').innerHTML = '<div class="v2-card"><h3>👤 ' + E(name) + ' (' + E(fin) + ')</h3>' + (al.length ? tbl(['Sınaq', 'İcazəli kateqoriyalar'], al.map(function (s) { return '<tr><td>Sınaq ' + E(s.exam_no || 1) + '</td><td>' + chips(cats(s)) + '</td></tr>'; })) : '<p class="v2-sub">İcazə yoxdur.</p>') + '</div><div class="v2-card"><h3>Nəticələr (' + res.length + ')</h3>' + tbl(['Sınaq', 'Kateqoriya', 'Doğru', 'Yanlış', 'Bal', 'Tarix', ''], res.map(function (x) { return '<tr><td>' + E(x.exam_no) + '</td><td>' + E(x.category) + '</td><td style="color:#059669">' + (x.correct_count || 0) + '</td><td style="color:#dc2626">' + (x.wrong_count || 0) + '</td><td><b>' + (x.score || 0) + '</b></td><td>' + E((x.created_at || '').slice(0, 10)) + '</td><td style="white-space:nowrap"><button class="v2-b o s" onclick="V7.detail(' + x.id + ')">🔍 Cavab cədvəli</button> <button class="v2-b r s" onclick="V7.delRes(' + x.id + ')">Sıfırla</button></td></tr>'; })) + '</div>';
+    };
+
+    /* ================= KONTROL (canlı nəzarət) ================= */
+    V7.t_kontrol = async function () {
+      await V2.probe(); var warn = V2.mode === 'cloud' ? '' : '<div class="v2-card" style="color:#b45309">⚠️ Canlı izləmə üçün Supabase <b>dq_v2_store</b> cədvəli lazımdır (V2 → SQL quraşdırma).</div>';
+      return warn + '<div id="v7-live"></div>';
+    };
+    V7.a_kontrol = function () { V7.kRef(); V7.timer = setInterval(function () { if ($('v7-live')) V7.kRef(); else clearInterval(V7.timer); }, 10000); };
+    V7.kRef = async function () {
+      var d = await Promise.all([V2.list('live'), cnt('exam_results'), cnt('allowed_students')]), now = Date.now();
+      var st = function (l) { var a = (now - new Date(l.last)) / 1000; return l.done || l.stop ? ['Dayandırıldı', '#dc2626'] : a < 60 ? ['İmtahandadır', '#059669'] : ['Əlaqə kəsilib', '#b45309']; };
+      var act = d[0].filter(function (l) { return st(l)[0] === 'İmtahandadır'; }).length, el = $('v7-live'); if (!el) return;
+      el.innerHTML = '<div class="v2-stats"><div class="v2-card v2-stat"><span>Aktiv iştirakçılar</span><b>' + act + '</b></div><div class="v2-card v2-stat"><span>Tamamlanan imtahanlar</span><b>' + d[1] + '</b></div><div class="v2-card v2-stat"><span>Ümumi giriş kodları</span><b>' + d[2] + '</b></div></div><div class="v2-card"><h3>Canlı kontrol paneli <small style="font-weight:400;color:#64748b">(10 san-dən bir yenilənir)</small></h3>' +
+        tbl(['İştirakçı', 'Qrup', 'FİN', 'Başlama', 'Son siqnal', 'Status', ''], d[0].map(function (l) { var s = st(l); return '<tr><td><b>' + E(l.name) + '</b></td><td>' + E(l.cat) + ' / S' + E(l.exam) + '</td><td>' + E(l.fin) + '</td><td>' + E(new Date(l.start).toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' })) + '</td><td>' + Math.round((now - new Date(l.last)) / 1000) + ' san</td><td style="font-weight:700;color:' + s[1] + '">' + s[0] + '</td><td style="white-space:nowrap">' + (s[0] === 'İmtahandadır' ? '<button class="v2-b r s" onclick="V7.stop(' + l._id + ')">⏹ İmtahanı dayandır</button> ' : '') + '<button class="v2-b o s" onclick="V7.rmLive(' + l._id + ')">🗑️</button></td></tr>'; })) + '</div>';
+    };
+    V7.stop = async function (id) { if (!confirm('Bu iştirakçının imtahanı məcburi yekunlaşdırılsın?')) return; var l = (await V2.list('live')).filter(function (x) { return x._id == id; })[0]; if (l) { await V2.put('live', Object.assign({}, l, { stop: 1, done: 0 }), id); V2.toast('Dayandırma əmri göndərildi (≤20 san)'); V7.kRef(); } };
+    V7.rmLive = async function (id) { if (!confirm('Qeyd silinsin?')) return; if (V2.mode === 'cloud') await S().from('dq_v2_store').delete().eq('id', id); else localStorage.setItem('dq_v2_live', JSON.stringify((await V2.list('live')).filter(function (x) { return x._id != id; }))); V7.kRef(); };
+
+    /* ---- iştirakçı tərəfi: heartbeat + məcburi bitirmə + bloklanmış FİN yoxlaması ---- */
+    setInterval(async function () {
+      try {
+        if (typeof currentActiveFin === 'undefined' || !currentActiveFin || examFinished || !allQuestions.length) return;
+        await V2.probe(); if (V2.mode !== 'cloud') return;
+        var fin = currentActiveFin, g = await S().from('dq_v2_store').select('*').eq('collection', 'live').eq('data->>fin', fin).limit(1), r = g.data && g.data[0], d = r ? r.data : null, now = new Date().toISOString();
+        if (d && d.stop && !d.done) { d.done = 1; d.last = now; await S().from('dq_v2_store').update({ data: d }).eq('id', r.id); if (typeof finishExam === 'function') finishExam(); return; }
+        var nd = { fin: fin, name: currentStudentName, exam: selectedExamId, cat: userGroup, start: d && !d.done && d.exam === selectedExamId ? d.start : now, last: now, stop: 0, done: 0 };
+        if (r) await S().from('dq_v2_store').update({ data: nd }).eq('id', r.id); else await S().from('dq_v2_store').insert([{ collection: 'live', data: nd }]);
+      } catch (e) {}
+    }, 20000);
+    var oP = window.proceedToExamSelect;
+    if (typeof oP === 'function') window.proceedToExamSelect = async function () {
+      try { var el = document.querySelector('#user-fin,#fin-input,input[id*="fin"]'), f = el ? el.value.trim().toUpperCase() : ''; if (f && (await V2.list('v7block')).some(function (b) { return b.blocked && b.fin === f; })) { alert('Bu FİN kodu üçün iştirak dayandırılıb. Administrasiya ilə əlaqə saxlayın.'); return; } } catch (e) {}
+      return oP.apply(this, arguments);
+    };
+
+    /* ================= PULT ================= */
+    V7.t_pult = async function () {
+      var d = await Promise.all([V2.list('orders'), cnt('exam_questions'), cnt('allowed_students'), cnt('exam_results'), V2.list('templates')]), o = d[0];
+      V7._tp = d[4];
+      return '<div class="v2-stats"><div class="v2-card v2-stat"><span>Ümumi sifariş</span><b>' + o.length + '</b></div><div class="v2-card v2-stat"><span>İmtahan sualları</span><b>' + d[1] + '</b></div><div class="v2-card v2-stat"><span>İcazəli tələbələr</span><b>' + d[2] + '</b></div><div class="v2-card v2-stat"><span>İmtahan cəhdləri</span><b>' + d[3] + '</b></div></div>' +
+        '<div class="v2-card"><h3>Sürətli keçid</h3>' + V7.cards([['Sual Bankı (PDF)', 'OCR ilə yükləmə', 'fa-file-lines', "V2.go('bank')"], ['Sual Bankı PDF V2', 'Məntiq / crop', 'fa-file-lines', "V2.go('bank2')"], ['İmtahan Başlat', 'Sessiya yarat', 'fa-play', "V2.go('start')"], ['Xəbər / Elan', 'Paylaş', 'fa-pen', "V2.go('news')"], ['Sayt Tənzimləmələri', 'Əlaqə, sosial', 'fa-gear', "V2.go('set')"], ['İmtahan Şablonları', 'Bax / idarə et', 'fa-award', "V2.go('tpl')"]]) + '</div>' +
+        '<div class="v2-card"><h3>Son kitab sifarişləri</h3>' + tbl(['Tələbə', 'Telefon', 'Ünvan', 'Kitab', 'Status'], o.slice(0, 10).map(function (x) { return '<tr><td>' + E(x.name || x.student || x.fullname) + '</td><td>' + E(x.phone) + '</td><td>' + E(x.address) + '</td><td>' + E(x.book) + '</td><td>' + E(x.status) + '</td></tr>'; })) + '</div>' +
+        '<div class="v2-card"><h3>Yaradılmış imtahan şablonları (' + d[4].length + ')</h3>' + tbl(['Şablon', 'Təsnifat', 'Sual sayı', 'Tarix', ''], d[4].map(function (t, i) { return '<tr><td><b>' + E(t.name) + '</b></td><td><span class="v2-tag">' + E(t.cat || t.category || '-') + '</span></td><td>' + (t.questions ? t.questions.length : 0) + ' sual</td><td>' + E(t.date || '') + '</td><td><button class="v2-b o s" onclick="V7.tplView(' + i + ')">👁️ Bax</button> <button class="v2-b r s" onclick="V2.del(\'templates\',' + t._id + ')">🗑️</button></td></tr>'; })) + '</div>';
+    };
+    V7.tplView = function (i) { var t = V7._tp[i]; if (!t) return; modal('<h3>' + E(t.name) + '</h3>' + (t.questions || []).map(function (q, k) { return '<div style="padding:8px 0;border-bottom:1px solid #eee"><b>' + (k + 1) + '.</b> ' + E(q.text || q.question || q.q || '') + '</div>'; }).join('')); };
+
+    /* ================= OPERATOR (kataloq) ================= */
+    V7.cards = function (a) { return '<div class="q7-cat">' + a.map(function (x) { return '<a href="#" class="q7-card" data-s="' + E((x[0] + ' ' + x[1]).toLowerCase()) + '" onclick="' + x[3] + ';return false"><i class="fa-solid ' + x[2] + '"></i><span><b>' + E(x[0]) + '</b><small>' + E(x[1]) + '</small></span></a>'; }).join('') + '</div>'; };
+    V7.t_operator = async function () {
+      var it = TABS.map(function (x) { return [x[2], 'V7 · ' + x[0], x[1], "V7.go('" + x[0] + "')"]; }).concat(V2.menu.filter(function (m) { return m[0] !== 'v7'; }).map(function (m) { return [m[2], 'İdarəçi V2 · ' + m[0], m[1], "V2.go('" + m[0] + "')"]; }));
+      [['Cavablar', 'cavablar', 'fa-square-poll-vertical'], ['Modul Mərkəzi', 'modul', 'fa-cubes'], ['Redaktə Mərkəzi', 'redakte', 'fa-pen-to-square']].forEach(function (x) { it.push([x[0], 'Admin mərkəz · ' + x[1], x[2], "V2.close();window.switchAdminTab&&switchAdminTab('" + x[1] + "')"]); });
+      it.push(['Ana səhifə', 'index', 'fa-house', 'V2.close()']);
+      return '<div class="v2-card"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><input class="v2-in" style="max-width:360px" placeholder="🔍 Bölmə axtar…" oninput="V7.filt(this.value)"><b id="q7-cnt">Cəmi: ' + it.length + ' bölmə</b></div><div style="margin-top:14px">' + V7.cards(it) + '</div><div id="q7-emp" class="v2-empty" style="display:none">Axtarışa uyğun bölmə tapılmadı.</div></div>';
+    };
+    V7.filt = function (v) { v = v.toLowerCase().trim(); var n = 0; document.querySelectorAll('.q7-card').forEach(function (c) { var s = c.getAttribute('data-s').indexOf(v) > -1; c.style.display = s ? 'flex' : 'none'; if (s) n++; }); $('q7-cnt').textContent = 'Göstərilir: ' + n; $('q7-emp').style.display = n ? 'none' : 'block'; };
+
+    /* ================= V2 menyusuna qoşulma ================= */
+    if (!V2.menu.some(function (m) { return m[0] === 'v7'; })) V2.menu.push(['v7', 'fa-cubes', 'İdarəçi V7']);
+    V2.p_v7 = async function () { return { title: 'V7 Modulu', sub: 'Admin, Kod, Siyahı, İdarə, Suallar, Kabinet, Kontrol, Statistika, Pult və Operator — hamısı bir paneldə.', html: '<div id="v7"></div>', after: function () { V7.go(V7.tab); } }; };
+    var oGo = V2.go; V2.go = function (p) { if (p !== 'v7') clearInterval(V7.timer); return oGo.apply(this, arguments); };
+    var card = function () {
+      var g = document.querySelector('#admin-panel .admin-nav-grid') || document.querySelector('.admin-nav-grid');
+      if (!g || document.getElementById('v7-hub')) return;
+      var c = document.createElement('div'); c.className = 'admin-nav-card'; c.id = 'v7-hub';
+      c.style.cssText = 'background:#7c3aed;color:#fff'; c.onclick = function () { V2.open(); V2.go('v7'); };
+      c.innerHTML = '<span class="icon">🧩</span> İdarəçi V7'; g.appendChild(c);
+    };
+    card(); setTimeout(card, 800); setTimeout(card, 2500);
+    try { new MutationObserver(card).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  }
+})();
+
+</script>
+
 
 <!-- ===== İCAZƏ QALXANI SONU ===== -->
 
