@@ -14707,6 +14707,68 @@ try {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 </script>
+    <!-- ═══ YAMAQ: "duplicate key ... unique_student_exam" xətası ═══
+     Quraşdırma: bu faylın bütün məzmununu index.html-də  </body>  teqindən ƏVVƏL,
+     ən sonuncu <script> blokundan sonra yapışdırın. Başqa heç nə dəyişmir.
+     Nə edir: "İştirak icazələri (vahid)" bölməsində mövcud şəxsi yadda saxlayanda eyni FİN + sınaq
+     sətri artıq bazada olduğu üçün insert rədd edilirdi. Yamaq həmin anda mövcud sətri yeniləyir və
+     kodun sonradan "köhnə sətirləri sil" addımında onu silməsinə icazə vermir. -->
+<script id="dq-unique-fix">
+(function () {
+  'use strict';
+  var sb; try { sb = _supabase; } catch (e) { return; }
+  if (!sb || sb.__dqUniqFix) return;
+  var keep = {}, clearT = 0;
+  var of = sb.from.bind(sb);
+  function key(r) { return String(r.fin || '').toUpperCase() + '|' + String(r.exam_no == null ? '1' : r.exam_no); }
+  function active() { return !!(window.DQX && window.DQX.busy); }
+
+  sb.from = function (t) {
+    var b = of.apply(sb, arguments);
+    if (t !== 'allowed_students' || !b) return b;
+
+    var oi = b.insert, od = b.delete;
+
+    if (typeof oi === 'function') b.insert = function (payload) {
+      if (!active()) return oi.apply(b, arguments);
+      var p = (async function () {
+        try {
+          keep = {};   /* yeni yadda saxlama — əvvəlkindən qalan qoruma sıfırlanır */
+          var rows = (Array.isArray(payload) ? payload : [payload]).filter(Boolean);
+          var fins = rows.map(function (r) { return String(r.fin || '').toUpperCase(); }).filter(function (f, i, a) { return f && a.indexOf(f) === i; });
+          var ex = await of('allowed_students').select('id,fin,exam_no').in('fin', fins);
+          if (ex.error) return ex;
+          var have = {}; (ex.data || []).forEach(function (r) { have[key(r)] = r.id; });
+          var fresh = [];
+          for (var i = 0; i < rows.length; i++) {
+            var id = have[key(rows[i])];
+            if (id == null) { fresh.push(rows[i]); continue; }
+            var u = await of('allowed_students').update(rows[i]).eq('id', id);
+            if (u.error) return u;
+            keep[String(id)] = 1; delete have[key(rows[i])];
+          }
+          clearTimeout(clearT); clearT = setTimeout(function () { keep = {}; }, 8000);
+          if (fresh.length) return await oi.call(b, fresh);
+          return { data: null, error: null };
+        } catch (e) { return { data: null, error: e }; }
+      })();
+      return { then: function (a, r) { return p.then(a, r); }, catch: function (r) { return p.catch(r); }, select: function () { return this; }, single: function () { return this; } };
+    };
+
+    if (typeof od === 'function') b.delete = function () {
+      var q = od.apply(b, arguments), oin = q && q.in;
+      if (typeof oin === 'function') q.in = function (col, vals) {
+        if (col === 'id' && Array.isArray(vals)) { vals = vals.filter(function (v) { return !keep[String(v)]; }); keep = {}; }   /* bir dəfəlik istifadə */
+        return oin.call(q, col, vals);
+      };
+      return q;
+    };
+    return b;
+  };
+  sb.__dqUniqFix = true;
+})();
+</script>
+
 
 
 </body>
