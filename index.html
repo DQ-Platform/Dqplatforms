@@ -14604,6 +14604,110 @@ try {
 })();
 } catch (err) { console.error('[dq-ux] bölmə işə düşmədi:', err); }
 </script>
+    <!-- ═══ YAMAQ: Admin panel kartlarının qruplaşdırılması ═══
+     Quraşdırma: bu faylın bütün məzmununu index.html-də  </body>  teqindən
+     ƏVVƏL, ən sonuncu <script> blokundan sonra yapışdırın. Başqa heç nə dəyişmir. -->
+<style id="dq-admin-nav-css">
+/* ── Admin panel: qruplaşdırılmış naviqasiya ── */
+.admin-nav-grid.dq-ag-on { display: block; }
+.dq-ag { margin: 0 0 18px; }
+.dq-ag-h { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 0 0 6px; border-bottom: 2px solid var(--ag, #0b2a7a); font-size: 14px; font-weight: 800; color: var(--ag, #0b2a7a); text-align: left; letter-spacing: .2px; }
+.dq-ag-i { font-size: 16px; line-height: 1; }
+.dq-ag-t { flex: 1; min-width: 0; }
+.dq-ag-n { min-width: 22px; padding: 1px 8px; border-radius: 999px; background: var(--ag, #0b2a7a); color: #fff; font-size: 11px; font-weight: 800; text-align: center; }
+.dq-ag-c { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.dq-ag-c .admin-nav-card { background: var(--ag, #0b2a7a) !important; color: #fff !important; background-image: none !important; min-height: 68px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px 6px; line-height: 1.25; border: 1px solid rgba(255, 255, 255, .15); }
+.dq-ag-c .admin-nav-card:hover { filter: brightness(1.12); }
+.dq-ag-c .admin-nav-card .icon { display: block; font-size: 18px; line-height: 1; }
+@media (max-width: 480px) { .dq-ag-c { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dq-ag-c .admin-nav-card { font-size: 11px; min-height: 64px; } }
+</style>
+<script id="dq-admin-nav-js">
+/* ───────── Admin panel naviqasiyası: kartların qruplaşdırılması ─────────
+   Kartlar müxtəlif modullar tərəfindən ayrı-ayrı əlavə olunur. Bu bölmə onları
+   mövzu üzrə başlıqlar altında yığır. Kartlar köçürülür (klonlanmır), ona görə
+   onların klik/hadisə dinləyiciləri olduğu kimi qalır. Sonradan əlavə olunan
+   kartlar avtomatik uyğun qrupa düşür. */
+(function () {
+  'use strict';
+  var GROUPS = [
+    { id: 'q',  title: 'Suallar və sual bankı', icon: '📝', color: '#0b2a7a', re: /suallar modulu|sual bankı|kəsmə|pdf avto|telefon beynind|copy \/ paste|ardıcıl daxiletmə|ağıllı pdf|redaktə mərkəzi|yoxlama rejimi/i },
+    { id: 'p',  title: 'İcazələr və qeydiyyat',  icon: '🔐', color: '#6d28d9', re: /icazə|təsdiq, pdf|kod yaratma|təkrar iştirak/i },
+    { id: 'r',  title: 'Sınaqlar və nəticələr',  icon: '📊', color: '#0e7490', re: /iştirakçılar|nəticələr|cavablar|statistika|testlər|pult|kontrol|şablonlar/i },
+    { id: 'c',  title: 'Məzmun və elanlar',      icon: '📢', color: '#b45309', re: /dərs material|elan|təəssürat|məlumat bölməsi|qanunvericilik/i },
+    { id: 'v',  title: 'İdarəçi panelləri',      icon: '🧭', color: '#1e1b4b', re: /idarəçi v\d/i },
+    { id: 's',  title: 'Sistem və ayarlar',      icon: '⚙️', color: '#334155', re: /idarə & ayarlar|şəxsi kabinet|modul mərkəzi|qiymət idarəsi/i }
+  ];
+  var OTHER = { id: 'o', title: 'Digər', icon: '📁', color: '#475569' };
+  var busy = false, timer = 0;
+
+  /* az/tr yerli kiçik hərf: «İ» → «i», yoxsa /i bayrağı «İcazə»-ni tanımır */
+  function label(card) { return (card.textContent || '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('tr'); }
+  function pick(card) {
+    var t = label(card);
+    /* «İdarəçi V…» paneli başqa açar sözlərdən (məs. «Qanunvericilik») üstün tutulur */
+    var order = GROUPS.filter(function (g) { return g.id === 'v'; }).concat(GROUPS.filter(function (g) { return g.id !== 'v'; }));
+    for (var i = 0; i < order.length; i++) if (order[i].re.test(t)) return order[i];
+    return OTHER;
+  }
+  function normIcon(card) {
+    if (card.querySelector('.icon') || card.children.length) return;
+    var m = /^\s*((?:\p{Extended_Pictographic}\uFE0F?\u200D?)+)\s*([\s\S]*)$/u.exec(card.textContent || '');
+    if (m) card.innerHTML = '<span class="icon">' + m[1] + '</span> ' + m[2].replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
+  }
+  function section(grid, g) {
+    var el = grid.querySelector(':scope > .dq-ag[data-g="' + g.id + '"]');
+    if (el) return el;
+    el = document.createElement('section');
+    el.className = 'dq-ag'; el.setAttribute('data-g', g.id); el.style.setProperty('--ag', g.color);
+    el.innerHTML = '<h4 class="dq-ag-h"><span class="dq-ag-i">' + g.icon + '</span><span class="dq-ag-t">' + g.title + '</span><span class="dq-ag-n">0</span></h4><div class="dq-ag-c"></div>';
+    var idx = GROUPS.indexOf(g), ref = null;
+    grid.querySelectorAll(':scope > .dq-ag').forEach(function (s) {
+      var k = GROUPS.findIndex(function (x) { return x.id === s.getAttribute('data-g'); }); if (k < 0) k = 99;
+      if (!ref && k > (idx < 0 ? 99 : idx)) ref = s;
+    });
+    grid.insertBefore(el, ref);
+    return el;
+  }
+  function organize() {
+    var grid = document.querySelector('#admin-panel .admin-nav-grid');
+    if (!grid || busy) return;
+    busy = true;
+    try {
+      grid.classList.add('dq-ag-on');
+      var cards = [];
+      grid.querySelectorAll('.admin-nav-card').forEach(function (c) { cards.push(c); });
+      cards.forEach(function (c) { normIcon(c); });
+      /* qrupun daxili sırası: orijinal DOM sırası saxlanılır */
+      cards.forEach(function (c) {
+        var g = pick(c), box = section(grid, g).querySelector('.dq-ag-c');
+        if (c.parentNode !== box) box.appendChild(c);
+      });
+      grid.querySelectorAll(':scope > .dq-ag').forEach(function (s) {
+        var n = s.querySelectorAll('.admin-nav-card').length;
+        s.querySelector('.dq-ag-n').textContent = n;
+        if (!n) s.remove();
+      });
+    } catch (e) { console.error('[dq-admin] naviqasiya qruplaşdırılmadı:', e); }
+    busy = false;
+  }
+  function schedule() { clearTimeout(timer); timer = setTimeout(organize, 60); }
+
+  function start() {
+    organize();
+    var grid = document.querySelector('#admin-panel .admin-nav-grid');
+    if (grid) new MutationObserver(function (list) {
+      if (busy) return;
+      for (var i = 0; i < list.length; i++) for (var j = 0; j < list[i].addedNodes.length; j++) {
+        var n = list[i].addedNodes[j];
+        if (n.nodeType === 1 && n.classList && n.classList.contains('admin-nav-card') && n.parentNode === grid) return schedule();
+      }
+    }).observe(grid, { childList: true });
+    setTimeout(organize, 800); setTimeout(organize, 2500);   /* gec əlavə olunan modullar üçün */
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
+
 
 </body>
     </html>
