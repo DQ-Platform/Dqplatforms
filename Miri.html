@@ -2286,20 +2286,22 @@ function showResult() {
 
 // init
 renderCard();
-  <script>
+<script>
 (async()=>{try{
  const r=await fetch('https://cpzwliqlgaplroscvduo.supabase.co/rest/v1/miri_content?select=id,value',
   {headers:{apikey:'sb_publishable_1clDyHhxAiSCurwGHwMi3g_rrs17eYF'}});
  const rows=await r.json(); if(!Array.isArray(rows))return;
+ const off=rows.find(x=>x.id==='enabled'&&x.value==='false');
+ if(off){document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:sans-serif;color:#e2e8f0"><div><div style="font-size:48px">🔒</div><h2>Bu bölmə müvəqqəti bağlıdır</h2><p>Zəhmət olmasa daha sonra yenidən cəhd edin.</p></div></div>';return;}
  rows.forEach(x=>{
   if(x.id==='flashcards'){flashcardsData.length=0;flashcardsData.push(...JSON.parse(x.value));fcData=[...flashcardsData];fcIndex=0;renderCard();}
   else if(x.id==='quiz'){quizData.length=0;quizData.push(...JSON.parse(x.value));}
   else if(x.id==='css'){const s=document.createElement('style');s.textContent=x.value;document.head.appendChild(s);}
   else if(x.id==='nav'){document.querySelector('nav').innerHTML=x.value;}
   else if(x.id.startsWith('tabs:')){const e=document.querySelector('#'+x.id.slice(5)+' .tabs');if(e)e.innerHTML=x.value;}
-  else{const e=document.getElementById(x.id);if(e)e.innerHTML=x.value;}
+  else if(x.id!=='enabled'){const e=document.getElementById(x.id);if(e)e.innerHTML=x.value;}
  });
 }catch(e){console.warn('Miri override:',e)}})();
-  </script>
+</script>
 </body>
 </html>
