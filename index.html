@@ -14768,6 +14768,103 @@ try {
   sb.__dqUniqFix = true;
 })();
 </script>
+    <!-- ═══ YAMAQ: Sınaqlar ekranında «Daxil ol» (FİN ilə) ═══
+     Quraşdırma: bu faylın bütün məzmununu index.html-də  </body>  teqindən ƏVVƏL,
+     ən sonuncu <script> blokundan sonra yapışdırın. Başqa heç nə dəyişmir.
+     Axın:  Daxil ol (FİN) → icazə varsa «İştirak et» siyahısı; icazə yoxdursa «Qeydiyyatdan keçmək üçün» siyahısı. -->
+<style id="dq-fin-login-css">
+.dq-fl { padding-bottom: 14px; }
+.dq-fl-t { margin: 4px 0 12px; color: #64748b; font-size: 14px; text-align: left; }
+.dq-fl-r { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+.dq-fl-in { flex: 1 1 160px; min-width: 0; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 16px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; color: #0b2a7a; background: #fff; outline: none; }
+.dq-fl-in::placeholder { letter-spacing: 0; text-transform: none; font-weight: 500; font-size: 14px; color: #94a3b8; }
+.dq-fl-in:focus { border-color: #0b2a7a; box-shadow: 0 0 0 3px rgba(11, 42, 122, .15); }
+.dq-fl-b { flex: 0 0 auto; padding: 12px 22px; font-weight: 800; border-radius: 12px; }
+.dq-fl-b:disabled { opacity: .65; cursor: wait; }
+.dq-fl-msg { min-height: 18px; margin-top: 8px; font-size: 13px; font-weight: 600; color: #b91c1c; text-align: left; }
+.dq-fl-note { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; font-size: 13px; text-align: left; line-height: 1.45; }
+.dq-fl-note a { display: inline-block; margin-top: 4px; color: #0b2a7a; font-weight: 700; }
+</style>
+<script id="dq-fin-login-js">
+(function () {
+  'use strict';
+  if (typeof V3 === 'undefined' || typeof DQ === 'undefined' || typeof YQ2 === 'undefined' || typeof _supabase === 'undefined') return;
+  var $ = function (id) { return document.getElementById(id); };
+  var BUSY = false;
+  var cleanFin = function (f) { return String(f == null ? '' : f).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  var validFin = function (f) { return /^[A-Z0-9]{7}$/.test(f); };
+
+  function logged() {
+    try { if (YQ2.sess()) return true; } catch (e) {}
+    try { var c = DQ.cabinet(); return !!(c && c.fin); } catch (e) { return false; }
+  }
+  function cabBlocks(show) {
+    var s = $('exam-select-screen'); if (!s) return;
+    ['.cab-card', '.cab-tests'].forEach(function (q) { var el = s.querySelector(q); if (el) el.style.display = show ? '' : 'none'; });
+  }
+  function setList(html) { cabBlocks(false); $('registered-exams-list').innerHTML = html; showScreen('exam-select-screen'); scrollTo(0, 0); }
+  function msg(t) { var m = $('dq-fl-msg'); if (m) { m.textContent = t || ''; m.className = 'dq-fl-msg'; } }
+
+  function loginView() {
+    setList(
+      '<div class="exam-item-card dq-fl"><div class="exam-item-header"><span>🔑 Daxil ol</span></div>' +
+      '<p class="dq-fl-t">Sınaqda iştirak üçün FİN kodunuzu daxil edin.</p>' +
+      '<div class="dq-fl-r"><input id="dq-fl-fin" class="dq-fl-in" type="text" maxlength="12" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="FİN kod" aria-label="FİN kod">' +
+      '<button id="dq-fl-go" type="button" class="btn btn-primary dq-fl-b">Daxil ol</button></div>' +
+      '<div id="dq-fl-msg" class="dq-fl-msg" role="alert" aria-live="polite"></div></div>'
+    );
+    var inp = $('dq-fl-fin'), go = $('dq-fl-go'); if (!inp || !go) return;
+    go.onclick = submit;
+    inp.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } };
+    inp.oninput = function () { var p = inp.selectionStart; inp.value = cleanFin(inp.value).slice(0, 7); try { inp.setSelectionRange(p, p); } catch (x) {} msg(''); };
+    setTimeout(function () { try { inp.focus(); } catch (x) {} }, 150);
+  }
+
+  function registerView(fin) {
+    var rows = ['BA', 'BB', 'AC'].map(function (c) {
+      return '<div class="cat-action-row" style="opacity:.85;background:#fff5f5;"><span class="cat-action-title" style="color:#64748b;">' + c + ' Kateqoriyası</span>' +
+        '<button type="button" class="btn btn-secondary btn-sm" style="background-color:#25D366;color:#fff;border:none;" onclick="YQ.open(\'reg\')">💬 Qeydiyyatdan keçmək üçün</button></div>';
+    }).join('');
+    setList(
+      (fin ? '<div class="dq-fl-note"><b>' + fin + '</b> FİN kodu üçün sınaq icazəsi verilməyib. Sınaqda iştirak üçün qeydiyyatdan keçin. <a href="#" id="dq-fl-back">Başqa FİN ilə daxil ol</a></div>' : '') +
+      '<div class="exam-item-card"><div class="exam-item-header"><span>Sınaq 1</span></div><div style="display:flex;flex-direction:column;gap:6px;">' + rows + '</div></div>'
+    );
+    var b = $('dq-fl-back'); if (b) b.onclick = function (e) { e.preventDefault(); loginView(); };
+  }
+
+  async function submit() {
+    if (BUSY) return;
+    var inp = $('dq-fl-fin'), go = $('dq-fl-go'); if (!inp) return;
+    var fin = cleanFin(inp.value);
+    if (!validFin(fin)) { msg('FİN kod 7 simvoldan ibarət olmalıdır (hərf və rəqəm).'); inp.focus(); return; }
+    BUSY = true; go.disabled = true; go.textContent = 'Yoxlanılır…'; msg('');
+    try {
+      var r = await _supabase.from('allowed_students').select('student_name,fin,exam_no,categories').eq('fin', fin);
+      if (r.error) throw r.error;
+      var rows = (r.data || []).filter(function (x) { var c = x.categories; return Array.isArray(c) ? c.length > 0 : (!!c || c === undefined || c === null); });
+      if (!rows.length) { BUSY = false; return registerView(fin); }
+      var name = String(rows[0].student_name || '').trim() || fin;
+      DQ.saveCabinet({ name: name, fin: fin });
+      currentStudentName = name; currentActiveFin = fin;
+      BUSY = false; cabBlocks(true);
+      return DQ.openExams ? DQ.openExams() : DQ.openCabinet();
+    } catch (e) {
+      BUSY = false;
+      var g = $('dq-fl-go'); if (g) { g.disabled = false; g.textContent = 'Daxil ol'; }
+      msg('Server cavab vermir. İnternet bağlantınızı yoxlayıb yenidən cəhd edin.');
+    }
+  }
+
+  /* «Sınaqlar» / «Sınaqlara Bax» / SINAQLAR: daxil olmayanlara əvvəlcə «Daxil ol» göstərilir */
+  var oGo = V3.go;
+  V3.go = function (id) {
+    var it = V3.D && V3.D.items && V3.D.items[id];
+    if (id !== 'kab' && it && it.a === 'exam' && !logged()) return loginView();
+    return oGo.apply(this, arguments);
+  };
+})();
+</script>
+
 
 
 
