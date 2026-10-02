@@ -15267,7 +15267,68 @@ var cur=null;new MutationObserver(function(){var a=D.querySelector('.screen.acti
   }
 })();
 
+<script>
+/* Yamaq: dqClean boşluq xətasının düzəlişi. </body>-dən əvvələ yapışdır. */
+        window.dqClean = function (src) {
+            if (src == null) return '';
+            let h = String(src);
+            if (!h.trim()) return '';
+            if (!/<\/?[a-z][^>]*>/i.test(h)) {
+                const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return h.replace(/\r/g, '').replace(/&nbsp;|\u00a0/gi, ' ').trim().split(/\n{2,}/).map(b => '<p>' + esc(b.trim()).replace(/\n/g, '<br>') + '</p>').join('');
+            }
+            const ALLOW = new Set(['P','BR','B','STRONG','I','EM','U','SUB','SUP','UL','OL','LI','IMG','TABLE','THEAD','TBODY','TR','TD','TH','SPAN']);
+            const doc = new DOMParser().parseFromString('<body>' + h.replace(/&nbsp;|\u00a0/g, ' ') + '</body>', 'text/html');
+            doc.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach(n => n.remove());
+            const walk = n => {
+                [...n.children].forEach(c => {
+                    walk(c);
+                    const tag = c.tagName;
+                    if (tag === 'DIV' || tag === 'H1' || tag === 'H2' || tag === 'H3' || tag === 'H4') { const p = doc.createElement('p'); p.innerHTML = c.innerHTML; c.replaceWith(p); return; }
+                    if (!ALLOW.has(tag)) { c.replaceWith(...c.childNodes); return; }
+                    [...c.attributes].forEach(a => {
+                        const nm = a.name.toLowerCase();
+                        if (tag === 'IMG' && (nm === 'src' || nm === 'alt' || nm === 'style')) { if (nm === 'src' && /^\s*javascript:/i.test(a.value)) c.removeAttribute(nm); return; }
+                        if ((tag === 'TD' || tag === 'TH') && (nm === 'colspan' || nm === 'rowspan')) return;
+                        c.removeAttribute(a.name);
+                    });
+                    if (tag === 'SPAN') c.replaceWith(...c.childNodes);
+                });
+            };
+            walk(doc.body);
+            // boş abzasları at
+            doc.body.querySelectorAll('p,li').forEach(p => { if (!p.textContent.trim() && !p.querySelector('img,table')) p.remove(); });
+            // abzas daxilində ardıcıl <br><br> → yeni abzas, başdakı/sondakı <br> təmizlə
+            doc.body.querySelectorAll('p').forEach(p => {
+                while (p.firstChild && p.firstChild.nodeName === 'BR') p.firstChild.remove();
+                while (p.lastChild && p.lastChild.nodeName === 'BR') p.lastChild.remove();
+                if (/<br\s*\/?>\s*<br\s*\/?>/i.test(p.innerHTML)) {
+                    const parts = p.innerHTML.split(/(?:<br\s*\/?>\s*){2,}/i).filter(x => x.trim());
+                    p.replaceWith(...parts.map(x => { const q = doc.createElement('p'); q.innerHTML = x; return q; }));
+                }
+            });
+            // üst səviyyədə yan-yana duran mətn/inline elementləri (b, i, u, img, br) BİR abzasda saxla — boşluqlar itməsin
+            let out = '', buf = '';
+            const EDGE = /^(?:\s|<br\s*\/?>)+|(?:\s|<br\s*\/?>)+$/gi;
+            const flush = () => {
+                buf.split(/(?:<br\s*\/?>\s*){2,}/i).forEach(part => {
+                    const t = part.replace(EDGE, '');
+                    if (t.replace(/<[^>]*>/g, '').trim() || /<img/i.test(t)) out += '<p>' + t + '</p>';
+                });
+                buf = '';
+            };
+            doc.body.childNodes.forEach(n => {
+                if (n.nodeType === 3) buf += n.nodeValue.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                else if (n.nodeType === 1) {
+                    if (/^(P|UL|OL|TABLE)$/.test(n.tagName)) { flush(); out += n.outerHTML; }
+                    else buf += n.outerHTML;
+                }
+            });
+            flush();
+            return out.replace(/\s{2,}/g, ' ').trim();
+        };
 </script>
+
 
 
 </body>
