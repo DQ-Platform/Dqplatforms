@@ -15104,6 +15104,124 @@ new MutationObserver(function(ms){ms.forEach(function(m){[].forEach.call(m.added
 var cur=null;new MutationObserver(function(){var a=D.querySelector('.screen.active'),id=a&&a.id;if(id&&id!==cur){var f=cur===null;cur=id;if(!f&&id!=='exam-screen')bar()}}).observe(D.body,{subtree:true,attributes:true,attributeFilter:['class']});
 }catch(err){console.warn('dqp:',err)}})();
 </script>
+    <!-- DQ Platform: Testlər Google Forms yaması. </body>-dən əvvələ yapışdır -->
+<script>
+/* DQ Platform – Testlər bölməsi üçün Google Forms yaması
+ * İstifadə: bu faylı </body>-dən əvvəl əlavə et:
+ *   <script src="/testler-google-forms-patch.js"></script>
+ * və ya məzmunu birbaşa <script>...</script> içinə qoy.
+ *
+ * Testlər bölməsində <div id="gf-subjects"></div> varsa, orada göstərilir.
+ * Yoxdursa, "Testlər" başlığını tapıb altına əlavə edir.
+ */
+(function () {
+  // ====== BURANI DƏYİŞ: fənn adı + Google Form linki ======
+  const SUBJECTS = [
+    { name: "Konstitusiya hüququ", icon: "⚖️", form: "https://docs.google.com/forms/d/e/FORM_ID_1/viewform" },
+    { name: "Dövlət qulluğu haqqında qanun", icon: "📜", form: "https://docs.google.com/forms/d/e/FORM_ID_2/viewform" },
+    { name: "İnformasiya texnologiyaları", icon: "💻", form: "https://docs.google.com/forms/d/e/FORM_ID_3/viewform" },
+    { name: "Məntiq", icon: "🧠", form: "" } // boşdursa "Tezliklə" yazılır
+  ];
+  // ========================================================
+
+  const css = `
+  .gf-wrap{margin:20px 12px}
+  .gf-grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:700px){.gf-grid{grid-template-columns:repeat(3,1fr)}}
+  .gf-card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(10,50,140,.15);
+    display:flex;align-items:center;gap:12px;border:1px solid #e3eaff}
+  .gf-ico{font-size:28px}
+  .gf-name{flex:1;font-weight:700;color:#0b2e7a;font-size:15px}
+  .gf-btn{border:0;border-radius:999px;padding:9px 16px;font-weight:700;color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,#0b2e7a,#2a5fc4)}
+  .gf-btn[disabled]{background:#b9c4de;cursor:not-allowed}
+  .gf-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:none;flex-direction:column}
+  .gf-modal.open{display:flex}
+  .gf-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#0b2e7a;color:#fff;font-weight:700}
+  .gf-bar button{background:#fff;color:#0b2e7a;border:0;border-radius:8px;padding:6px 12px;font-weight:700}
+  .gf-frame{flex:1;border:0;width:100%;background:#fff}`;
+
+  function embedUrl(u) {
+    if (!u) return "";
+    return u + (u.includes("?") ? "&" : "?") + "embedded=true";
+  }
+
+  function build() {
+    const wrap = document.createElement("div");
+    wrap.className = "gf-wrap";
+    wrap.innerHTML = '<div class="gf-grid"></div>';
+    const grid = wrap.firstChild;
+
+    SUBJECTS.forEach((s) => {
+      const card = document.createElement("div");
+      card.className = "gf-card";
+      card.innerHTML =
+        '<span class="gf-ico"></span><span class="gf-name"></span><button class="gf-btn"></button>';
+      card.querySelector(".gf-ico").textContent = s.icon || "📝";
+      card.querySelector(".gf-name").textContent = s.name;
+      const btn = card.querySelector(".gf-btn");
+      if (s.form) {
+        btn.textContent = "Testə başla";
+        btn.onclick = () => openModal(s);
+      } else {
+        btn.textContent = "Tezliklə";
+        btn.disabled = true;
+      }
+      grid.appendChild(card);
+    });
+    return wrap;
+  }
+
+  let modal, frame, title;
+  function openModal(s) {
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.className = "gf-modal";
+      modal.innerHTML =
+        '<div class="gf-bar"><span></span><div><a class="gf-open" target="_blank" rel="noopener" style="color:#fff;margin-right:12px">Yeni tabda aç</a><button>Bağla</button></div></div><iframe class="gf-frame"></iframe>';
+      document.body.appendChild(modal);
+      frame = modal.querySelector("iframe");
+      title = modal.querySelector(".gf-bar span");
+      modal.querySelector("button").onclick = () => {
+        modal.classList.remove("open");
+        frame.src = "about:blank";
+      };
+    }
+    title.textContent = s.name;
+    modal.querySelector(".gf-open").href = s.form;
+    frame.src = embedUrl(s.form);
+    modal.classList.add("open");
+  }
+
+  function mount() {
+    if (document.getElementById("gf-built")) return true;
+    let host = document.getElementById("gf-subjects");
+    if (!host) {
+      const h = [...document.querySelectorAll("h1,h2,h3")].find(
+        (e) => e.textContent.trim().toLowerCase() === "testlər"
+      );
+      if (!h) return false;
+      host = document.createElement("div");
+      h.insertAdjacentElement("afterend", host);
+    }
+    const ui = build();
+    ui.id = "gf-built";
+    host.appendChild(ui);
+    return true;
+  }
+
+  const st = document.createElement("style");
+  st.textContent = css;
+  document.head.appendChild(st);
+
+  // Səhifə sonradan yüklənirsə (SPA) izləyir
+  if (!mount()) {
+    const obs = new MutationObserver(() => { if (mount()) obs.disconnect(); });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+})();
+</script>
+
 
 </body>
 </html>
