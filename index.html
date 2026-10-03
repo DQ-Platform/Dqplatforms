@@ -15480,6 +15480,77 @@ var cur=null;new MutationObserver(function(){var a=D.querySelector('.screen.acti
   setInterval(sync, 300); sync();
 })();
 </script>
+    <script>
+/* Yamaq: qeydiyyat pəncərəsində «Qeydiyyatdan keç» basılanda məlumat bazaya yazılır və WhatsApp AVTOMATİK açılır.
+   Mesaj: Salam mən Sınaq 1 - BA kateqoriyası üçün qeydiyyatdan keçmək istəyirəm. Ad: ..., FIN: ..., Əlaqə: ...
+          Qiymət: 15 ₼
+          Ödəniş üçün kart qeyd edə bilərsizmi
+   </body>-dən əvvələ yapışdır. Bu yamaq əvvəlki «yamaq-whatsapp-qeydiyyat» yamağını avtomatik söndürür
+   (həmin yamaq pəncərəni keçib birbaşa WhatsApp açırdı). */
+(function () {
+  if (window.__dqRegWa) return; window.__dqRegWa = true;
+  window.DQ_WA_REDIRECT = false;   // köhnə birbaşa-yönləndirmə yamağını söndür, pəncərə açılsın
+  var PRICES = { BB: 10, BA: 15, AC: 20 };
+  var WANT = null;                 // basılan kateqoriya
+
+  function fmt(v) { var n = Math.round(parseFloat(v) * 100) / 100; return isNaN(n) ? '' : n + ' ₼'; }
+  function priceOf(cat) {
+    var v = null;
+    try { var c = JSON.parse(localStorage.getItem('dq_prices_cache') || 'null'); v = c && c.map && c.map[cat]; } catch (e) {}
+    if (v == null || v === '') v = PRICES[cat];
+    return fmt(v);
+  }
+
+  /* hansı kateqoriyanın düyməsinə basıldığını yadda saxla */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#registered-exams-list .cat-action-row button, #registered-exams-list .cat-action-row a');
+    if (!b || !/Qeydiyyatdan\s+keçmək/i.test(b.textContent)) return;
+    var row = b.closest('.cat-action-row'), t = row.querySelector('.cat-action-title');
+    var card = row.closest('.exam-item-card'), hs = card && card.querySelector('.exam-item-header span');
+    WANT = { cat: t ? (t.textContent.trim().split(/\s+/)[0] || '').toUpperCase() : '', exam: (hs && hs.textContent.trim()) || 'Sınaq 1' };
+  }, true);
+
+  function buildMsg(r) {
+    var w = WANT, head;
+    if (w && w.cat) head = 'Salam mən ' + w.exam + ' - ' + w.cat + ' kateqoriyası üçün qeydiyyatdan keçmək istəyirəm. ';
+    else head = 'Salam, saytda qeydiyyatdan keçmək istəyirəm. ';
+    var m = head + 'Ad: ' + r.name + (r.fin ? ', FIN: ' + r.fin : '') + (r.contact ? ', Əlaqə: ' + r.contact : '');
+    if (w && w.cat) { var p = priceOf(w.cat); if (p) m += '\nQiymət: ' + p; }
+    return m + '\nÖdəniş üçün kart qeyd edə bilərsizmi';
+  }
+
+  function install() {
+    if (typeof YQ === 'undefined' || !YQ.register || !YQ.state) return false;
+    if (YQ.__waWrapped) return true; YQ.__waWrapped = true;
+
+    var oState = YQ.state, oReg = YQ.register, inReg = false, got = null;
+    YQ.state = function (r) { if (inReg) got = r; return oState.apply(this, arguments); };
+
+    YQ.register = async function () {
+      var $ = YQ.$ || function (id) { return document.getElementById(id); };
+      // eyni yoxlama: səhv olanda boş pəncərə açmasın
+      try {
+        var name = $('yq-n').value.trim(), fin = YQ.cleanFin ? YQ.cleanFin($('yq-f').value) : '', c = $('yq-c').value.trim();
+        if (name.length < 3 || (YQ.validFin && !YQ.validFin(fin)) || !YQ.valid(c)) return oReg.apply(this, arguments);
+      } catch (e) { return oReg.apply(this, arguments); }
+
+      // klik jestində boş pəncərə aç (async-dan sonra brauzer bloklamasın), nəticə gələndə WhatsApp-a yönləndir
+      var w = null; try { w = window.open('', '_blank'); } catch (e) {}
+      inReg = true; got = null;
+      try { await oReg.apply(this, arguments); } finally { inReg = false; }
+
+      if (got && got.status === 'pending') {
+        var url = 'https://wa.me/' + (YQ.WA || '994504305162') + '?text=' + encodeURIComponent(buildMsg(got));
+        if (w) { try { w.location.href = url; return; } catch (e) {} }
+        // pəncərə bloklanıbsa, pəncərədəki yaşıl WhatsApp düyməsi qalır
+      } else if (w) { try { w.close(); } catch (e) {} }
+    };
+    return true;
+  }
+  if (!install()) { var n = 0, iv = setInterval(function () { if (install() || ++n > 40) clearInterval(iv); }, 250); }
+})();
+</script>
+
  
 
 
