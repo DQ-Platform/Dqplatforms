@@ -15327,7 +15327,83 @@ var cur=null;new MutationObserver(function(){var a=D.querySelector('.screen.acti
             flush();
             return out.replace(/\s{2,}/g, ' ').trim();
         };
+ <script>
+/* Yamaq: «Qeydiyyatdan keçmək üçün» düyməsi birbaşa WhatsApp-a yönləndirsin.
+   Mesaj: Salam mən Sınaq 1 - BA kateqoriyası üçün qeydiyyatdan keçmək istəyirəm. Ad: ..., FIN: ...
+          Ödəniş üçün kart qeyd edə bilərsizmi
+   </body>-dən əvvələ yapışdır. Söndürmək üçün: window.DQ_WA_REDIRECT = false */
+(function () {
+  if (window.__dqWaRedirect) return; window.__dqWaRedirect = true;
+  var NUMBER = '994504305162';   // WhatsApp nömrəsi
+  var NAME_KEY = 'dq_wa_name';
+  var PRICES = { BB: 10, BA: 15, AC: 20 };   // ehtiyat qiymətlər (sistemdən oxuna bilməsə istifadə olunur)
+  var live = null;                           // «Qiymət İdarəsi»ndən oxunan ən son qiymətlər
+
+  function fmt(v) { var n = Math.round(parseFloat(v) * 100) / 100; return isNaN(n) ? '' : n + ' ₼'; }
+  function cached() { try { var c = JSON.parse(localStorage.getItem('dq_prices_cache') || 'null'); return c && c.map ? c.map : null; } catch (e) { return null; } }
+  function refresh() {   // qiymət bazadan təzələnir (admin dəyişəndə növbəti təzələmədə mesaja düşür)
+    try {
+      if (typeof V2 === 'undefined' || !V2.list) return;
+      V2.list('prices').then(function (l) { if (l && l.length && l[0].map) live = l[0].map; }).catch(function () {});
+    } catch (e) {}
+  }
+  function priceOf(cat, row) {
+    var v = live && live[cat];
+    if (v == null || v === '') { var c = cached(); v = c && c[cat]; }
+    if (v == null || v === '') { var tg = row.querySelector('.dqpr-tag'); if (tg) return tg.textContent.replace('💰', '').trim(); }
+    if (v == null || v === '') v = PRICES[cat];
+    return fmt(v);
+  }
+  refresh(); setInterval(refresh, 30000);
+  document.addEventListener('pointerdown', refresh, true);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+
+  function cab() { try { return (window.DQ && DQ.cabinet && DQ.cabinet()) || null; } catch (e) { return null; } }
+  function getFin() {
+    var b = document.querySelector('#registered-exams-list .dq-fl-note b');
+    if (b && b.textContent.trim()) return b.textContent.trim();
+    var c = cab(); if (c && c.fin) return String(c.fin);
+    var u = document.getElementById('user-fin'); return u && u.value ? u.value.trim() : '';
+  }
+  function getName() {
+    var c = cab(); if (c && c.name && c.name !== c.fin) return String(c.name);
+    var u = document.getElementById('user-name'); if (u && u.value.trim()) return u.value.trim();
+    try { var s = localStorage.getItem(NAME_KEY); if (s) return s; } catch (e) {}
+    return '';
+  }
+
+  document.addEventListener('click', function (e) {
+    if (window.DQ_WA_REDIRECT === false) return;
+    var btn = e.target.closest && e.target.closest('#registered-exams-list .cat-action-row button, #registered-exams-list .cat-action-row a');
+    if (!btn || !/Qeydiyyatdan\s+keçmək/i.test(btn.textContent)) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+
+    var row = btn.closest('.cat-action-row');
+    var t = row.querySelector('.cat-action-title');
+    var cat = t ? (t.textContent.trim().split(/\s+/)[0] || '').toUpperCase() : '';
+    var card = row.closest('.exam-item-card');
+    var hs = card && card.querySelector('.exam-item-header span');
+    var exam = (hs && hs.textContent.trim()) || 'Sınaq 1';
+
+    var price = priceOf(cat, row);
+
+    var name = getName();
+    if (!name) {
+      name = (prompt('Adınızı və soyadınızı yazın (WhatsApp mesajına əlavə olunacaq):') || '').trim();
+      if (!name) return;                       // ləğv edilsə, heç nə açılmır
+      try { localStorage.setItem(NAME_KEY, name); } catch (x) {}
+    }
+    var fin = getFin();
+
+    var msg = 'Salam mən ' + exam + ' - ' + cat + ' kateqoriyası üçün qeydiyyatdan keçmək istəyirəm. Ad: ' + name + (fin ? ', FIN: ' + fin : '') +
+              (price ? '\nQiymət: ' + price : '') +
+              '\nÖdəniş üçün kart qeyd edə bilərsizmi';
+    var url = 'https://wa.me/' + NUMBER + '?text=' + encodeURIComponent(msg);
+    if (!window.open(url, '_blank')) location.href = url;
+  }, true);   // capture: köhnə onclick="YQ.open('reg')" işləməzdən əvvəl tutur
+})();
 </script>
+
 
 
 
