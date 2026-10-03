@@ -15327,7 +15327,7 @@ var cur=null;new MutationObserver(function(){var a=D.querySelector('.screen.acti
             flush();
             return out.replace(/\s{2,}/g, ' ').trim();
         };
- <script>
+    <script>
 /* Yamaq: «Qeydiyyatdan keçmək üçün» düyməsi birbaşa WhatsApp-a yönləndirsin.
    Mesaj: Salam mən Sınaq 1 - BA kateqoriyası üçün qeydiyyatdan keçmək istəyirəm. Ad: ..., FIN: ...
           Ödəniş üçün kart qeyd edə bilərsizmi
@@ -15403,6 +15403,84 @@ var cur=null;new MutationObserver(function(){var a=D.querySelector('.screen.acti
   }, true);   // capture: köhnə onclick="YQ.open('reg')" işləməzdən əvvəl tutur
 })();
 </script>
+   <script>
+/* Yamaq: «Masaüstü / Mobil rejim» düyməsi kiçik, şəffaf və sürüşdürülə bilən olsun (məzmunu tutmasın).
+   </body>-dən əvvələ yapışdır. Düyməni barmaqla istənilən yerə sürüşdür — yeri yadda qalır, kənara yapışır. */
+(function () {
+  if (window.__dqModeBtn) return; window.__dqModeBtn = true;
+  var POS_KEY = 'dq_modebtn_pos', SIZE = 38, MARGIN = 8, TAP = 6;
+  var st = document.createElement('style');
+  st.textContent =
+    '#dqdm{display:none!important}' +
+    '#dqdm2{position:fixed;left:0;top:0;z-index:100001;transform-origin:0 0;display:none;align-items:center;justify-content:center;' +
+    'width:' + SIZE + 'px;height:' + SIZE + 'px;border:0;border-radius:50%;padding:0;font-size:18px;line-height:1;color:#fff;cursor:grab;' +
+    'background:linear-gradient(135deg,#0b2e7a,#2a5fc4);box-shadow:0 3px 10px rgba(0,0,0,.28);opacity:.5;touch-action:none;' +
+    '-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity .2s}' +
+    '#dqdm2.on{display:flex}#dqdm2.d{background:linear-gradient(135deg,#b45309,#d9a23a)}' +
+    '#dqdm2.drag{opacity:.95;cursor:grabbing}#dqdm2:active{opacity:.95}';
+  document.head.appendChild(st);
+
+  var b = document.createElement('button');
+  b.id = 'dqdm2'; b.type = 'button'; b.setAttribute('aria-label', 'Masaüstü / mobil rejim');
+  document.body.appendChild(b);
+
+  var pos = { fx: 1, fy: 0.9 };   // ekranın görünən hissəsinə görə nisbi yer (0..1)
+  try { var sp = JSON.parse(localStorage.getItem(POS_KEY) || 'null'); if (sp && isFinite(sp.fx) && isFinite(sp.fy)) pos = sp; } catch (e) {}
+
+  function vv() { return window.visualViewport || { scale: 1, offsetLeft: 0, offsetTop: 0, width: innerWidth, height: innerHeight }; }
+  function place() {
+    var v = vv(), s = 1 / (v.scale || 1), w = SIZE * s, m = MARGIN * s;
+    var x = v.offsetLeft + m + pos.fx * Math.max(0, v.width - w - 2 * m);
+    var y = v.offsetTop + m + pos.fy * Math.max(0, v.height - w - 2 * m);
+    b.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+  }
+  function sync() {
+    var o = document.getElementById('dqdm'); if (!o) return;
+    var on = o.classList.contains('on'), d = o.classList.contains('d');
+    b.classList.toggle('on', on); b.classList.toggle('d', d);
+    b.textContent = d ? '📱' : '🖥️';
+    b.title = d ? 'Mobil rejimə qayıt' : 'Masaüstü rejimə keç';
+    if (on) place();
+  }
+
+  /* sürüşdürmə + toxunma */
+  var drag = null;
+  b.addEventListener('pointerdown', function (e) {
+    var v = vv(), s = 1 / (v.scale || 1);
+    drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false };
+    try { b.setPointerCapture(e.pointerId); } catch (x) {}
+  });
+  b.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < TAP) return;
+    drag.moved = true; b.classList.add('drag');
+    var v = vv(), s = 1 / (v.scale || 1), w = SIZE * s, m = MARGIN * s;
+    var rangeX = Math.max(1, v.width - w - 2 * m), rangeY = Math.max(1, v.height - w - 2 * m);
+    // e.clientX layout viewport koordinatıdır → görünən sahəyə çevir
+    var px = e.clientX - (v.offsetLeft || 0) - w / 2 - m, py = e.clientY - (v.offsetTop || 0) - w / 2 - m;
+    pos.fx = Math.min(1, Math.max(0, px / rangeX)); pos.fy = Math.min(1, Math.max(0, py / rangeY));
+    place();
+  });
+  function end(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var moved = drag.moved; drag = null; b.classList.remove('drag');
+    try { b.releasePointerCapture(e.pointerId); } catch (x) {}
+    if (moved) {
+      pos.fx = pos.fx < 0.5 ? 0 : 1;   // ən yaxın kənara yapış
+      place();
+      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch (x) {}
+    } else if (window.DQDM && DQDM.toggle) {
+      DQDM.toggle(); setTimeout(sync, 80);
+    }
+  }
+  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', function (e) { if (drag) { drag = null; b.classList.remove('drag'); } });
+
+  window.addEventListener('resize', place); window.addEventListener('scroll', place, { passive: true });
+  if (window.visualViewport) { visualViewport.addEventListener('resize', place); visualViewport.addEventListener('scroll', place); }
+  setInterval(sync, 300); sync();
+})();
+</script>
+ 
 
 
 
